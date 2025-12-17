@@ -5,6 +5,18 @@ PROJECT_NAME="remake"  # Change this when creating a new remake
 
 GIT_ROOT=$(git rev-parse --show-toplevel)
 
+# Ensure bmp2ugg is available
+if ! command -v bmp2ugg &> /dev/null; then
+	# Not in PATH, build local copy
+	BMP2UGG="$GIT_ROOT/tools/bin/bmp2ugg"
+	if [ ! -f "$BMP2UGG" ]; then
+		echo "bmp2ugg not found in PATH. Building local copy..."
+		mkdir -p "$GIT_ROOT/tools/bin"
+		(cd "$GIT_ROOT/tools/bmp2ugg" && gcc -g -O2 -march=native -Wno-unused-result bmp2ugg.c -I"$GIT_ROOT/include" -o "$GIT_ROOT/tools/bin/bmp2ugg")
+	fi
+	export PATH="$GIT_ROOT/tools/bin:$PATH"
+fi
+
 # Process shared option selector assets (once, avoid race conditions)
 process_selector() {
 	local selector_dir="$GIT_ROOT/platform/$1"
