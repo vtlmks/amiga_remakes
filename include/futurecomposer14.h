@@ -10,8 +10,6 @@
 ** The BLEP (Band-Limited Step) and filter routines were coded by aciddose.
 ** This makes the replayer sound much similar to a real Amiga.
 **
-** Converted to state-based approach (similar to micromod.h) for multiple song support.
-** All functions prefixed with fc14_ to avoid conflicts with other players.
 */
 
 // NOTE(peter): This is NOT the original, it's modified to use a state and some things has been changed over time!
