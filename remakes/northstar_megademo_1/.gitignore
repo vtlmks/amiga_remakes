@@ -1,0 +1,4 @@
+*.ugg
+data/*.dat
+remake
+remake.exe
