@@ -13,10 +13,12 @@ First-time setup:
 
 Then build all demos:
 ```bash
-./build_all.sh
+./build_all.sh release
 ```
 
-Individual demos can be built in their respective directories.
+Built executables are placed in the `/bin` directory at the project root.
+
+Individual demos can also be built from their respective directories, producing `remake` and `remake.exe` locally.
 
 ## Status
 
