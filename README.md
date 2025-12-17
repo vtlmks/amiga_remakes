@@ -4,7 +4,14 @@
 
 ## Building
 
-Requires both GCC (for Linux binaries) and MinGW (for Windows binaries). Run:
+Requires both GCC (for Linux binaries) and MinGW (for Windows binaries).
+
+First-time setup:
+```bash
+./bootstrap.sh
+```
+
+Then build all demos:
 ```bash
 ./build_all.sh
 ```
