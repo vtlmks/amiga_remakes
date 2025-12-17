@@ -19,7 +19,7 @@ fi
 
 # Process shared option selector assets (once, avoid race conditions)
 process_selector() {
-	local selector_dir="$GIT_ROOT/platform/$1"
+	local selector_dir="$GIT_ROOT/platform/$1/data"
 	local needs_update=false
 	for bmp in "$selector_dir"/*.bmp; do
 		[ -f "$bmp" ] || continue
