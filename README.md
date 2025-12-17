@@ -6,6 +6,8 @@
 
 Requires both GCC (for Linux binaries) and MinGW (for Windows binaries).
 
+**Windows users:** WSL2 (Windows Subsystem for Linux) is the recommended development environment, as it provides a full Linux toolchain including both GCC and MinGW cross-compilation support. Tested on WSL2 with Arch Linux (available directly from the Microsoft Store).
+
 First-time setup:
 ```bash
 ./bootstrap.sh
