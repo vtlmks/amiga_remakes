@@ -1,0 +1,76 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+		"label": "Build Release",
+		"type": "shell",
+		"command": "./build.sh",
+		"group": { "kind": "build", "isDefault": true },
+		"problemMatcher": {
+			"owner": "gcc",
+			"fileLocation": ["relative", "${workspaceFolder}"],
+			"pattern": {
+				"regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
+				"file": 1,
+				"line": 2,
+				"column": 3,
+				"severity": 4,
+				"message": 5
+			}
+		},
+		"presentation": {
+			"echo": true,
+			"reveal": "always",
+			"focus": false,
+			"clear": true,
+			"panel": "shared",
+			"showReuseMessage": false
+		}
+		},
+		{
+			"label": "Build Debug",
+			"type": "shell",
+			"command": "./build.sh debug",
+			"group": {
+				"kind": "build",
+				"isDefault": false
+			},
+			"problemMatcher": {
+				"owner": "gcc",
+				"fileLocation": ["relative", "${workspaceFolder}"],
+				"pattern": {
+					"regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
+					"file": 1,
+					"line": 2,
+					"column": 3,
+					"severity": 4,
+					"message": 5
+				}
+			},
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"clear": true,
+				"panel": "shared",
+				"showReuseMessage": false
+			}
+		},
+		{
+			"label": "runExecutable",
+			"type": "shell",
+			"command": "./mknes",
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": true,
+				"clear": true,
+				"panel": "shared",
+				"showReuseMessage": false
+			}
+		}
+	]
+}

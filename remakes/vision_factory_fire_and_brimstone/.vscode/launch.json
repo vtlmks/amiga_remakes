@@ -1,0 +1,77 @@
+{
+   "version": "0.2.0",
+   "configurations": [
+      {
+         "name": "Debug Remake (Build + Launch)",
+         "type": "cppdbg",
+         "request": "launch",
+         "program": "${workspaceFolder}/remake",
+         "args": [],
+         "stopAtEntry": false,
+         "cwd": "${workspaceFolder}",
+         "environment": [],
+         "externalConsole": false,
+         "MIMode": "gdb",
+         "setupCommands": [
+            {
+               "description": "Enable pretty-printing for gdb",
+               "text": "-enable-pretty-printing",
+               "ignoreFailures": true
+            },
+            {
+               "description": "Set Disassembly Flavor to Intel",
+               "text": "-gdb-set disassembly-flavor intel",
+               "ignoreFailures": true
+            }
+         ],
+         "preLaunchTask": "Build Debug",
+         "miDebuggerPath": "/usr/bin/gdb",
+         "logging": {
+            "engineLogging": false
+         }
+      },
+      {
+         "name": "Debug Remake (No Build)",
+         "type": "cppdbg",
+         "request": "launch",
+         "program": "${workspaceFolder}/remake",
+         "args": [],
+         "stopAtEntry": false,
+         "cwd": "${workspaceFolder}",
+         "environment": [],
+         "externalConsole": false,
+         "MIMode": "gdb",
+         "setupCommands": [
+            {
+               "description": "Enable pretty-printing for gdb",
+               "text": "-enable-pretty-printing",
+               "ignoreFailures": true
+            },
+            {
+               "description": "Set Disassembly Flavor to Intel",
+               "text": "-gdb-set disassembly-flavor intel",
+               "ignoreFailures": true
+            }
+         ],
+         "miDebuggerPath": "/usr/bin/gdb",
+         "logging": {
+            "engineLogging": false
+         }
+      },
+      {
+         "name": "Attach to Remake",
+         "type": "cppdbg",
+         "request": "attach",
+         "program": "${workspaceFolder}/remake",
+         "MIMode": "gdb",
+         "setupCommands": [
+            {
+               "description": "Enable pretty-printing for gdb",
+               "text": "-enable-pretty-printing",
+               "ignoreFailures": true
+            }
+         ],
+         "miDebuggerPath": "/usr/bin/gdb"
+      }
+   ]
+}
