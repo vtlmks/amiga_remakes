@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Peter Fors
+// SPDX-License-Identifier: MIT
+
 
 static struct Firework firework_data[216] = {
 	{ 0, 0x2e, 0x19, 0, 1, 0, 25, 0, },

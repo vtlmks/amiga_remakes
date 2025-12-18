@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Peter Fors
+// SPDX-License-Identifier: MIT
+
 #define _GNU_SOURCE
 #include <stddef.h>
 #include <stdint.h>

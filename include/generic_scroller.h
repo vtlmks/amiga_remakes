@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Peter Fors
+// SPDX-License-Identifier: MIT
+
 
 #define SCROLL_BUFFER_WIDTH 512 // Fixed buffer width for wrapping
 

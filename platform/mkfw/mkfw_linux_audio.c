@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Peter Fors
+// SPDX-License-Identifier: MIT
+
 
 #define MKFW_SAMPLE_RATE     48000
 #define MKFW_NUM_CHANNELS    2

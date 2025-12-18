@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Peter Fors
+// SPDX-License-Identifier: MIT
+
 #define SCALE 3.3
 
 #define CRT_ASPECT_NUM 4

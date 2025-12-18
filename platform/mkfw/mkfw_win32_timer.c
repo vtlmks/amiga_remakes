@@ -1,10 +1,13 @@
+// Copyright (c) 2025 Peter Fors
+// SPDX-License-Identifier: MIT
+
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <mmsystem.h>
 #include <avrt.h>
 #include <winternl.h>
 
-#define MKFW_SPIN_THRESHOLD_NS 1000000	// NOTE(peter): 1000µs spin threshold for Windows
+#define MKFW_SPIN_THRESHOLD_NS 1000000	// NOTE(peter): 1000us spin threshold for Windows
 
 struct mkfw_timer_handle {
 	uint64_t interval_ns;

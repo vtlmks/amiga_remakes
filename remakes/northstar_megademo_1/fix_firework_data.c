@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Peter Fors
+// SPDX-License-Identifier: MIT
+
 
 static uint8_t firework_data[216][8] = {
 	{ 0, 0x46, 0x46, 0, 1, 0, 0x19, },

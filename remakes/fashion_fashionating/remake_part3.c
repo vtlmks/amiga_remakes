@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Peter Fors
+// SPDX-License-Identifier: MIT
+
 INCBIN_UGG(p3_bob, "data/p3_bob.ugg");
 INCBIN_UGG(p3_eyes, "data/p3_eyes.ugg");
 INCBIN_UGG(p3_flirty_eye, "data/p3_flirty_eye.ugg");

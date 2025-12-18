@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Peter Fors
+// SPDX-License-Identifier: MIT
+
 #define _CRT_SECURE_NO_WARNINGS
 #include <errno.h>
 #include <stdint.h>

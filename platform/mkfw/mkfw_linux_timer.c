@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Peter Fors
+// SPDX-License-Identifier: MIT
+
 #include <pthread.h>
 #include <time.h>
 #include <unistd.h>
@@ -5,7 +8,7 @@
 #include <linux/futex.h>
 #include <immintrin.h>
 
-#define MKFW_SPIN_THRESHOLD_NS 500000	// NOTE(peter): 500µs spin threshold for Linux
+#define MKFW_SPIN_THRESHOLD_NS 500000	// NOTE(peter): 500us spin threshold for Linux
 
 struct mkfw_timer_handle {
 	uint64_t interval_ns;

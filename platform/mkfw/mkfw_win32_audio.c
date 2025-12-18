@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Peter Fors
+// SPDX-License-Identifier: MIT
+
 #define COBJMACROS
 #include <windows.h>
 #include <initguid.h>

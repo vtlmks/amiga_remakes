@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Peter Fors
+// SPDX-License-Identifier: MIT
+
 #include <windows.h>
 #include <windowsx.h>
 #include <wingdi.h>

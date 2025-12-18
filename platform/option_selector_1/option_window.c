@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Peter Fors
+// SPDX-License-Identifier: MIT
+
 
 #define OPTIONS_WINDOW_WIDTH 320
 #define OPTIONS_WINDOW_HEIGHT 240

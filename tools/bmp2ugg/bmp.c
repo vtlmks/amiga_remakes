@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Peter Fors
+// SPDX-License-Identifier: MIT
+
 #define bmp_magic (uint16_t)('B' | 'M' << 8)
 
 #pragma pack(push,1)

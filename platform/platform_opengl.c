@@ -1,7 +1,10 @@
+// Copyright (c) 2025 Peter Fors
+// SPDX-License-Identifier: MIT
+
 /*
  * This is a 2-pass shader
  *
- * 1. Phosphor persistence at source resolution (346×270)
+ * 1. Phosphor persistence at source resolution (346x270)
  * 2. CRT shader with phosphor masks and scanlines at viewport resolution
  *
  */

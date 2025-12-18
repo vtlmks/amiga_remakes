@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Peter Fors
+// SPDX-License-Identifier: MIT
+
 // [=]===^=[ base setup ]============================================================^===[=]
 
 #define WINDOW_WIDTH 360

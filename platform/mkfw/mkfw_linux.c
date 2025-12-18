@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Peter Fors
+// SPDX-License-Identifier: MIT
+
 #include <X11/Xatom.h>
 #include <X11/Xlib.h>
 #include <X11/keysym.h>
