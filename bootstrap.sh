@@ -14,7 +14,7 @@ if ! command -v bmp2ugg &> /dev/null; then
 	if [ ! -f "$BMP2UGG" ]; then
 		echo "bmp2ugg not found in PATH. Building local copy..."
 		mkdir -p "$GIT_ROOT/tools/bin"
-		(cd "$GIT_ROOT/tools/bmp2ugg" && gcc -g -O2 -march=native -Wno-unused-result bmp2ugg.c -I"$GIT_ROOT/include" -o "$GIT_ROOT/tools/bin/bmp2ugg")
+		(cd "$GIT_ROOT/tools/bmp2ugg" && gcc -g -O2 -march=native -Wno-unused-result bmp2ugg.c -pthread -I"$GIT_ROOT/include" -o "$GIT_ROOT/tools/bin/bmp2ugg")
 	fi
 	export PATH="$GIT_ROOT/tools/bin:$PATH"
 fi
