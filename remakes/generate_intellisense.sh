@@ -57,7 +57,16 @@ EOF
 			"cStandard": "gnu11",
 			"cppStandard": "gnu++17",
 			"intelliSenseMode": "linux-gcc-x64",
-			"compileCommands": "${workspaceFolder}/compile_commands.json"
+			"compileCommands": "${workspaceFolder}/compile_commands.json",
+			"browse": {
+				"path": [
+					"${workspaceFolder}",
+					"${workspaceFolder}/../../include",
+					"${workspaceFolder}/../../platform",
+					"${workspaceFolder}/../../platform/mkfw"
+				],
+				"limitSymbolsToIncludedHeaders": false
+			}
 		}
 	],
 	"version": 4
