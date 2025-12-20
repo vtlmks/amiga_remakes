@@ -7,17 +7,10 @@ set -e
 
 GIT_ROOT=$(git rev-parse --show-toplevel)
 
-# Ensure bmp2ugg is available
-if ! command -v bmp2ugg &> /dev/null; then
-	# Not in PATH, build local copy
-	BMP2UGG="$GIT_ROOT/tools/bin/bmp2ugg"
-	if [ ! -f "$BMP2UGG" ]; then
-		echo "bmp2ugg not found in PATH. Building local copy..."
-		mkdir -p "$GIT_ROOT/tools/bin"
-		(cd "$GIT_ROOT/tools/bmp2ugg" && gcc -g -O2 -march=native -Wno-unused-result bmp2ugg.c -pthread -I"$GIT_ROOT/include" -o "$GIT_ROOT/tools/bin/bmp2ugg")
-	fi
-	export PATH="$GIT_ROOT/tools/bin:$PATH"
-fi
+# Build bmp2ugg
+echo "Building bmp2ugg..."
+mkdir -p "$GIT_ROOT/tools/bin"
+(cd "$GIT_ROOT/tools/bmp2ugg" && gcc -g -O2 -march=native -Wno-unused-result -pthread bmp2ugg.c -I"$GIT_ROOT/include" -o "$GIT_ROOT/tools/bin/bmp2ugg")
 
 # Process shared option selector assets
 process_selector() {
@@ -35,6 +28,5 @@ process_selector() {
 	return 0
 }
 
-echo "Running bootstrap..."
 process_selector "option_selector_1"
 echo "Bootstrap complete. You can now run build_all.sh or individual build scripts."
