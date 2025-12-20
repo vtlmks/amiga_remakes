@@ -11,6 +11,7 @@ GIT_ROOT=$(git rev-parse --show-toplevel)
 echo "Building bmp2ugg..."
 mkdir -p "$GIT_ROOT/tools/bin"
 (cd "$GIT_ROOT/tools/bmp2ugg" && gcc -g -O2 -march=native -Wno-unused-result -pthread bmp2ugg.c -I"$GIT_ROOT/include" -o "$GIT_ROOT/tools/bin/bmp2ugg")
+export PATH="$PATH:$GIT_ROOT/tools/bin"
 
 # Process shared option selector assets
 process_selector() {
