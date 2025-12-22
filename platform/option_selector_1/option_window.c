@@ -126,7 +126,7 @@ struct star_ {
 
 static struct star_ option_stars[OPTION_NSTARS];
 
-static void init_stars(void) {
+static void option_init_stars(void) {
 	for (int i = 0; i < OPTION_NSTARS; ++i) {
 		option_stars[i].x = ((float)xor_generate_random(&option_rand) / (float)0xffffffff - 0.5f) * OPTIONS_BUFFER_WIDTH;
 		option_stars[i].y = ((float)xor_generate_random(&option_rand) / (float)0xffffffff - 0.5f) * OPTIONS_BUFFER_HEIGHT;
@@ -210,7 +210,7 @@ static void *option_render_thread_func(void *arg) {
 
 	mkfw_attach_context(option_window);
 	option_opengl_initialize();
-	init_stars();
+	option_init_stars();
 
 	// opt->release_group = "ALPHA FLIGHT";
 	// opt->release_title = "DR.MABUSE FIRST INTRO";
