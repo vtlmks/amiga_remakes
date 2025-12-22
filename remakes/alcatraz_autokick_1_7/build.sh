@@ -21,7 +21,7 @@ CFLAGS+="-fno-stack-protector -fno-PIE -no-pie -fcf-protection=none "
 CFLAGS+="-fno-non-call-exceptions -fno-unwind-tables -fno-asynchronous-unwind-tables "
 CFLAGS+="-Wall -Wextra -Wstrict-aliasing=3 "
 CFLAGS+="-Wno-unused-parameter -Wno-sign-compare -Wno-trigraphs -Wno-maybe-uninitialized "
-CFLAGS+="-Wno-unused-variable -Wno-unused-const-variable -Wno-unused-function -Wno-write-strings -Wno-missing-field-initializers "
+CFLAGS+="-Wno-unused-variable -Wno-unused-const-variable -Wno-unused-function -Wno-write-strings "
 CFLAGS+="-U_FORTIFY_SOURCE -fno-pic -fno-ident "
 
 # harden semantics + warn on UB-prone patterns with near-zero build-time cost
