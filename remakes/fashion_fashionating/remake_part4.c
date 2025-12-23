@@ -85,7 +85,7 @@ static void part_4_init(void) {
 
 static uint32_t p4_frame = 0;
 
-static uint32_t part_4_render(void) {
+static uint32_t part_4_render(struct remake_state *state) {
 	static struct {
 		uint32_t counter;
 		uint32_t scroll;
@@ -95,14 +95,14 @@ static uint32_t part_4_render(void) {
 	} p4_state = {0};
 
 	// Center logos
-	uint32_t x_center = (BUFFER_WIDTH - loader_logo->width) >> 1;
+	uint32_t x_center = (state->buffer_width - loader_logo->width) >> 1;
 
 	// Blit logos
 
-	// blit_full(p2_stalaktites, CENTER_X(p2_stalaktites->width), 103, 0);
+	// blit_full(state, p2_stalaktites, CENTER_X(state, p2_stalaktites->width), 103, 0);
 
-	blit_full(loader_logo, CENTER_X(loader_logo->width), P4_TOP_LOGO_Y_START, fsn_top_logo_colors);
-	blit_full(loader_logo, CENTER_X(loader_logo->width), P4_BOTTOM_LOGO_Y_START, fsn_bottom_logo_colors);
+	blit_full(state, loader_logo, CENTER_X(state, loader_logo->width), P4_TOP_LOGO_Y_START, fsn_top_logo_colors);
+	blit_full(state, loader_logo, CENTER_X(state, loader_logo->width), P4_BOTTOM_LOGO_Y_START, fsn_bottom_logo_colors);
 
 	// fast_blit_with_palette(state->shared, loader_logo->data, loader_logo->width, loader_logo->height, fsn_top_logo_colors, x_center, P4_TOP_LOGO_Y_START);
 	// fast_blit_with_palette(state->shared, loader_logo->data, loader_logo->width, loader_logo->height, fsn_bottom_logo_colors, x_center, P4_BOTTOM_LOGO_Y_START);
@@ -143,15 +143,15 @@ static uint32_t part_4_render(void) {
 	}
 
 	// Render scroll buffer (center the 352-pixel scroll in 346-pixel buffer)
-	uint32_t *data = buffer + P4_UPSCROLL_Y_START * BUFFER_WIDTH;
-	uint8_t *src = p4_scroll_buffer + CENTER_X(P4_UPSCROLL_WIDTH);
+	uint32_t *data = BUFFER_PTR(state, 0, P4_UPSCROLL_Y_START);
+	uint8_t *src = p4_scroll_buffer + CENTER_X(state, P4_UPSCROLL_WIDTH);
 
 	for(uint32_t y = 0; y < P4_UPSCROLL_VISIBLE_HEIGHT; ++y) {
 		uint32_t color = background_upscroll_color[y];
-		for(uint32_t x = 0; x < BUFFER_WIDTH; ++x) {
+		for(uint32_t x = 0; x < state->buffer_width; ++x) {
 			data[x] = (src[x]) ? color : data[x];
 		}
-		data += BUFFER_WIDTH;
+		data += state->buffer_width;
 		src += P4_UPSCROLL_WIDTH;
 	}
 

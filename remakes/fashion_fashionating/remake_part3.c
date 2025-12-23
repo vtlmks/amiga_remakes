@@ -91,42 +91,42 @@ static struct point p3_bling_sprite_locations[] = {
 	{ 249,	169 },				// S on signature
 };
 
-static void initialize_stars(void) {
+static void initialize_stars(struct remake_state *state) {
 	for(uint16_t i = 0; i < ARRAYSIZE(remake_stars); ++i) {
-		remake_stars[i].x = BUFFER_WIDTH + xor_generate_random(&rand_state) % (BUFFER_WIDTH + 30);
+		remake_stars[i].x = state->buffer_width + xor_generate_random(&rand_state) % (state->buffer_width + 30);
 
 		remake_stars[i].y = i;
 	}
 	p3Init = 1;
 }
 
-static void render_copper_bars(void) {
-	uint32_t *row = buffer;
+static void render_copper_bars(struct remake_state *state) {
+	uint32_t *row = state->buffer;
 	uint32_t x, y;
 
 	// Render top copper bar - just one line at Y=0
-	for(x = 0; x < BUFFER_WIDTH; ++x) {
+	for(x = 0; x < state->buffer_width; ++x) {
 		*row++ = p3_copper_colors[10];  // Last color in the array
 	}
 
 	// Render middle copper bar
-	row = buffer + 201 * BUFFER_WIDTH;
+	row = BUFFER_PTR(state, 0, 201);
 	for(y = 0; y < 11; ++y) {
-		for(x = 0; x < BUFFER_WIDTH; ++x) {
+		for(x = 0; x < state->buffer_width; ++x) {
 			*row++ = p3_copper_colors[y];
 		}
 	}
 
 	// Render bottom copper bar
-	row = buffer + 230 * BUFFER_WIDTH;
+	row = BUFFER_PTR(state, 0, 230);
 	for(y = 0; y < 11; ++y) {
-		for(x = 0; x < BUFFER_WIDTH; ++x) {
+		for(x = 0; x < state->buffer_width; ++x) {
 			*row++ = p3_copper_colors[y];
 		}
 	}
 }
 
-static uint32_t render_game_over_logo(uint32_t frame) {
+static uint32_t render_game_over_logo(struct remake_state *state, uint32_t frame) {
 	static uint32_t first_line_of_logo_rendered = 0;
 	static uint32_t flood_fill = 1;
 	static uint32_t initialized = 0;
@@ -136,8 +136,7 @@ static uint32_t render_game_over_logo(uint32_t frame) {
 		initialized = 1;
 	}
 
-	uint32_t *game_over_logo_start = buffer + 1 * BUFFER_WIDTH +
-		((BUFFER_WIDTH - p3_game_over_logo->width) / 2);
+	uint32_t *game_over_logo_start = BUFFER_PTR(state, (state->buffer_width - p3_game_over_logo->width) / 2, 1);
 
 	if(flood_fill && frame % 2 == 0) {
 		if(--first_line_of_logo_rendered == 0xffffffff) {
@@ -156,18 +155,18 @@ static uint32_t render_game_over_logo(uint32_t frame) {
 			for(uint32_t x = 0; x < p3_game_over_logo->width; ++x) {
 				*pixel++ = p3_game_over_logo->palette[*src++];
 			}
-			row += BUFFER_WIDTH;
+			row += state->buffer_width;
 			++floodY;
 		}
 
-		row = game_over_logo_start + first_line_of_logo_rendered * BUFFER_WIDTH;
+		row = game_over_logo_start + first_line_of_logo_rendered * state->buffer_width;
 		src = p3_game_over_logo->data + first_line_of_logo_rendered * p3_game_over_logo->width;
 		for(uint32_t y = 0; y < (p3_game_over_logo->height - first_line_of_logo_rendered); ++y) {
 			uint32_t *pixel = row;
 			for(uint32_t x = 0; x < p3_game_over_logo->width; ++x) {
 				*pixel++ = p3_game_over_logo->palette[*src++];
 			}
-			row += BUFFER_WIDTH;
+			row += state->buffer_width;
 		}
 	} else {
 		uint32_t *row = game_over_logo_start;
@@ -178,14 +177,14 @@ static uint32_t render_game_over_logo(uint32_t frame) {
 			for(uint32_t x = 0; x < p3_game_over_logo->width; ++x) {
 				*pixel++ = p3_game_over_logo->palette[*src++];
 			}
-			row += BUFFER_WIDTH;
+			row += state->buffer_width;
 		}
 	}
 
 	return !flood_fill;  // Return 1 when logo is fully rendered
 }
 
-static void update_and_render_scroller(void) {
+static void update_and_render_scroller(struct remake_state *state) {
 	if(--p3_scroll_count == 0) {
 		p3_scroll_count = 8;
 		if(*p3_scroll_text_ptr == '@') {
@@ -212,8 +211,7 @@ static void update_and_render_scroller(void) {
 	memmove(p3_scroll_buffer, p3_scroll_buffer + 2, sizeof(p3_scroll_buffer) - 2);
 
 	uint8_t *src = p3_scroll_buffer;
-	uint32_t *row = buffer + 213 * BUFFER_WIDTH +
-		((BUFFER_WIDTH - p3_scroller_width) / 2);
+	uint32_t *row = BUFFER_PTR(state, (state->buffer_width - p3_scroller_width) / 2, 213);
 
 	for(uint32_t y = 0; y < p3_scroller_height; ++y) {
 		uint32_t *pixel = row;
@@ -224,34 +222,34 @@ static void update_and_render_scroller(void) {
 			++pixel;
 			++src;
 		}
-		row += BUFFER_WIDTH;
+		row += state->buffer_width;
 		src += p3_scroller_char_width;
 	}
 }
 
-static void render_stars(void) {
+static void render_stars(struct remake_state *state) {
 	for(uint32_t i = 0; i < ARRAYSIZE(remake_stars); ++i) {
 		remake_stars[i].x -= (i % 3) + 1;
 		if(remake_stars[i].x < 0) {
-			remake_stars[i].x += BUFFER_WIDTH;
+			remake_stars[i].x += state->buffer_width;
 		}
 	}
 
-	uint32_t *stars_start = buffer + 242 * BUFFER_WIDTH;
+	uint32_t *stars_start = BUFFER_PTR(state, 0, 242);
 	uint32_t *row = stars_start;
 	uint32_t current_y = 242;
 
 	for(uint32_t i = 0; i < ARRAYSIZE(remake_stars); ++i) {
-		if(current_y < BUFFER_HEIGHT && (remake_stars[i].x > 0) && (remake_stars[i].x < (int32_t)BUFFER_WIDTH)) {
+		if(current_y < state->buffer_height && (remake_stars[i].x > 0) && (remake_stars[i].x < (int32_t)state->buffer_width)) {
 			uint32_t *pixel = row + remake_stars[i].x;
 			*pixel = p3_star_colors[i % 3];
 		}
-		row += BUFFER_WIDTH;
+		row += state->buffer_width;
 		++current_y;
 	}
 }
 
-static void render_flirty_eyes(void) {
+static void render_flirty_eyes(struct remake_state *state) {
 	// Flirty eyes animation - woman's eyes blink every 167 frames
 	static uint32_t local_frame_counter = 0;
 
@@ -264,7 +262,7 @@ static void render_flirty_eyes(void) {
 			0, 16, 32, 48, 32, 16, 0,
 		};
 		uint8_t *src = p3_flirty_eye->data + flirty_eyes_offsets[7 - p3_flirt_frames];
-		uint32_t *dest = buffer + 90 * BUFFER_WIDTH + 187;
+		uint32_t *dest = BUFFER_PTR(state, 187, 90);
 		for(uint32_t y = 0; y < 11; ++y) {
 			for(uint32_t x = 0; x < 16; ++x) {
 				if(*src) {
@@ -274,7 +272,7 @@ static void render_flirty_eyes(void) {
 				dest++;
 			}
 			src += 48;
-			dest += (BUFFER_WIDTH - 16);
+			dest += (state->buffer_width - 16);
 		}
 		if(local_frame_counter % 2 == 0) {
 			--p3_flirt_frames;
@@ -283,7 +281,7 @@ static void render_flirty_eyes(void) {
 	++local_frame_counter;
 }
 
-static void render_moving_eyes(void) {
+static void render_moving_eyes(struct remake_state *state) {
 	// Moving eyes animation - man's eyes change position every 80 frames
 	static uint32_t local_frame_counter = 0;
 
@@ -293,16 +291,16 @@ static void render_moving_eyes(void) {
 	++local_frame_counter;
 
 	uint8_t *src = p3_eyes->data + ((p3_eyes_frame % 3) * 8) * p3_eyes->width;
-	uint32_t *dest = buffer + 36 * BUFFER_WIDTH + 110;
+	uint32_t *dest = BUFFER_PTR(state, 110, 36);
 	for(uint32_t y = 0; y < 8; ++y) {
 		for(uint32_t x = 0; x < p3_eyes->width; ++x) {
 			*dest++ = p3_eyes->palette[*src++];
 		}
-		dest += (BUFFER_WIDTH - p3_eyes->width);
+		dest += (state->buffer_width - p3_eyes->width);
 	}
 }
 
-static void render_bling_stars(void) {
+static void render_bling_stars(struct remake_state *state) {
 	// Bling star animation - sparkles on the logo every 81 frames
 	static uint32_t local_frame_counter = 0;
 
@@ -319,20 +317,20 @@ static void render_bling_stars(void) {
 
 		// Bounds check - skip if completely off-screen
 		if(star_x >= 0 && star_y >= 0 &&
-		   star_x < (int32_t)BUFFER_WIDTH && star_y < (int32_t)BUFFER_HEIGHT) {
+		   star_x < (int32_t)state->buffer_width && star_y < (int32_t)state->buffer_height) {
 			uint8_t *src = p3_stars->data + p3_bling_star_phases[p3_bling_star_phase_index] * 15;
-			uint32_t *dest = buffer + (BUFFER_WIDTH * star_y + star_x);
+			uint32_t *dest = BUFFER_PTR(state, star_x, star_y);
 
-			for(uint32_t y = 0; y < p3_stars->height && (star_y + y) < BUFFER_HEIGHT; ++y) {
+			for(uint32_t y = 0; y < p3_stars->height && (star_y + y) < state->buffer_height; ++y) {
 				uint32_t *row = dest;
-				for(uint32_t x = 0; x < p3_stars->height && (star_x + x) < BUFFER_WIDTH; ++x) {
+				for(uint32_t x = 0; x < p3_stars->height && (star_x + x) < state->buffer_width; ++x) {
 					if(*src) {
 						*row = p3_stars->palette[*src];
 					}
 					++src;
 					++row;
 				}
-				dest += BUFFER_WIDTH;
+				dest += state->buffer_width;
 				src += p3_stars->width - p3_stars->height;
 			}
 		}
@@ -341,7 +339,7 @@ static void render_bling_stars(void) {
 	++local_frame_counter;
 }
 
-static void render_bob_scroller(void) {
+static void render_bob_scroller(struct remake_state *state) {
 	// Bob scrolling text - horizontal scrolling text at bottom
 	static uint8_t p3_bob_buffer[((2 * 16) + 376) * 16];  // TODO: Fix hardcoded dimensions
 	uint8_t *src;
@@ -359,22 +357,22 @@ static void render_bob_scroller(void) {
 				++src;
 				++dst;
 			}
-			dst += BUFFER_WIDTH + p3_bob->width;
+			dst += state->buffer_width + p3_bob->width;
 		}
 	}
 
-	dst = p3_bob_buffer + 2 * p3_bob->width + BUFFER_WIDTH - 1;
+	dst = p3_bob_buffer + 2 * p3_bob->width + state->buffer_width - 1;
 	for(y = 0; y < p3_bob->height; ++y) {
 		*dst = 0;
-		dst += 2 * p3_bob->width + BUFFER_WIDTH;
+		dst += 2 * p3_bob->width + state->buffer_width;
 	}
 
 	memmove(p3_bob_buffer + 1, p3_bob_buffer, sizeof(p3_bob_buffer) - 1);
 
 	src = p3_bob_buffer + p3_bob->width;
-	uint32_t *dest = buffer + 247 * BUFFER_WIDTH;
+	uint32_t *dest = BUFFER_PTR(state, 0, 247);
 	for(y = 0; y < p3_bob->height; ++y) {
-		for(x = 0; x < BUFFER_WIDTH; ++x) {
+		for(x = 0; x < state->buffer_width; ++x) {
 			if(*src) {
 				*dest = p3_bob->palette[*src];
 			}
@@ -385,22 +383,22 @@ static void render_bob_scroller(void) {
 	}
 }
 
-static uint32_t part_3_render(void) {
+static uint32_t part_3_render(struct remake_state *state) {
 	if(!p3Init) {
-		initialize_stars();
+		initialize_stars(state);
 	}
 
-	render_copper_bars();
+	render_copper_bars(state);
 
-	uint32_t logo_complete = render_game_over_logo(p3_frame);
+	uint32_t logo_complete = render_game_over_logo(state, p3_frame);
 	// Only render these elements after the logo flood-fill is complete
 	if(logo_complete) {
-		render_flirty_eyes();
-		render_moving_eyes();
-		render_bling_stars();
-		update_and_render_scroller();
-		render_stars();
-		render_bob_scroller();
+		render_flirty_eyes(state);
+		render_moving_eyes(state);
+		render_bling_stars(state);
+		update_and_render_scroller(state);
+		render_stars(state);
+		render_bob_scroller(state);
 	}
 
 	// Increment the frame counter

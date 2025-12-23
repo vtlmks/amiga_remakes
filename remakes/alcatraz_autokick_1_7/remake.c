@@ -3,8 +3,6 @@
 
 // [=]===^=[ base setup ]============================================================^===[=]
 
-#define WINDOW_WIDTH 360
-#define WINDOW_HEIGHT 270
 #define BUFFER_WIDTH  (346 << 0)
 #define BUFFER_HEIGHT (270 << 0)
 
@@ -304,28 +302,28 @@ static void remake_options(struct options *opt) {
 	opt->window_title = "Alcatraz - Autokick 1.7 - 1988-09\0";
 }
 
-static void af_render_scroll_buffer(struct scroller_state *scr_state, uint32_t *palette) {
-	uint32_t *scroll_dest = buffer + scr_state->dest_offset_y * BUFFER_WIDTH;
+static void af_render_scroll_buffer(struct remake_state *state, struct scroller_state *scr_state, uint32_t *palette) {
+	uint32_t *scroll_dest = BUFFER_PTR(state, 0, scr_state->dest_offset_y);
 	uint8_t *scroll_src = scr_state->buffer;
 
 	size_t base_src_index = (scr_state->char_render_offset - 370) & (SCROLL_BUFFER_WIDTH - 1);
 	for(size_t i = 0; i < scr_state->char_height; ++i) {
-		for(size_t j = 0; j < BUFFER_WIDTH; ++j) {
+		for(size_t j = 0; j < state->buffer_width; ++j) {
 			size_t src_index = (base_src_index + j) & (SCROLL_BUFFER_WIDTH - 1);
 			uint8_t color_index = scroll_src[src_index];
 			palette[0] = scroll_dest[j];
 			scroll_dest[j] = palette[color_index];
 		}
-		scroll_dest += BUFFER_WIDTH;
+		scroll_dest += state->buffer_width;
 		scroll_src += SCROLL_BUFFER_WIDTH;
 	}
 }
 
-static void render_logo(void) {
-	uint32_t *dst = buffer + 7 * BUFFER_WIDTH + CENTER_X(logo->width);
+static void render_logo(struct remake_state *state) {
+	uint32_t *dst = BUFFER_PTR(state, CENTER_X(state, logo->width), 7);
 	uint8_t *src = logo->data;
 
-	for(size_t y = 0; y < logo->height; ++y, src += logo->width, dst += BUFFER_WIDTH) {
+	for(size_t y = 0; y < logo->height; ++y, src += logo->width, dst += state->buffer_width) {
 
 		if(y >= 153 && y <= 185) {
 			logo->palette[14] = color_roll1[((y-153) + color_roll_index) % ARRAYSIZE(color_roll1)];
@@ -405,7 +403,7 @@ static void init_stars(void) {
 	}
 }
 
-static void render_stars(void) {
+static void render_stars(struct remake_state *state) {
    int32_t left_border = LOGO_RIGHT_BORDER_START - LOGO_INNER_WIDTH;
    int32_t right_border = LOGO_RIGHT_BORDER_START;
 
@@ -415,7 +413,7 @@ static void render_stars(void) {
 
       uint32_t c = 0x11111100 * (stars[i].speed + 3) | 0xff;
 
-		uint32_t *dst = buffer + x + y * BUFFER_WIDTH;
+		uint32_t *dst = BUFFER_PTR(state, x, y);
       for(int32_t j = 0; j < 16; ++j) {
          int32_t pixel_x = x + j;
 
@@ -427,7 +425,9 @@ static void render_stars(void) {
 }
 
 // [=]===^=[ remake_init ]============================================================^===[=]
-static void remake_init(struct mkfw_state *window) {
+static void remake_init(struct remake_state *state) {
+	change_resolution(state, BUFFER_WIDTH, BUFFER_HEIGHT);
+
 	init_stars();
 	for(size_t i = 0; i < 6; ++i) {
 		bobs[i].x = BOB_INITIAL_X;
@@ -443,14 +443,14 @@ static void remake_init(struct mkfw_state *window) {
 }
 
 // [=]===^=[ remake_frame ]============================================================^===[=]
-static void remake_frame(struct mkfw_state *window) {
+static void remake_frame(struct remake_state *state) {
 
 	update_stars();
 	update_star_pattern();
-	render_stars();
+	render_stars(state);
 
 	for(size_t i = 0; i < 6; ++i) {
-		blit_clipped(bob, bobs[i].x, bobs[i].y, alcatraz_screen, 0);
+		blit_clipped(state, bob, bobs[i].x, bobs[i].y, alcatraz_screen, 0);
 		bobs[i].x += (int32_t)sprite_anim[bobs[i].offset++];
 		bobs[i].y += (int32_t)sprite_anim[bobs[i].offset++];
 
@@ -461,17 +461,16 @@ static void remake_frame(struct mkfw_state *window) {
 		}
 	}
 
-	render_logo();
+	render_logo(state);
 
 	scroller(scroller1);
 	scroller(scroller2);
-	af_render_scroll_buffer(scroller2, darker_font_palette);
-	af_render_scroll_buffer(scroller1, font->palette);
+	af_render_scroll_buffer(state, scroller2, darker_font_palette);
+	af_render_scroll_buffer(state, scroller1, font->palette);
 
 }
 
 // [=]===^=[ remake_shutdown ]============================================================^===[=]
-static void remake_shutdown(struct mkfw_state *window) {
+static void remake_shutdown(struct remake_state *state) {
 	mkfw_audio_callback = 0;
 }
-

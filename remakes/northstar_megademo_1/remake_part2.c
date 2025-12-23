@@ -73,11 +73,11 @@ static const uint8_t p2_scroll_text[] = {
 	"WELL, WHY NOT JUMP ON THE MOUSE ??????               (C) NORTH STAR&               ^"
 };
 
-static uint32_t logo_render() {
+static uint32_t logo_render(struct remake_state *state) {
 	// PROFILE_FUNCTION();
 	// NOTE(peter): Update and scroll the northstar logo into place
 	uint32_t scroll_speed = 2;
-	uint32_t target_x = (BUFFER_WIDTH - part2_ns_logo_data->width) >> 1;
+	uint32_t target_x = (state->buffer_width - part2_ns_logo_data->width) >> 1;
 	uint32_t logo_target_reached = 1;
 
 	for(uint32_t line = 0; line < part2_ns_logo_data->height; ++line) {
@@ -87,13 +87,13 @@ static uint32_t logo_render() {
 		}
 
 		uint32_t current_x = scroll_positions[line];
-		if(current_x >= BUFFER_WIDTH) continue; // Skip rendering if the line is completely off-screen
+		if(current_x >= state->buffer_width) continue; // Skip rendering if the line is completely off-screen
 
-		uint32_t *dest = buffer + ((15 + line) * BUFFER_WIDTH);
+		uint32_t *dest = BUFFER_PTR(state, 0, 15 + line);
 		uint8_t *src = &part2_ns_logo_data->data[line * part2_ns_logo_data->width];
 
 		// Render the visible part of the line
-		for(uint32_t x = current_x; x < BUFFER_WIDTH; ++x) {
+		for(uint32_t x = current_x; x < state->buffer_width; ++x) {
 			uint32_t logo_index = x - current_x;
 			uint8_t color_index = src[logo_index];
 			if(color_index == 0) continue;
@@ -111,10 +111,10 @@ static uint32_t part2_color_offset = 0;
 static uint32_t p2_logo_reveal_done = 0;
 static uint32_t p2_colors_done = 0;
 
-static void p2_texteffect() {
+static void p2_texteffect(struct remake_state *state) {
 	// PROFILE_FUNCTION();
 	if(p2_logo_reveal_done & !p2_colors_done) {
-		if((state.frame_number & 0x3) == 0) {
+		if((state->frame_number & 0x3) == 0) {
 			part2_color_rows++;
 		}
 
@@ -130,7 +130,7 @@ static void p2_texteffect() {
 	part2_color_offset++;
 
 	uint8_t *src = part2_text_data->data;
-	dst = buffer + (72 * BUFFER_WIDTH) + ((BUFFER_WIDTH - part2_text_data->width) >> 1);
+	dst = BUFFER_PTR(state, (state->buffer_width - part2_text_data->width) >> 1, 72);
 	for(uint32_t y = 0; y < part2_text_data->height; ++y) {
 		for(uint32_t x = 0; x < part2_text_data->width; ++x) {
 			uint8_t color = *src++;
@@ -141,12 +141,12 @@ static void p2_texteffect() {
 				default: { dst[x] = part2_text_writer_colors[y]; } break;
 			}
 		}
-		dst += BUFFER_WIDTH;
+		dst += state->buffer_width;
 	}
 }
 
 
-static void p2_render_char_clipped(uint8_t *glyph_data, int32_t dest_x, int32_t dest_y) {
+static void p2_render_char_clipped(struct remake_state *state, uint8_t *glyph_data, int32_t dest_x, int32_t dest_y) {
 	// PROFILE_FUNCTION();
 
 	int glyph_size = 16;
@@ -156,7 +156,7 @@ static void p2_render_char_clipped(uint8_t *glyph_data, int32_t dest_x, int32_t 
 	int32_t clip_x1 = 336;
 
 	// Early-out if entirely outside vertically or horizontally
-	if(dest_y >= BUFFER_HEIGHT || dest_y + glyph_size <= 0 || dest_x >= clip_x1 || dest_x + glyph_size <= clip_x0) {
+	if(dest_y >= (int32_t)state->buffer_height || dest_y + glyph_size <= 0 || dest_x >= clip_x1 || dest_x + glyph_size <= clip_x0) {
 		return;
 	}
 
@@ -181,8 +181,8 @@ static void p2_render_char_clipped(uint8_t *glyph_data, int32_t dest_x, int32_t 
 	if(dest_y < 0) {
 		y_start = -dest_y;
 	}
-	if(dest_y + glyph_size > BUFFER_HEIGHT) {
-		y_end = BUFFER_HEIGHT - dest_y;
+	if(dest_y + glyph_size > (int32_t)state->buffer_height) {
+		y_end = state->buffer_height - dest_y;
 	}
 
 	if(y_start >= y_end) {
@@ -192,18 +192,18 @@ static void p2_render_char_clipped(uint8_t *glyph_data, int32_t dest_x, int32_t 
 	// Render the glyph
 	for(int y = y_start; y < y_end; y++) {
 		for(int x = x_start; x < x_end; x++) {
-			int dest_index = (dest_y + y) * BUFFER_WIDTH + (dest_x + x);
+			uint32_t *dest = BUFFER_PTR(state, dest_x + x, dest_y + y);
 			int src_index = y * glyph_size + x;
 			uint32_t color_index = glyph_data[src_index];
 			uint32_t line_color = md1_p2_sine_background_color[dest_y + y - 154];
 
 			switch(color_index) {
 				case 1:
-					buffer[dest_index] = line_color;
+					*dest = line_color;
 					break;
 				case 2:
 				case 3:
-					buffer[dest_index] = part1_small_font_data->palette[color_index];
+					*dest = part1_small_font_data->palette[color_index];
 					break;
 			}
 		}
@@ -233,7 +233,7 @@ static void p2_initialize_scroller(void) {
 }
 
 
-static void p2_init(void) {
+static void p2_init(struct remake_state *state) {
 	p2_initialize_scroller();
 
 	for(uint32_t i = 0; i < NUM_STARS; ++i) {
@@ -244,12 +244,12 @@ static void p2_init(void) {
 	for(uint32_t i = 0; i < part2_ns_logo_data->height; i++) {
 		uint32_t diff = (i >= middle) ? (i - middle) : (middle - i);
 		uint32_t line_offset = diff * 22;
-		scroll_positions[i] = BUFFER_WIDTH + part2_ns_logo_data->width + line_offset;
+		scroll_positions[i] = state->buffer_width + part2_ns_logo_data->width + line_offset;
 	}
 }
 
 
-void p2_bouncing_scroller(void) {
+void p2_bouncing_scroller(struct remake_state *state) {
 	// PROFILE_FUNCTION();/
 
 	if(!p2_colors_done) return;
@@ -282,44 +282,44 @@ void p2_bouncing_scroller(void) {
 		uint8_t sine_offset = part2_sine_values[entity->sine_phase];
 		uint8_t *font_src = part1_small_font_data->data + (entity->character - ' ') * 256;
 
-		p2_render_char_clipped(font_src, entity->x_pos, 154 + sine_offset);
+		p2_render_char_clipped(state, font_src, entity->x_pos, 154 + sine_offset);
 		entity->sine_phase = (entity->sine_phase + 1) % ARRAYSIZE(part2_sine_values);
 	}
 }
 
-static void p2_starfield(void) {
-	uint32_t *dst = buffer + 17 * BUFFER_WIDTH;
-	uint32_t star_add = (state.frame_number & 0x1);
+static void p2_starfield(struct remake_state *state) {
+	uint32_t *dst = BUFFER_PTR(state, 0, 17);
+	uint32_t star_add = (state->frame_number & 0x1);
 	for(uint32_t i = 0; i < NUM_STARS; ++i) {
 		int32_t x = p2_stars[i] & 0x7ff;
 		if((x >= 0) && (x < 336)) {
 			dst[x] = 0xffffffff;
 		}
-		dst += BUFFER_WIDTH * 2;
+		dst += state->buffer_width * 2;
 		p2_stars[i] += (i % 3) + 1;
 	}
 }
 
-static void p2_render_logo(void) {
+static void p2_render_logo(struct remake_state *state) {
 	// PROFILE_FUNCTION();
 	if(p2_logo_reveal_done) {
-		uint32_t logo_x_offset = (BUFFER_WIDTH - part2_ns_logo_data->width) >> 1;
-		blit_full(part2_ns_logo_data, logo_x_offset, 15, 0);
+		uint32_t logo_x_offset = (state->buffer_width - part2_ns_logo_data->width) >> 1;
+		blit_full(state, part2_ns_logo_data, logo_x_offset, 15, 0);
 	} else {
-		p2_logo_reveal_done = logo_render();
+		p2_logo_reveal_done = logo_render(state);
 	}
 }
 
-static uint32_t p2_update(void) {
+static uint32_t p2_update(struct remake_state *state) {
 	// PROFILE_NAMED("part2 all");
 
-	p2_starfield();
+	p2_starfield(state);
 
-	p2_render_logo();
+	p2_render_logo(state);
 
-	p2_texteffect();
-	p2_bouncing_scroller();
+	p2_texteffect(state);
+	p2_bouncing_scroller(state);
 
-	return mkfw_is_button_pressed(window, MOUSE_BUTTON_LEFT);
+	return mkfw_is_button_pressed(state->window, MOUSE_BUTTON_LEFT);
 }
 

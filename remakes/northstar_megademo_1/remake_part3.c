@@ -41,10 +41,10 @@ uint32_t p3_bounce_sine[] = {
 	0x3d, 0x3c, 0x3b, 0x39, 0x37, 0x35, 0x32, 0x30, 0x2d, 0x2a, 0x27, 0x23, 0x1f, 0x1b, 0x16, 0x11,  0xc,  0x6,
 };
 
-static void p3_render_bouncing_logo(uint32_t * restrict buffer, uint32_t center_x, uint32_t center_y, uint32_t bounce_offset, uint32_t color) {
+static void p3_render_bouncing_logo(struct remake_state *state, uint32_t center_x, uint32_t center_y, uint32_t bounce_offset, uint32_t color) {
 	// PROFILE_FUNCTION();
 	uint8_t * restrict src = part3_logo_bounce_data->data;
-	uint32_t * restrict dst = buffer + center_x + (center_y - bounce_offset) * BUFFER_WIDTH;
+	uint32_t * restrict dst = BUFFER_PTR(state, center_x, center_y - bounce_offset);
 
 	uint32_t tmp_colors[2] = { 0x0, color };
 
@@ -54,7 +54,7 @@ static void p3_render_bouncing_logo(uint32_t * restrict buffer, uint32_t center_
 			tmp_colors[0] = dst[x];
 			dst[x] = tmp_colors[pixel_color];
 		}
-		dst += BUFFER_WIDTH;
+		dst += state->buffer_width;
 	}
 }
 
@@ -89,19 +89,19 @@ static struct stripe stripes[] = {
 	{ 84, -1, palette_bright },
 };
 
-static void p3_render_big_bouncer(void) {
+static void p3_render_big_bouncer(struct remake_state *state) {
 	// PROFILE_FUNCTION();
 
 	p3_src_offset_y += p3_direction;
-	if(p3_src_offset_y == 0 || p3_src_offset_y == (part3_large_bg_data->height - BUFFER_HEIGHT)) {
+	if(p3_src_offset_y == 0 || p3_src_offset_y == (part3_large_bg_data->height - state->buffer_height)) {
 		p3_direction = -p3_direction; // Reverse direction
 	}
 
-	uint32_t center_x = (BUFFER_WIDTH - part3_large_bg_data->width) >> 1;
+	uint32_t center_x = (state->buffer_width - part3_large_bg_data->width) >> 1;
 	uint32_t index_y = 15;
 
 	uint8_t * restrict src = part3_large_bg_data->data + (p3_src_offset_y * part3_large_bg_data->width);
-	uint32_t * restrict dst = buffer + center_x;
+	uint32_t * restrict dst = BUFFER_PTR(state, center_x, 0);
 
 	for(uint32_t stripe_index = 0; stripe_index < ARRAYSIZE(stripes); ++stripe_index) {
 		uint32_t count = stripes[stripe_index].count;
@@ -113,28 +113,28 @@ static void p3_render_big_bouncer(void) {
 			for(int32_t x = 0; x < part3_large_bg_data->width; ++x) {
 				dst[x + displacement] = palette[src[x]];
 			}
-			dst += BUFFER_WIDTH;
+			dst += state->buffer_width;
 			src += part3_large_bg_data->width;
 		}
 	}
 }
 
-static uint32_t p3_update(void)  {
+static uint32_t p3_update(struct remake_state *state)  {
 	// PROFILE_NAMED("part3 all");
 
-	p3_render_big_bouncer();
+	p3_render_big_bouncer(state);
 
 	uint32_t bounce_offset1 = p3_bounce_sine[(xx + 0) % ARRAYSIZE(p3_bounce_sine)];
 	uint32_t bounce_offset2 = p3_bounce_sine[(xx + 3) % ARRAYSIZE(p3_bounce_sine)];
 	uint32_t bounce_offset3 = p3_bounce_sine[(xx + 6) % ARRAYSIZE(p3_bounce_sine)];
 	xx++;
 
-	uint32_t center_bounce_x = (BUFFER_WIDTH - part3_logo_bounce_data->width) >> 1;
+	uint32_t center_bounce_x = (state->buffer_width - part3_logo_bounce_data->width) >> 1;
 	uint32_t center_bounce_y = 104 + 83 - part3_logo_bounce_data->height;	// the two first values are the upper part of the logo, plus the displaced middle area height.
 
-	p3_render_bouncing_logo(buffer, center_bounce_x + 1, center_bounce_y, bounce_offset1, 0x555555ff);
-	p3_render_bouncing_logo(buffer, center_bounce_x,     center_bounce_y, bounce_offset2, 0xaaaaaaff);
-	p3_render_bouncing_logo(buffer, center_bounce_x - 1, center_bounce_y, bounce_offset3, 0xffffffff);
+	p3_render_bouncing_logo(state, center_bounce_x + 1, center_bounce_y, bounce_offset1, 0x555555ff);
+	p3_render_bouncing_logo(state, center_bounce_x,     center_bounce_y, bounce_offset2, 0xaaaaaaff);
+	p3_render_bouncing_logo(state, center_bounce_x - 1, center_bounce_y, bounce_offset3, 0xffffffff);
 
-	return mkfw_is_button_pressed(window, MOUSE_BUTTON_LEFT);
+	return mkfw_is_button_pressed(state->window, MOUSE_BUTTON_LEFT);
 }

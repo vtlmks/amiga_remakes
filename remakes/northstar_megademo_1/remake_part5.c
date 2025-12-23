@@ -323,7 +323,7 @@ static struct sprite sprites[4] = {
 };
 
 
-static void p5_sprite_bounce() {
+static void p5_sprite_bounce(struct remake_state *state) {
 	// PROFILE_FUNCTION();
 
 	// NOTE(peter): forced nonsense fix because ugg data is no longer const (C is garbage)...
@@ -345,17 +345,17 @@ static void p5_sprite_bounce() {
 			offset_y = p5_sprite_sine[sprites[i].sine_index++];
 		}
 
-		blit_full(sprites[i].sprite, sprites[i].xpos, 104 +0x29 - offset_y, 0);
+		blit_full(state, sprites[i].sprite, sprites[i].xpos, 104 +0x29 - offset_y, 0);
 
 	}
 
 }
 
-static void p5_render_logo(struct ugg *image, int32_t offset_x, uint32_t offset_y) {
+static void p5_render_logo(struct remake_state *state, struct ugg *image, int32_t offset_x, uint32_t offset_y) {
 	// PROFILE_FUNCTION();
 
 	int32_t left_clip = 12;
-	int32_t right_clip = BUFFER_WIDTH;
+	int32_t right_clip = state->buffer_width;
 
 	// Clip against the left and right edges
 	int32_t source_x_start = (offset_x < left_clip) ? (left_clip - offset_x) : 0;
@@ -371,7 +371,7 @@ static void p5_render_logo(struct ugg *image, int32_t offset_x, uint32_t offset_
 		return;
 	}
 
-	uint32_t *dst = buffer + (103 + offset_y) * BUFFER_WIDTH + ((BUFFER_WIDTH - 352) >> 1) + dest_x_start;
+	uint32_t *dst = BUFFER_PTR(state, ((state->buffer_width - 352) >> 1) + dest_x_start, 103 + offset_y);
 	uint8_t * restrict src = image->data + source_x_start;
 	uint32_t * restrict palette = &p5_logo_background_colors[offset_y];
 
@@ -384,7 +384,7 @@ static void p5_render_logo(struct ugg *image, int32_t offset_x, uint32_t offset_
 			tmp_palette[0] = dst[x];
 			dst[x] = tmp_palette[color_index];
 		}
-		dst += BUFFER_WIDTH;
+		dst += state->buffer_width;
 		src += image->width;
 	}
 }
@@ -402,7 +402,7 @@ struct animation_state {
 
 static struct animation_state ani = { .duration = 1, .color = 0xffffffff };
 
-static void p5_mid_screen_logos() {
+static void p5_mid_screen_logos(struct remake_state *state) {
 	if(--ani.duration == 0) {
 		uint32_t exit;
 		do {
@@ -461,22 +461,22 @@ static void p5_mid_screen_logos() {
 	};
 
 	ani.pos += (ani.direction) ? ani.speed : -ani.speed;
-	p5_render_logo(p5_logos[ani.logoid].image, ani.pos, p5_logos[ani.logoid].y_offset);
+	p5_render_logo(state, p5_logos[ani.logoid].image, ani.pos, p5_logos[ani.logoid].y_offset);
 }
 
-static void p5_render_heads() {
+static void p5_render_heads(struct remake_state *state) {
 	// PROFILE_FUNCTION();
 	int32_t half_head_w = p5_faces_data->width >> 1;
-	blit_full(p5_faces_data, -half_head_w, 206, 0);
-	blit_full(p5_faces_data, BUFFER_WIDTH-half_head_w, 206, 0);
+	blit_full(state, p5_faces_data, -half_head_w, 206, 0);
+	blit_full(state, p5_faces_data, state->buffer_width-half_head_w, 206, 0);
 }
 
 #define LOGO_Y_OFFSET 224
-static void p5_render_atom_logo() {
+static void p5_render_atom_logo(struct remake_state *state) {
 	// PROFILE_FUNCTION();
 	uint32_t temp_offset = md1_p5_atom_logo_offset;
 	uint8_t * restrict logo_ptr = p5_atom_demo_ii_logo_data->data;
-	uint32_t * restrict base_dest = &buffer[(LOGO_Y_OFFSET * BUFFER_WIDTH) + ((BUFFER_WIDTH - p5_atom_demo_ii_logo_data->width) >> 1) - 8];
+	uint32_t * restrict base_dest = BUFFER_PTR(state, ((state->buffer_width - p5_atom_demo_ii_logo_data->width) >> 1) - 8, LOGO_Y_OFFSET);
 	const size_t sin_table_size = sizeof(atom_logo_sin_data);
 
 	uint32_t tmp_palette[2] = { 0 };
@@ -493,32 +493,32 @@ static void p5_render_atom_logo() {
 		for(uint32_t x = 0; x < p5_atom_demo_ii_logo_data->width; ++x) {
 			dest[x] = tmp_palette[*logo_ptr++];	//(value) ? color : 0;
 		}
-		base_dest += BUFFER_WIDTH;
+		base_dest += state->buffer_width;
 	}
 
 	md1_p5_atom_logo_offset = (md1_p5_atom_logo_offset == sin_table_size - 1) ? 0 : md1_p5_atom_logo_offset + 1;
 }
 
-static void p5_render_copperbars() {
+static void p5_render_copperbars(struct remake_state *state) {
 	// PROFILE_FUNCTION();
 
-	uint32_t * restrict copper_bars_dest = buffer + (103 * BUFFER_WIDTH);
+	uint32_t * restrict copper_bars_dest = BUFFER_PTR(state, 0, 103);
 	uint32_t * restrict copper_bars_src = md1_p5_large_copper_bars;
 	uint32_t num_copper_bars = ARRAYSIZE(md1_p5_large_copper_bars);
 
 	for(uint32_t i = 0; i < num_copper_bars; ++i) {
 		__m128i color = _mm_set1_epi32(copper_bars_src[i]);
-		for(uint32_t x = 0; x < BUFFER_WIDTH; x += 4) {
+		for(uint32_t x = 0; x < state->buffer_width; x += 4) {
 			_mm_storeu_si128((__m128i*)(copper_bars_dest + x), color);
 		}
-		copper_bars_dest += BUFFER_WIDTH;
+		copper_bars_dest += state->buffer_width;
 	}
 }
 
-static void p5_render_small_scroller() {
+static void p5_render_small_scroller(struct remake_state *state) {
 	// PROFILE_FUNCTION();
 	const uint8_t * restrict src = p5_scroller1->buffer;
-	uint32_t * restrict dst = ((BUFFER_WIDTH - 336) / 2) + buffer + (86 * BUFFER_WIDTH);
+	uint32_t * restrict dst = BUFFER_PTR(state, (state->buffer_width - 336) / 2, 86);
 
 	uint32_t color_lookup[4];
 	color_lookup[2] = 0xffffffff;
@@ -536,15 +536,15 @@ static void p5_render_small_scroller() {
 			dst[x] = color_lookup[color_index];
 		}
 
-		dst += BUFFER_WIDTH;
+		dst += state->buffer_width;
 		src += SCROLL_BUFFER_WIDTH;
 	}
 }
 
-static void p5_render_large_scroller() {
+static void p5_render_large_scroller(struct remake_state *state) {
 	// PROFILE_FUNCTION();
 	uint8_t * restrict src = p5_scroller2->buffer;
-	uint32_t * restrict dst = ((BUFFER_WIDTH - 336) / 2) + buffer + (170 * BUFFER_WIDTH);
+	uint32_t * restrict dst = BUFFER_PTR(state, (state->buffer_width - 336) / 2, 170);
 
 	uint32_t color_lookup[4];
 
@@ -559,7 +559,7 @@ static void p5_render_large_scroller() {
 			dst[x] = color_lookup[src[src_index]];
 		}
 
-		dst += BUFFER_WIDTH;
+		dst += state->buffer_width;
 		src += SCROLL_BUFFER_WIDTH;
 	}
 }
@@ -567,9 +567,9 @@ static void p5_render_large_scroller() {
 static uint32_t p5_warhammer_index = 0;
 
 __attribute__((hot, always_inline))
-static inline void p5_render_image_with_palette(struct ugg *image, uint32_t *palette1, uint32_t *palette2, uint32_t *buffer, uint32_t start_row) {
+static inline void p5_render_image_with_palette(struct remake_state *state, struct ugg *image, uint32_t *palette1, uint32_t *palette2, uint32_t start_row) {
 	uint8_t *src = image->data;
-	uint32_t *dst = buffer + (start_row * BUFFER_WIDTH) + ((BUFFER_WIDTH - image->width) >> 1);
+	uint32_t *dst = BUFFER_PTR(state, (state->buffer_width - image->width) >> 1, start_row);
 	uint32_t color_index = p5_warhammer_index;
 	uint32_t fallback_color2 = 0x777777ff;
 
@@ -588,22 +588,22 @@ static inline void p5_render_image_with_palette(struct ugg *image, uint32_t *pal
 			dst[j] = color_lookup[index];
 		}
 
-		dst += BUFFER_WIDTH;
+		dst += state->buffer_width;
 		src += image->width;
 	}
 }
 
-static void p5_render_warhammer_40k() {
+static void p5_render_warhammer_40k(struct remake_state *state) {
 	// PROFILE_FUNCTION();
-	p5_render_image_with_palette(p5_warhammer_logo_data, p5_warhammer_palette, 0, buffer, 14);
-	p5_render_image_with_palette(p5_rogue_40k_logo_data, p5_40k_palette, p5_rogue_palette, buffer, 41);
+	p5_render_image_with_palette(state, p5_warhammer_logo_data, p5_warhammer_palette, 0, 14);
+	p5_render_image_with_palette(state, p5_rogue_40k_logo_data, p5_40k_palette, p5_rogue_palette, 41);
 	p5_warhammer_index = (p5_warhammer_index == 0) ? 29 : p5_warhammer_index - 1;
 }
 
-static uint32_t p5_update()  {
+static uint32_t p5_update(struct remake_state *state)  {
 	// PROFILE_NAMED("part5 all");
 
-	if(mkfw_is_button_pressed(window, MOUSE_BUTTON_RIGHT)) {
+	if(mkfw_is_button_pressed(state->window, MOUSE_BUTTON_RIGHT)) {
 		p5_scroller1->speed += 1;
 		p5_scroller2->speed += 2;
 		if(p5_scroller1->speed > 4) {
@@ -613,16 +613,16 @@ static uint32_t p5_update()  {
 	}
 	scroller(p5_scroller1);
 	scroller(p5_scroller2);
-	p5_render_warhammer_40k();
-	p5_render_copperbars();
-	p5_render_heads();
-	p5_render_small_scroller();
-	p5_render_large_scroller();
-	p5_sprite_bounce();
-	p5_mid_screen_logos();
-	p5_render_atom_logo();
+	p5_render_warhammer_40k(state);
+	p5_render_copperbars(state);
+	p5_render_heads(state);
+	p5_render_small_scroller(state);
+	p5_render_large_scroller(state);
+	p5_sprite_bounce(state);
+	p5_mid_screen_logos(state);
+	p5_render_atom_logo(state);
 
-	return mkfw_is_button_pressed(window, MOUSE_BUTTON_LEFT);
+	return mkfw_is_button_pressed(state->window, MOUSE_BUTTON_LEFT);
 
 }
 

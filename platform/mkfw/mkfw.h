@@ -37,6 +37,9 @@ struct mkfw_state {
 
 	// Platform-specific state
 	void *platform;
+
+	// User data (for application use)
+	void *user_data;
 };
 
 /* Platform-specific implementation includes */
@@ -69,6 +72,8 @@ static inline void mkfw_update_modifier_state(struct mkfw_state *state) { memcpy
 static inline void mkfw_update_keyboard_state(struct mkfw_state *state) { memcpy(state->prev_keyboard_state, state->keyboard_state, sizeof(state->keyboard_state)); }
 static inline void mkfw_update_mouse_state(struct mkfw_state *state) { memcpy(state->previous_mouse_buttons, state->mouse_buttons, sizeof(state->mouse_buttons)); }
 
+static inline void mkfw_set_user_data(struct mkfw_state *state, void *user_data) { state->user_data = user_data; }
+static inline void *mkfw_get_user_data(struct mkfw_state *state) { return state->user_data; }
 static inline void mkfw_set_key_callback(struct mkfw_state *state, key_callback_t callback) { state->key_callback = callback; }
 static inline void mkfw_set_mouse_move_delta_callback(struct mkfw_state *state, mouse_move_delta_callback_t callback) { state->mouse_move_delta_callback = callback; }
 static inline void mkfw_set_mouse_button_callback(struct mkfw_state *state, mouse_button_callback_t callback) { state->mouse_button_callback = callback; }

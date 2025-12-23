@@ -126,14 +126,14 @@ static uint8_t half_sine_tab[] = {
 };
 
 // [=]===^=====================================================================================^===[=]
-static void render_copper(uint32_t start_line, uint32_t *copper_data, uint32_t rows) {
-	if(start_line >= BUFFER_HEIGHT) return;
+static void render_copper(struct remake_state *state, uint32_t start_line, uint32_t *copper_data, uint32_t rows) {
+	if(start_line >= state->buffer_height) return;
 
-	uint32_t max_rows = (start_line + rows > BUFFER_HEIGHT) ? (BUFFER_HEIGHT - start_line) : rows;
-	uint32_t *row = buffer + (start_line * BUFFER_WIDTH);
+	uint32_t max_rows = (start_line + rows > state->buffer_height) ? (state->buffer_height - start_line) : rows;
+	uint32_t *row = BUFFER_PTR(state, 0, start_line);
 
 	for(uint32_t copper_line = 0; copper_line < max_rows; ++copper_line) {
-		for(uint32_t i = 0; i < BUFFER_WIDTH; ++i) {
+		for(uint32_t i = 0; i < state->buffer_width; ++i) {
 			*row++ = copper_data[copper_line];
 		}
 	}
@@ -180,7 +180,7 @@ static void update_scroller(void) {
 }
 
 // [=]===^=====================================================================================^===[=]
-static void render_tech_tech(void) {
+static void render_tech_tech(struct remake_state *state) {
 	uint8_t logo_line = 0;
 	uint8_t tmp_dup_line_index = dup_line_index;
 	uint8_t dup_lines = dup_line_tab[tmp_dup_line_index];
@@ -189,8 +189,7 @@ static void render_tech_tech(void) {
 	uint8_t temp_ttcol_id2 = ttcol_id2;
 	uint8_t temp_ttsine_id = ttsineid;
 
-	uint32_t *restrict row = buffer + (163 * BUFFER_WIDTH);
-	row += ((BUFFER_WIDTH - p2_logo->width) / 2) - 4;
+	uint32_t *restrict row = BUFFER_PTR(state, ((state->buffer_width - p2_logo->width) / 2) - 4, 163);
 
 	for (uint8_t line_count = 0; line_count < 56; ++line_count) {
 		if (dup_lines == 0) {
@@ -215,15 +214,15 @@ static void render_tech_tech(void) {
 			--dup_lines;
 		}
 
-		row += BUFFER_WIDTH;
+		row += state->buffer_width;
 		temp_ttcol_id1 = (temp_ttcol_id1 + 1) % ARRAYSIZE(tech_tech_colors);
 		temp_ttcol_id2 = (temp_ttcol_id2 + 1) % ARRAYSIZE(tech_tech_colors);
 		temp_ttsine_id = (temp_ttsine_id + 1) % ARRAYSIZE(tech_tech_sine);
 	}
 }
 
-static void render_scroller(void) {
-	uint32_t *row = buffer + (233 * BUFFER_WIDTH) + ((BUFFER_WIDTH - p2_scrollerWidth) / 2);
+static void render_scroller(struct remake_state *state) {
+	uint32_t *row = BUFFER_PTR(state, (state->buffer_width - p2_scrollerWidth) / 2, 233);
 	uint8_t *src = scroll_buffer;
 
 	for(uint32_t i = 0; i < p2_scrollerHeight; ++i) {
@@ -235,12 +234,12 @@ static void render_scroller(void) {
 			++pixel;
 			++src;
 		}
-		row += BUFFER_WIDTH;
+		row += state->buffer_width;
 		src += p2_scrollCharWidth;
 	}
 }
 
-static void render_spring_and_ball(struct ballSpring *spring, uint32_t index) {
+static void render_spring_and_ball(struct remake_state *state, struct ballSpring *spring, uint32_t index) {
 #define first_ball_spring_x 68
 #define distance_to_next 32
 #define spring_width 18
@@ -250,9 +249,7 @@ static void render_spring_and_ball(struct ballSpring *spring, uint32_t index) {
 #define ball_offset_y 16
 
 	// Render ball
-	uint32_t *row = buffer + first_ball_spring_x - 1 + distance_to_next * index;
-	row += half_sine_tab[spring->offset] * BUFFER_WIDTH;
-	row += ball_offset_y * BUFFER_WIDTH;
+	uint32_t *row = BUFFER_PTR(state, first_ball_spring_x - 1 + distance_to_next * index, half_sine_tab[spring->offset] + ball_offset_y);
 
 	uint8_t *colId = p2_bouncing_balls->data;
 	colId += (spring->ball_anim_offset / 2) * ball_width;
@@ -268,13 +265,12 @@ static void render_spring_and_ball(struct ballSpring *spring, uint32_t index) {
 			++dst;
 			++src;
 		}
-		row += BUFFER_WIDTH;
+		row += state->buffer_width;
 		colId += p2_bouncing_balls->width;
 	}
 
 	// Render spring
-	row = buffer + first_ball_spring_x + distance_to_next * index;
-	row += spring_offset_y * BUFFER_WIDTH;
+	row = BUFFER_PTR(state, first_ball_spring_x + distance_to_next * index, spring_offset_y);
 
 	colId = p2_bouncing_ball_springs->data;
 	colId += spring_anim_offset[spring->offset] * spring_width;
@@ -289,7 +285,7 @@ static void render_spring_and_ball(struct ballSpring *spring, uint32_t index) {
 			++dst;
 			++src;
 		}
-		row += BUFFER_WIDTH;
+		row += state->buffer_width;
 		colId += p2_bouncing_ball_springs->width;
 	}
 }
@@ -309,7 +305,7 @@ static void update_springs() {
 	}
 }
 
-static uint32_t part_2_render(void) {
+static uint32_t part_2_render(struct remake_state *state) {
 	if(!p2_initialized) {
 		for(uint8_t i = 0; i < ARRAYSIZE(ball_springs); ++i) {
 			ball_springs[i].ball_anim_offset = 2 * i;
@@ -320,7 +316,7 @@ static uint32_t part_2_render(void) {
 	}
 
 	// Update logic every other frame
-	if(state.frame_number & 0x1) {
+	if(state->frame_number & 0x1) {
 		dup_line_index = (dup_line_index + 2) % ARRAYSIZE(dup_line_tab);
 		ttcol_id1 = (ttcol_id1 - 1 + ARRAYSIZE(tech_tech_colors)) % ARRAYSIZE(tech_tech_colors);
 		ttcol_id2 = (ttcol_id2 + 1) % ARRAYSIZE(tech_tech_colors);
@@ -328,24 +324,24 @@ static uint32_t part_2_render(void) {
 	ttsineid = (ttsineid + 1) % ARRAYSIZE(tech_tech_sine);
 
 	// Render copper backgrounds
-	render_copper(springsCopperStart, springs_copper, ARRAYSIZE(springs_copper));
-	render_copper(scrollerCopperStart, scroller_copper, ARRAYSIZE(scroller_copper));
+	render_copper(state, springsCopperStart, springs_copper, ARRAYSIZE(springs_copper));
+	render_copper(state, scrollerCopperStart, scroller_copper, ARRAYSIZE(scroller_copper));
 
 	update_springs();
 	// Render springs
 	for(uint32_t i = 0; i < ARRAYSIZE(ball_springs); ++i) {
-		render_spring_and_ball(&ball_springs[i], i);
+		render_spring_and_ball(state, &ball_springs[i], i);
 	}
 
 
 	// Render static elements and tech-tech effect
-	blit_full(p2_stalaktites, CENTER_X(p2_stalaktites->width), 103, 0);
+	blit_full(state, p2_stalaktites, CENTER_X(state, p2_stalaktites->width), 103, 0);
 
-	render_tech_tech();
+	render_tech_tech(state);
 
 	// Update and render scroller
 	update_scroller();
-	render_scroller();
+	render_scroller(state);
 
 	return mkfw_is_button_pressed(window, MOUSE_BUTTON_LEFT);
 }

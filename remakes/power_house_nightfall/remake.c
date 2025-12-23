@@ -3,8 +3,6 @@
 
 // [=]===^=[ base setup ]============================================================^===[=]
 
-#define WINDOW_WIDTH 360
-#define WINDOW_HEIGHT 270
 #define BUFFER_WIDTH  (346 << 0)
 #define BUFFER_HEIGHT (270 << 0)
 
@@ -150,23 +148,23 @@ static uint8_t scrolltext[] = {
 
 static struct scroller_state *scroll;
 
-static void render_scroll_buffer(struct scroller_state *scr_state) {
+static void render_scroll_buffer(struct remake_state *state, struct scroller_state *scr_state) {
 	// PROFILE_FUNCTION();
-	uint32_t *scroll_dest = buffer + scr_state->dest_offset_y * BUFFER_WIDTH;
+	uint32_t *scroll_dest = BUFFER_PTR(state, 0, scr_state->dest_offset_y);
 	uint8_t *scroll_src = scr_state->buffer;
 
 	size_t base_src_index = (scr_state->char_render_offset - 370) & (SCROLL_BUFFER_WIDTH - 1);
 	for(size_t i = 0; i < scr_state->char_height; ++i) {
 		scr_state->font->palette[1] = scroll_colors[i];
 
-		for(size_t j = 0; j < BUFFER_WIDTH; ++j) {
+		for(size_t j = 0; j < state->buffer_width; ++j) {
 			size_t src_index = (base_src_index + j) & (SCROLL_BUFFER_WIDTH - 1);
 			uint8_t color_index = scroll_src[src_index];
 
 			scr_state->font->palette[0] = scroll_dest[j];
 			scroll_dest[j] = scr_state->font->palette[color_index];
 		}
-		scroll_dest += BUFFER_WIDTH;
+		scroll_dest += state->buffer_width;
 		scroll_src += SCROLL_BUFFER_WIDTH;
 	}
 }
@@ -177,15 +175,15 @@ static uint32_t copperbar_colors[10] = {
 	0x440055ff, 0x661177ff, 0x884499ff, 0xaa77bbff, 0xccaaddff, 0xffffffff, 0x99dd99ff, 0x44cc44ff, 0x00aa00ff, 0x000000ff,
 };
 
-static void render_copperbar(void) {
+static void render_copperbar(struct remake_state *state) {
 	// PROFILE_FUNCTION();
 	uint32_t color;
 	uint32_t *src = copperbar_colors;
-	uint32_t *dst = buffer + (0xe4-36) * BUFFER_WIDTH;
+	uint32_t *dst = BUFFER_PTR(state, 0, (0xe4-36));
 
-	for(size_t y = 0; y < ARRAYSIZE(copperbar_colors); ++y, dst += BUFFER_WIDTH) {
+	for(size_t y = 0; y < ARRAYSIZE(copperbar_colors); ++y, dst += state->buffer_width) {
 		color = src[y];
-		for(size_t x = 0; x < BUFFER_WIDTH; ++x) {
+		for(size_t x = 0; x < state->buffer_width; ++x) {
 			dst[x] = color;
 		}
 	}
@@ -219,12 +217,12 @@ static void initialize_stars(void) {
 }
 
 // [=]===^=[ render_stars ]============================================================^===[=]
-static void render_stars(void) {
+static void render_stars(struct remake_state *state) {
 	// PROFILE_FUNCTION();
 	for(size_t i = 0; i < 19; ++i) {
 		// PROFILE_NAMED("Large_star");
 		int32_t temp_x = large_star_positions[i].x;
-		blit_full(large_star, temp_x, large_star_positions[i].y, 0);
+		blit_full(state, large_star, temp_x, large_star_positions[i].y, 0);
 		temp_x = (temp_x > 424) ? temp_x - 512 : temp_x + 6;
 		large_star_positions[i].x = temp_x;
 	}
@@ -232,7 +230,7 @@ static void render_stars(void) {
 	for(size_t i = 0; i < 17; ++i) {
 		// PROFILE_NAMED("Small_star");
 		int32_t temp_x = small_star_positions[i].x;
-		blit_full(small_star, temp_x, small_star_positions[i].y, 0);
+		blit_full(state, small_star, temp_x, small_star_positions[i].y, 0);
 		temp_x = (temp_x > 424) ? temp_x - 512 : temp_x + 4;
 		small_star_positions[i].x = temp_x;
 	}
@@ -242,10 +240,10 @@ static void render_stars(void) {
 
 static int32_t y_offset;	// NOTE(peter): y-offset for the logo 'reveal' function, initialized further down
 
-static void render_logo(void) {
+static void render_logo(struct remake_state *state) {
 	// PROFILE_FUNCTION();
-	struct rect full_rect = { 0, 0, BUFFER_WIDTH, (0x2d-36) + powerhouse_logo->height };
-	blit_clipped(powerhouse_logo, (BUFFER_WIDTH - powerhouse_logo->width) / 2, (0x2d-36) + y_offset, full_rect, 0);
+	struct rect full_rect = { 0, 0, state->buffer_width, (0x2d-36) + powerhouse_logo->height };
+	blit_clipped(state, powerhouse_logo, (state->buffer_width - powerhouse_logo->width) / 2, (0x2d-36) + y_offset, full_rect, 0);
 	y_offset = (y_offset > 0) ? y_offset - 1 : 0;
 }
 
@@ -275,28 +273,28 @@ static const uint8_t water_displacement[] = {
 };
 
 
-static void render_trees(void) {
+static void render_trees(struct remake_state *state) {
 	// PROFILE_FUNCTION();
 
 	struct ugg * restrict trees_data = (struct ugg*)powerhouse_trees_data;
 
 	uint32_t * restrict palette = powerhouse_trees->palette;
-	uint32_t * restrict dst = buffer + (128*BUFFER_WIDTH);
+	uint32_t * restrict dst = BUFFER_PTR(state, 0, 128);
 	uint8_t * restrict src = powerhouse_trees->data + 20;
 
 	for(size_t y = 0; y < powerhouse_trees->height - 1; ++y) {
-		for(size_t x = 0; x < BUFFER_WIDTH; ++x) {
+		for(size_t x = 0; x < state->buffer_width; ++x) {
 
 			uint8_t color_id = src[x];
 			palette[0] = dst[x];
 			dst[x] = palette[color_id];
 		}
-		dst += BUFFER_WIDTH;
+		dst += state->buffer_width;
 		src += powerhouse_trees->width;
 	}
 
 	src -= powerhouse_trees->width;	// NOTE(peter): make sure we are back at the last line!
-	dst -= BUFFER_WIDTH;
+	dst -= state->buffer_width;
 
 	static uint32_t sine_offset = 0;
 
@@ -308,25 +306,25 @@ static void render_trees(void) {
 	size_t count = (powerhouse_trees->height >> 1) - 4;	// NOTE(peter): 4 is just measured, this render the first 4 lines of the upside down trees because that is what the original demo did.
 
 	for(size_t y = 0; y < 4; ++y) {								// NOTE(peter): Actually render those 4 lines.
-		for(size_t x = 0; x < BUFFER_WIDTH; ++x) {
+		for(size_t x = 0; x < state->buffer_width; ++x) {
 
 			uint8_t color_id = src[x];
 			palette[0] = dst[x];
 			dst[x] = palette[color_id];
 		}
-		dst += BUFFER_WIDTH;
+		dst += state->buffer_width;
 		src -= powerhouse_trees->width << 1;
 	}
 
 	for(size_t y = 0; y < count; ++y) {
 		uint32_t water_offset = water_displacement[temp_sine_offset];
-		for(size_t x = 0; x < BUFFER_WIDTH; ++x) {
+		for(size_t x = 0; x < state->buffer_width; ++x) {
 
 			uint8_t color_id = src[x + water_offset];
 			palette[0] = dst[x];
 			dst[x] = palette[color_id];
 		}
-		dst += BUFFER_WIDTH;
+		dst += state->buffer_width;
 		src -= powerhouse_trees->width << 1;
 		temp_sine_offset = (temp_sine_offset + 1 == sizeof(water_displacement)) ? 0 : temp_sine_offset + 1;
 	}
@@ -339,7 +337,9 @@ static void remake_options(struct options *opt) {
 }
 
 // [=]===^=[ remake_init ]============================================================^===[=]
-static void remake_init(struct mkfw_state *window) {
+static void remake_init(struct remake_state *state) {
+	change_resolution(state, BUFFER_WIDTH, BUFFER_HEIGHT);
+
 	// int mod_size = _2d6_end - _2d6_data;
 	// micromod_initialise(&ctx, (signed char*)_2d6_data, 48000);
 	// micromod_set_gain(&ctx, 64);
@@ -355,18 +355,18 @@ static void remake_init(struct mkfw_state *window) {
 }
 
 // [=]===^=[ remake_frame ]============================================================^===[=]
-static void remake_frame(struct mkfw_state *window) {
+static void remake_frame(struct remake_state *state) {
 	// PROFILE_FUNCTION();
-	render_logo();
-	render_stars();
-	render_copperbar();
-	render_trees();
+	render_logo(state);
+	render_stars(state);
+	render_copperbar(state);
+	render_trees(state);
 	scroller(scroll);
-	render_scroll_buffer(scroll);
+	render_scroll_buffer(state, scroll);
 }
 
 // [=]===^=[ remake_shutdown ]============================================================^===[=]
-static void remake_shutdown(struct mkfw_state *window) {
+static void remake_shutdown(struct remake_state *state) {
 	mkfw_audio_callback = 0;
 	scroller_remove(scroll);
 	fc14_shutdown(&remake_song);

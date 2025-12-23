@@ -51,13 +51,9 @@ static const uint32_t p1_copper_background[207] = {	// cyan -> blue -> purple ->
 static uint32_t firework_buffer[FIREWORK_BUFFER_WIDTH * FIREWORK_BUFFER_HEIGHT];
 static uint32_t firework_noclear = 0;
 
-static void p1_init() {
-	memcpy(firework_data_copy, firework_data, sizeof(firework_data));
-}
-
-static void p1_firework() {
+static void p1_firework(struct remake_state *state) {
 	// PROFILE_FUNCTION();
-	if((state.frame_number % 3) == 0) {
+	if((state->frame_number % 3) == 0) {
 		for(uint32_t particle_index = 0; particle_index < 216; ++particle_index) {
 			struct Firework *data = &firework_data_copy[particle_index];
 
@@ -92,13 +88,13 @@ static void p1_firework() {
 	}
 
 	uint32_t *src = firework_buffer;
-	uint32_t *dest = buffer + ((BUFFER_WIDTH - FIREWORK_BUFFER_WIDTH) >> 1) + (((BUFFER_HEIGHT - FIREWORK_BUFFER_HEIGHT) >> 1) * BUFFER_WIDTH);
+	uint32_t *dest = BUFFER_PTR(state, (state->buffer_width - FIREWORK_BUFFER_WIDTH) >> 1, (state->buffer_height - FIREWORK_BUFFER_HEIGHT) >> 1);
 	for(uint32_t y = 0; y < FIREWORK_BUFFER_HEIGHT; ++y) {
 		for(uint32_t x = 0; x < FIREWORK_BUFFER_WIDTH; ++x) {
 			dest[x] = src[x];
 		}
 		src += FIREWORK_BUFFER_WIDTH;
-		dest += BUFFER_WIDTH;
+		dest += state->buffer_width;
 	}
 }
 
@@ -109,18 +105,20 @@ struct p1_string_data {
 	uint8_t dat;
 };
 
-#define TEXT_LINE1_Y (((BUFFER_HEIGHT >> 1) - 23 ) * BUFFER_WIDTH)
-#define TEXT_LINE2_Y (((BUFFER_HEIGHT >> 1) - 3 ) * BUFFER_WIDTH)
-#define TEXT_OFFSET_X (((BUFFER_WIDTH - (17*16)) >> 1) + 8)
+#define TEXT_LINE1_Y(state) (((state->buffer_height >> 1) - 23 ))
+#define TEXT_LINE2_Y(state) (((state->buffer_height >> 1) - 3 ))
+#define TEXT_OFFSET_X(state) (((state->buffer_width - (17*16)) >> 1) + 8)
 #define END_OF_TEXT  0xff
 
-struct p1_string_data p1_text_data[][2] = {
-	{ { TEXT_LINE1_Y, TEXT_OFFSET_X, "  AFTER A LONG   ", 0 }, { TEXT_LINE2_Y, TEXT_OFFSET_X, "PERIOD OF SILENCE", 0 } },
-	{ { TEXT_LINE1_Y, TEXT_OFFSET_X, "  ARE WE BACK    ", 0 }, { TEXT_LINE2_Y, TEXT_OFFSET_X, "     WITH A      ", 0 } },
-	{ { TEXT_LINE1_Y, TEXT_OFFSET_X, "                 ", 0 }, { TEXT_LINE2_Y, TEXT_OFFSET_X, " MEGA-DEMO-DISK  ", 0 } },
-	{ { TEXT_LINE1_Y, TEXT_OFFSET_X, " COPYRIGHT 1988  ", 0 }, { TEXT_LINE2_Y, TEXT_OFFSET_X, " NORTH STAR LTD  ", 0 } },
-	{ { TEXT_LINE1_Y, TEXT_OFFSET_X, "                 ", 0 }, { TEXT_LINE2_Y, TEXT_OFFSET_X, "                 ", END_OF_TEXT } },
+struct p1_string_data p1_text_data_template[][2] = {
+	{ { 0, 0, "  AFTER A LONG   ", 0 }, { 0, 0, "PERIOD OF SILENCE", 0 } },
+	{ { 0, 0, "  ARE WE BACK    ", 0 }, { 0, 0, "     WITH A      ", 0 } },
+	{ { 0, 0, "                 ", 0 }, { 0, 0, " MEGA-DEMO-DISK  ", 0 } },
+	{ { 0, 0, " COPYRIGHT 1988  ", 0 }, { 0, 0, " NORTH STAR LTD  ", 0 } },
+	{ { 0, 0, "                 ", 0 }, { 0, 0, "                 ", END_OF_TEXT } },
 };
+
+static struct p1_string_data p1_text_data[5][2];
 
 uint32_t p1_font_colors[4] = { 0x00000000, 0x00000000, 0x00000000, 0x00000000 };
 
@@ -148,7 +146,7 @@ static inline uint32_t fade_down(uint32_t color) {
 	return (color > 0) ? (color - COLOR_INCREMENT) : color;
 }
 
-static void p1_render_text() {
+static void p1_render_text(struct remake_state *state) {
 	for(uint32_t i = 0; i < 2; ++i) {
 		uint32_t y_offset = p1_text_data[p1_text_writer_line][i].y_offset;
 		uint32_t x_offset = p1_text_data[p1_text_writer_line][i].x_offset;
@@ -156,7 +154,7 @@ static void p1_render_text() {
 
 		uint8_t *small_font_data = part1_small_font_data->data;
 
-		uint32_t *dest = buffer + y_offset + x_offset;
+		uint32_t *dest = BUFFER_PTR(state, x_offset, y_offset);
 		while(*c) {
 			uint8_t *src = small_font_data + (*c++ - 0x20) * 16 * 16;
 			uint32_t *dst = dest;
@@ -166,13 +164,13 @@ static void p1_render_text() {
 					p1_font_colors[0] = dst[x];
 					dst[x] = p1_font_colors[*src++];
 				}
-				dst += BUFFER_WIDTH;
+				dst += state->buffer_width;
 			}
 			dest += 16;
 		}
 	}
 
-	if((state.frame_number % 3) == 0) {
+	if((state->frame_number % 3) == 0) {
 		switch(p1_text_writer_state) {
 			case TEXT_STATE_WRITE: {
 				if(p1_text_data[p1_text_writer_line][1].dat == 0xff) {
@@ -213,14 +211,25 @@ static void p1_render_text() {
 	}
 }
 
-static uint32_t p1_update()  {
+static void p1_init(struct remake_state *state) {
+	memcpy(firework_data_copy, firework_data, sizeof(firework_data));
+	memcpy(p1_text_data, p1_text_data_template, sizeof(p1_text_data_template));
+	for(uint32_t i = 0; i < 5; ++i) {
+		p1_text_data[i][0].y_offset = TEXT_LINE1_Y(state);
+		p1_text_data[i][0].x_offset = TEXT_OFFSET_X(state);
+		p1_text_data[i][1].y_offset = TEXT_LINE2_Y(state);
+		p1_text_data[i][1].x_offset = TEXT_OFFSET_X(state);
+	}
+}
+
+static uint32_t p1_update(struct remake_state *state)  {
 	// PROFILE_NAMED("part1 all");
-	if(mkfw_is_button_pressed(window, MOUSE_BUTTON_RIGHT)) {
+	if(mkfw_is_button_pressed(state->window, MOUSE_BUTTON_RIGHT)) {
 		firework_noclear = !firework_noclear;
 	}
 
-	p1_firework();
-	p1_render_text();
+	p1_firework(state);
+	p1_render_text(state);
 
-	return mkfw_is_button_pressed(window, MOUSE_BUTTON_LEFT);
+	return mkfw_is_button_pressed(state->window, MOUSE_BUTTON_LEFT);
 }

@@ -3,12 +3,10 @@
 
 // [=]===^=[ base setup ]============================================================^===[=]
 
-#define WINDOW_WIDTH 360
-#define WINDOW_HEIGHT 270
+#include "platform.c"
+
 #define BUFFER_WIDTH  (346 << 0)
 #define BUFFER_HEIGHT (270 << 0)
-
-#include "platform.c"
 
 // [=]===^=[ remake stuff below ]============================================================^===[=]
 
@@ -134,14 +132,14 @@ uint32_t bars_on_top_of_eachother[87];
 
 uint8_t scroll_buffer[(320+16) * 14];
 
-static void remake(void) {
+static void remake(struct remake_state *state) {
 
 	memset(copper_background, 0, sizeof(copper_background));
 	memset(copper_behind_image, 0, sizeof(copper_behind_image));
 
 	{	// clear screen to deep blue
-		uint32_t *dst = buffer;
-		for(uint32_t i = 0; i < BUFFER_WIDTH*BUFFER_HEIGHT; ++i) {
+		uint32_t *dst = state->buffer;
+		for(uint32_t i = 0; i < state->buffer_width * state->buffer_height; ++i) {
 			dst[i] = 0x000044ff;
 		}
 	}
@@ -163,7 +161,7 @@ static void remake(void) {
 			}
 			temp_sine_offset += 4;
 		}
-		if((state.frame_number & 0x1) == 0) {
+		if((state->frame_number & 0x1) == 0) {
 			large_copper_bar_sine_offset += 1;
 		}
 	}
@@ -172,13 +170,13 @@ static void remake(void) {
 	copper_background[219] = 0x000000ff;	// offset 219 = black line under scroller
 
 	{	// Render background copper
-		uint32_t *dst = buffer + BUFFER_WIDTH;
+		uint32_t *dst = BUFFER_PTR(state, 0, 1);
 		for(uint32_t y = 0; y < 229; ++y) {
 			uint32_t line_color = copper_background[y];
-			for(uint32_t x = 0; x < BUFFER_WIDTH; ++x) {
+			for(uint32_t x = 0; x < state->buffer_width; ++x) {
 				dst[x] = line_color;
 			}
-			dst += BUFFER_WIDTH;
+			dst += state->buffer_width;
 		}
 	}
 
@@ -189,7 +187,7 @@ static void remake(void) {
 		for(uint32_t y = 0; y < 24; ++y) {
 			dst[y] = src[y];
 		}
-		if((state.frame_number % 4) == 0) {
+		if((state->frame_number % 4) == 0) {
 			bars_on_top_of_eachother_sine_offset += 1;
 		}
 	}
@@ -203,14 +201,14 @@ static void remake(void) {
 			}
 			temp_sine_offset += 3;
 		}
-		if((state.frame_number % 3) == 0) {
+		if((state->frame_number % 3) == 0) {
 			small_copper_bars_sine_offset += 1;
 		}
 	}
 
 
 	{	// Draw logo
-		uint32_t *dst = buffer + 18*BUFFER_WIDTH + ((BUFFER_WIDTH-background->width)>>1);
+		uint32_t *dst = BUFFER_PTR(state, (state->buffer_width - background->width) >> 1, 18);
 		uint8_t *src = background->data;
 		for(uint32_t y = 0; y < background->height; ++y) {
 			uint32_t line_color = copper_behind_image[y];
@@ -229,7 +227,7 @@ static void remake(void) {
 					} break;
 				}
 			}
-			dst += BUFFER_WIDTH;
+			dst += state->buffer_width;
 		}
 	}
 
@@ -267,7 +265,7 @@ static void remake(void) {
 			}
 		}
 
-		uint32_t *dst = buffer + 205*BUFFER_WIDTH + ((BUFFER_WIDTH-320) >> 1);
+		uint32_t *dst = BUFFER_PTR(state, (state->buffer_width - 320) >> 1, 205);
 		uint8_t *src = scroll_buffer;
 		for(uint32_t y = 0; y < 14; ++y) {
 			uint32_t line_color = scroll_colors[y+1];
@@ -278,12 +276,12 @@ static void remake(void) {
 				}
 			}
 			src += 336;
-			dst += BUFFER_WIDTH;
+			dst += state->buffer_width;
 		}
 	}
 
 	{ // Cycle the scroll_colors
-		if((state.frame_number & 0x3) == 0) {
+		if((state->frame_number & 0x3) == 0) {
 			// Cycle down
 			uint32_t first = 0;
 			uint32_t temp = scroll_colors[0];
@@ -313,25 +311,26 @@ static void remake_audio_callback(int16_t *data, size_t frames) {
 }
 
 static void remake_options(struct options *opt) {
-	opt->release_group = "ALPHA FLIGHT";
-	opt->release_title = "DR.MABUSE FIRST INTRO";
+	opt->release_group = "Alpha Flight";
+	opt->release_title = "Dr.Mabuse first intro";
 	opt->window_title = "Alpha Flight - Dr.Mabuse first intro - 1987-09";
 }
 
 // [=]===^=[ remake_init ]============================================================^===[=]
-static void remake_init(struct mkfw_state *window) {
+static void remake_init(struct remake_state *state) {
+	change_resolution(state, BUFFER_WIDTH, BUFFER_HEIGHT);
 	part1_sample.data = resample_audio((int8_t*)music, music_end - music_data, 400, &part1_sample.size);
 	mkfw_audio_callback = remake_audio_callback;
 }
 
 // [=]===^=[ remake_frame ]============================================================^===[=]
-static void remake_frame(struct mkfw_state *window) {
+static void remake_frame(struct remake_state *state) {
 	// PROFILE_FUNCTION();
-	remake();
+	remake(state);
 }
 
 // [=]===^=[ remake_shutdown ]============================================================^===[=]
-static void remake_shutdown(struct mkfw_state *window) {
+static void remake_shutdown(struct remake_state *state) {
 	free(part1_sample.data);
 	mkfw_audio_callback = 0;
 }

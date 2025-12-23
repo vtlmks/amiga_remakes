@@ -1,16 +1,12 @@
 // Copyright (c) 2025 Peter Fors
 // SPDX-License-Identifier: MIT
 
-#define SCALE 3.3
-
 #define CRT_ASPECT_NUM 4
 #define CRT_ASPECT_DEN 3
 #define CRT_ASPECT     ((float)CRT_ASPECT_NUM / (float)CRT_ASPECT_DEN)
 
 #define FRAME_RATE_HZ 50.0
 #define FRAME_TIME_NS ((uint64_t)(1000000000.0 / FRAME_RATE_HZ))
-
-uint32_t buffer[BUFFER_WIDTH * BUFFER_HEIGHT] __attribute__((aligned(4096)));
 
 struct options {
 	uint8_t fullscreen;
@@ -22,6 +18,14 @@ struct options {
 struct options opt;
 
 struct remake_state {
+	// Window reference
+	struct mkfw_state *window;
+
+	// Framebuffer (fixed 1024x1024, only buffer_width x buffer_height is used)
+	uint32_t buffer[1024 * 1024] __attribute__((aligned(4096)));
+	uint32_t buffer_width;   // Current logical buffer width
+	uint32_t buffer_height;  // Current logical buffer height
+
 	struct { int32_t x, y, w, h; } viewport;
 	int32_t mouse_dx;
 	int32_t mouse_dy;
@@ -59,9 +63,7 @@ struct remake_state {
 	// Phosphor persistence
 	float persistence_decay;
 
-	// Rendering & Dynamic Resolution
-	uint32_t render_width;	// The actual remake resolution (e.g., 360)
-	uint32_t render_height;	// The actual remake resolution (e.g., 270)
+	// Rendering & Frame State
 	uint32_t frame_number;
 	uint8_t running;
 	uint8_t toggle_crt_emulation;
@@ -70,4 +72,4 @@ struct remake_state {
 
 };
 
-static struct remake_state state;
+static struct remake_state platform_state;

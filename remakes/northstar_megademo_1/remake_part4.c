@@ -158,9 +158,9 @@ static void p4_shutdown() {
 	scroller_remove(p4_scroll_8);
 }
 
-static void p4_render_scroll_buffer(struct scroller_state *scr_state) {
+static void p4_render_scroll_buffer(struct remake_state *state, struct scroller_state *scr_state) {
 	// PROFILE_FUNCTION();
-	uint32_t *scroll_dest = buffer + scr_state->dest_offset_y * BUFFER_WIDTH;
+	uint32_t *scroll_dest = BUFFER_PTR(state, 0, scr_state->dest_offset_y);
 	uint8_t *scroll_src = scr_state->buffer;
 	uint32_t color_lookup[4];
 	color_lookup[2] = 0xffffffff;
@@ -172,14 +172,14 @@ static void p4_render_scroll_buffer(struct scroller_state *scr_state) {
 	for(size_t i = 0; i < scr_state->char_height; ++i) {
 		color_lookup[1] = p4_scroller_inner_colors[real_inner_color_index];
 		color_lookup[3] = p4_scroller_border_colors[real_border_color_index];
-		for(size_t j = 0; j < BUFFER_WIDTH; ++j) {
+		for(size_t j = 0; j < state->buffer_width; ++j) {
 			size_t src_index = (base_src_index + j) & (SCROLL_BUFFER_WIDTH - 1);
 			uint8_t color_index = scroll_src[src_index];
 
 			color_lookup[0] = scroll_dest[j];
 			scroll_dest[j] = color_lookup[color_index];
 		}
-		scroll_dest += BUFFER_WIDTH;
+		scroll_dest += state->buffer_width;
 		scroll_src += SCROLL_BUFFER_WIDTH;
 
 		if(++real_inner_color_index >= P4_INNER_COLOR_COUNT) real_inner_color_index = 0;
@@ -187,12 +187,12 @@ static void p4_render_scroll_buffer(struct scroller_state *scr_state) {
 	}
 }
 
-static uint32_t p4_update()  {
+static uint32_t p4_update(struct remake_state *state)  {
 	// PROFILE_NAMED("part4 all");
 
 // NOTE(peter): Background logo
-	uint32_t atom_offset_x = (BUFFER_WIDTH - part4_atom_logo_bg_data->width) >> 1;
-	blit_full(part4_atom_logo_bg_data, atom_offset_x, 37, 0);
+	uint32_t atom_offset_x = (state->buffer_width - part4_atom_logo_bg_data->width) >> 1;
+	blit_full(state, part4_atom_logo_bg_data, atom_offset_x, 37, 0);
 
 
 // NOTE(peter): Scrollers
@@ -205,18 +205,18 @@ static uint32_t p4_update()  {
 	scroller(p4_scroll_7);
 	scroller(p4_scroll_8);
 
-	p4_render_scroll_buffer(p4_scroll_1);
-	p4_render_scroll_buffer(p4_scroll_2);
-	p4_render_scroll_buffer(p4_scroll_3);
-	p4_render_scroll_buffer(p4_scroll_4);
-	p4_render_scroll_buffer(p4_scroll_5);
-	p4_render_scroll_buffer(p4_scroll_6);
-	p4_render_scroll_buffer(p4_scroll_7);
-	p4_render_scroll_buffer(p4_scroll_8);
+	p4_render_scroll_buffer(state, p4_scroll_1);
+	p4_render_scroll_buffer(state, p4_scroll_2);
+	p4_render_scroll_buffer(state, p4_scroll_3);
+	p4_render_scroll_buffer(state, p4_scroll_4);
+	p4_render_scroll_buffer(state, p4_scroll_5);
+	p4_render_scroll_buffer(state, p4_scroll_6);
+	p4_render_scroll_buffer(state, p4_scroll_7);
+	p4_render_scroll_buffer(state, p4_scroll_8);
 
 
 	p4_real_inner_color_index++;
 	p4_real_border_color_index--;
 
-	return mkfw_is_button_pressed(window, MOUSE_BUTTON_LEFT);
+	return mkfw_is_button_pressed(state->window, MOUSE_BUTTON_LEFT);
 }

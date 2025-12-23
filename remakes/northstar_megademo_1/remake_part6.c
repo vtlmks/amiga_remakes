@@ -74,37 +74,37 @@ static void p6_shutdown() {
 }
 #define P6_OFFSET_BOTTOM (400 - 164)
 
-static void p6_bouncing_logo() {
+static void p6_bouncing_logo(struct remake_state *state) {
 	// PROFILE_FUNCTION();
 
 	p6_offset += p6_offset_direction;
 	p6_offset_direction = (p6_offset == 0) ? 1 : (p6_offset == P6_OFFSET_BOTTOM) ? -1 : p6_offset_direction;
 
-	struct rect dest_rect = { 0, 18, BUFFER_WIDTH, 164 };
-	uint32_t offset_x = (BUFFER_WIDTH - part6_large_logo_data->width) >> 1;
+	struct rect dest_rect = { 0, 18, state->buffer_width, 164 };
+	uint32_t offset_x = (state->buffer_width - part6_large_logo_data->width) >> 1;
 
-	blit_clipped(part6_large_logo_data, offset_x, 18-p6_offset, dest_rect, 0);
+	blit_clipped(state, part6_large_logo_data, offset_x, 18-p6_offset, dest_rect, 0);
 }
 
-static void p6_render_scroll_buffer(struct scroller_state *dat) {
+static void p6_render_scroll_buffer(struct remake_state *state, struct scroller_state *dat) {
 	// PROFILE_FUNCTION();
-	uint32_t *scroll_dest = buffer + (dat->dest_offset_y * BUFFER_WIDTH) + ((BUFFER_WIDTH - 320) >> 1);
+	uint32_t *scroll_dest = BUFFER_PTR(state, (state->buffer_width - 320) >> 1, dat->dest_offset_y);
 	uint8_t *scroll_src = dat->buffer;
 	for(size_t i = 0; i < 32; ++i) {
 		for(size_t j = 0; j < 320; ++j) {
 			uint8_t color_index = scroll_src[(dat->char_render_offset - 370 + j) & (SCROLL_BUFFER_WIDTH - 1)];
 			scroll_dest[j] = dat->font->palette[color_index];
 		}
-		scroll_dest += BUFFER_WIDTH;
+		scroll_dest += state->buffer_width;
 		scroll_src += SCROLL_BUFFER_WIDTH;
 	}
 }
 
-static uint32_t p6_update()  {
+static uint32_t p6_update(struct remake_state *state)  {
 	// PROFILE_NAMED("part6 all");
-	p6_bouncing_logo();
+	p6_bouncing_logo(state);
 	scroller(p6_scroll);
-	p6_render_scroll_buffer(p6_scroll);
+	p6_render_scroll_buffer(state, p6_scroll);
 
-	return mkfw_is_button_pressed(window, MOUSE_BUTTON_LEFT);
+	return mkfw_is_button_pressed(state->window, MOUSE_BUTTON_LEFT);
 }

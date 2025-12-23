@@ -181,9 +181,9 @@ static void p7_shutdown() {
 	scroller_remove(p7_scroll);
 }
 
-static void p7_render_scroll_buffer(struct scroller_state *scr_state) {
+static void p7_render_scroll_buffer(struct remake_state *state, struct scroller_state *scr_state) {
 	// PROFILE_FUNCTION();
-	uint32_t *scroll_dest = buffer + (scr_state->dest_offset_y * BUFFER_WIDTH);
+	uint32_t *scroll_dest = BUFFER_PTR(state, 0, scr_state->dest_offset_y);
 	uint8_t *scroll_src = scr_state->buffer;
 
 	uint32_t color_lookup[256]; // Static color lookup
@@ -195,12 +195,12 @@ static void p7_render_scroll_buffer(struct scroller_state *scr_state) {
 	for(size_t i = 0; i < scr_state->char_height; ++i) {
 		color_lookup[1] = p7_scroll_color[i]; // Only update color 1 per row
 
-		for(size_t j = 0; j < BUFFER_WIDTH; ++j) {
+		for(size_t j = 0; j < state->buffer_width; ++j) {
 			uint8_t color_index = scroll_src[(scr_state->char_render_offset - 370 + j) & (SCROLL_BUFFER_WIDTH - 1)];
 			scroll_dest[j] = color_lookup[color_index];
 		}
 
-		scroll_dest += BUFFER_WIDTH;
+		scroll_dest += state->buffer_width;
 		scroll_src += SCROLL_BUFFER_WIDTH;
 	}
 }
@@ -214,7 +214,7 @@ static uint8_t p7_item_type = 0;
 static uint8_t p7_item_count = 0;
 static uint8_t p7_item_scroll_offset = 47;
 
-static void p7_bar_scrollers() {
+static void p7_bar_scrollers(struct remake_state *state) {
 	// PROFILE_FUNCTION();
 // 20 objects before change
 	if(p7_item_scroll_offset++ == 47) {
@@ -225,7 +225,7 @@ static void p7_bar_scrollers() {
 			for(uint32_t x = 0; x < P7_OBJECT_WIDTH; ++x) {
 				dst[x] = *src++;
 			}
-			dst += (BUFFER_WIDTH + P7_OBJECT_WIDTH);
+			dst += (state->buffer_width + P7_OBJECT_WIDTH);
 		}
 
 		if(p7_item_count++ == 19) {
@@ -238,23 +238,23 @@ static void p7_bar_scrollers() {
 	memmove(p7_objects_buffer + 1, p7_objects_buffer, sizeof(p7_objects_buffer)-1);
 
 // both bars render
-	uint32_t *dst0 = buffer + 58 * BUFFER_WIDTH;
-	uint32_t *dst1 = buffer + 230 * BUFFER_WIDTH;
+	uint32_t *dst0 = BUFFER_PTR(state, 0, 58);
+	uint32_t *dst1 = BUFFER_PTR(state, 0, 230);
 	uint8_t *src = p7_objects_buffer + P7_OBJECT_WIDTH;
 	for(uint32_t y = 0; y < 16; ++y) {
-		for(uint32_t x = 0; x < BUFFER_WIDTH; ++x) {
+		for(uint32_t x = 0; x < state->buffer_width; ++x) {
 			uint8_t color_index = src[x];
 			uint32_t color = part7_objects_data->palette[color_index];
 			dst0[x] = color_index ? color : dst0[x];
 			dst1[x] = color_index ? color : dst1[x];
 		}
-		src += BUFFER_WIDTH + P7_OBJECT_WIDTH;
-		dst0 += BUFFER_WIDTH;
-		dst1 += BUFFER_WIDTH;
+		src += state->buffer_width + P7_OBJECT_WIDTH;
+		dst0 += state->buffer_width;
+		dst1 += state->buffer_width;
 	}
 }
 
-static void p7_show_logos() {
+static void p7_show_logos(struct remake_state *state) {
 	// PROFILE_FUNCTION();
 
 
@@ -279,37 +279,37 @@ static void p7_show_logos() {
 
 
 	if(p7_logo_index != -1) {
-		uint32_t logo_x = (BUFFER_WIDTH - p7_logos[p7_logo_index].image->width) >> 1;
-		blit_full(p7_logos[p7_logo_index].image, logo_x, p7_logos[p7_logo_index].logo_y, 0);
+		uint32_t logo_x = (state->buffer_width - p7_logos[p7_logo_index].image->width) >> 1;
+		blit_full(state, p7_logos[p7_logo_index].image, logo_x, p7_logos[p7_logo_index].logo_y, 0);
 	}
 }
 
-static void p7_render_stars() {
-	uint32_t *dst = buffer + 58 * BUFFER_WIDTH;
-	uint32_t star_add = (state.frame_number & 0x1);
+static void p7_render_stars(struct remake_state *state) {
+	uint32_t *dst = BUFFER_PTR(state, 0, 58);
+	uint32_t star_add = (state->frame_number & 0x1);
 	for(uint32_t i = 0; i < 188; ++i) {
 		int32_t x = md1_p7_stars[i] & 0x7ff;
 		if((x >= 0) && (x < 336)) {
 			dst[x] = 0xffffffff;
 		}
-		dst += BUFFER_WIDTH;
+		dst += state->buffer_width;
 		md1_p7_stars[i] += star_add;
 	}
 }
 
-static uint32_t p7_update()  {
+static uint32_t p7_update(struct remake_state *state)  {
 	// PROFILE_NAMED("part7 all");
 
-	if(mkfw_is_button_pressed(window, MOUSE_BUTTON_RIGHT)) {
+	if(mkfw_is_button_pressed(state->window, MOUSE_BUTTON_RIGHT)) {
 		p7_scroll->speed = (p7_scroll->speed == 7) ? 1 : (p7_scroll->speed + 1);
 	}
 
-	p7_render_stars();
+	p7_render_stars(state);
 	scroller(p7_scroll);
-	p7_render_scroll_buffer(p7_scroll);
-	p7_bar_scrollers();
-	p7_show_logos();
+	p7_render_scroll_buffer(state, p7_scroll);
+	p7_bar_scrollers(state);
+	p7_show_logos(state);
 
-	return mkfw_is_button_pressed(window, MOUSE_BUTTON_LEFT);
+	return mkfw_is_button_pressed(state->window, MOUSE_BUTTON_LEFT);
 }
 

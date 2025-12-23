@@ -3,8 +3,6 @@
 
 // [=]===^=[ base setup ]============================================================^===[=]
 
-#define WINDOW_WIDTH 360
-#define WINDOW_HEIGHT 270
 #define BUFFER_WIDTH  (346 << 0)
 #define BUFFER_HEIGHT (270 << 0)
 
@@ -281,7 +279,7 @@ static uint32_t scroll_colors[] = { 0xff55ffff, 0xffbbffff, 0xffffffff, 0xffffff
 // [=]===^=[ global state ]==========================================================^===[=]
 static struct fc14_state remake_song;
 static struct rng_state vf_rand_state;
-static struct rect remake_clip = { (BUFFER_WIDTH - 320) >> 1 , 0, 320, BUFFER_HEIGHT };
+static struct rect remake_clip = { (346 - 320) >> 1 , 0, 320, 270 };
 static struct star_layer layers[4];
 static struct point stars[19+16+13+12];
 static struct scroller_state *vf_scroller;
@@ -295,14 +293,14 @@ static size_t vector_ball_count;
 static size_t offset;
 
 static struct text_line text_lines[] = {
-	{ "                      PRESENTS:                       ", buffer + TEXT_START_X + (127 * BUFFER_WIDTH), DIR_RIGHT_TO_LEFT, STATE_WAITING, str0_color, 0 },
-	{ "                  VISION FACTORY ++                   ", buffer + TEXT_START_X + (136 * BUFFER_WIDTH), DIR_LEFT_TO_RIGHT, STATE_WAITING, str1_color, 0 },
-	{ "----------------------------------------------------- ", buffer + TEXT_START_X + (145 * BUFFER_WIDTH), DIR_RIGHT_TO_LEFT, STATE_WAITING, str2_color, 0 },
-	{ "                   F1 ABORT GAME                      ", buffer + TEXT_START_X + (154 * BUFFER_WIDTH), DIR_LEFT_TO_RIGHT, STATE_WAITING, color_muted, 0 },
-	{ "                   F2 NEXT LEVEL                      ", buffer + TEXT_START_X + (163 * BUFFER_WIDTH), DIR_RIGHT_TO_LEFT, STATE_WAITING, color_muted, 0 },
-	{ "                   F3 UNLIMETED LIVES                 ", buffer + TEXT_START_X + (172 * BUFFER_WIDTH), DIR_LEFT_TO_RIGHT, STATE_WAITING, color_muted, 0 },
-	{ "                   F4 UNLIMETED ENERGY                ", buffer + TEXT_START_X + (181 * BUFFER_WIDTH), DIR_RIGHT_TO_LEFT, STATE_WAITING, color_muted, 0 },
-	{ "----------------------------------------------------- ", buffer + TEXT_START_X + (190 * BUFFER_WIDTH), DIR_LEFT_TO_RIGHT, STATE_WAITING, str7_color, 0 },
+	{ "                      PRESENTS:                       ", 0, DIR_RIGHT_TO_LEFT, STATE_WAITING, str0_color, 0 },
+	{ "                  VISION FACTORY ++                   ", 0, DIR_LEFT_TO_RIGHT, STATE_WAITING, str1_color, 0 },
+	{ "----------------------------------------------------- ", 0, DIR_RIGHT_TO_LEFT, STATE_WAITING, str2_color, 0 },
+	{ "                   F1 ABORT GAME                      ", 0, DIR_LEFT_TO_RIGHT, STATE_WAITING, color_muted, 0 },
+	{ "                   F2 NEXT LEVEL                      ", 0, DIR_RIGHT_TO_LEFT, STATE_WAITING, color_muted, 0 },
+	{ "                   F3 UNLIMETED LIVES                 ", 0, DIR_LEFT_TO_RIGHT, STATE_WAITING, color_muted, 0 },
+	{ "                   F4 UNLIMETED ENERGY                ", 0, DIR_RIGHT_TO_LEFT, STATE_WAITING, color_muted, 0 },
+	{ "----------------------------------------------------- ", 0, DIR_LEFT_TO_RIGHT, STATE_WAITING, str7_color, 0 },
 };
 
 
@@ -346,7 +344,7 @@ static void precalc_rotated_vertices(void) {
 			int16_t screen_x = (cam_z * rotated_x) / distance_from_camera;
 			int16_t screen_y = (cam_z * y) / distance_from_camera;
 
-			screen_x += (BUFFER_WIDTH - 5) >> 1; //154;  // Center horizontally
+			screen_x += (346 - 5) >> 1; //154;  // Center horizontally
 			screen_y += 26 + 7;   // Vertical offset for top logo
 			depth = (depth + 80) >> 3;  // Quantize to 29 layers
 
@@ -382,7 +380,7 @@ static void precalc_rotated_vertices(void) {
 			int16_t screen_x = (cam_z * rotated_x) / distance_from_camera;
 			int16_t screen_y = (cam_z * y) / distance_from_camera;
 
-			screen_x += (BUFFER_WIDTH - 5) >> 1; //154;  // Center horizontally
+			screen_x += (346 - 5) >> 1; //154;  // Center horizontally
 			screen_y += 80 + 7;   // Vertical offset for bottom logo
 			depth = (depth + 80) >> 3;
 
@@ -431,7 +429,7 @@ static void initialize_star_sprites(void) {
 		for(size_t i = 0; i < layers[layer].count; ++i, ++p) {
 			xor_generate_random(&vf_rand_state);
 			xor_generate_random(&vf_rand_state);
-			p->x = ((xor_generate_random(&vf_rand_state) - xor_generate_random(&vf_rand_state)) & 0x1ff) - ((512 - BUFFER_WIDTH) >> 1);
+			p->x = ((xor_generate_random(&vf_rand_state) - xor_generate_random(&vf_rand_state)) & 0x1ff) - ((512 - 346) >> 1);
 			p->y = y + (i * layers[layer].delta_y);
 		}
 	}
@@ -446,14 +444,24 @@ static void remake_audio_callback(int16_t *data, size_t frames) {
 	fc14_get_audio(&remake_song, data, frames);
 }
 
-static void remake_init(struct mkfw_state *window) {
+static void remake_init(struct remake_state *state) {
+	change_resolution(state, BUFFER_WIDTH, BUFFER_HEIGHT);
 	xor_init_rng(&vf_rand_state, 0x34872d9);
 	precalc_rotated_vertices();
 	fc14_initialize(&remake_song, waterproof_data, INCBIN_SIZE(waterproof), 48000);
 	mkfw_audio_callback = remake_audio_callback;
-	mkfw_set_mouse_sensitivity(window, 0.067);
+	mkfw_set_mouse_sensitivity(state->window, 0.067);
 	initialize_star_sprites();
 	vf_scroller = scroller_new(8, 6, 199, 2, scroll_text, font, 0, vf_horizontal_offset);
+
+	text_lines[0].dst_buffer = BUFFER_PTR(state, TEXT_START_X, 127);
+	text_lines[1].dst_buffer = BUFFER_PTR(state, TEXT_START_X, 136);
+	text_lines[2].dst_buffer = BUFFER_PTR(state, TEXT_START_X, 145);
+	text_lines[3].dst_buffer = BUFFER_PTR(state, TEXT_START_X, 154);
+	text_lines[4].dst_buffer = BUFFER_PTR(state, TEXT_START_X, 163);
+	text_lines[5].dst_buffer = BUFFER_PTR(state, TEXT_START_X, 172);
+	text_lines[6].dst_buffer = BUFFER_PTR(state, TEXT_START_X, 181);
+	text_lines[7].dst_buffer = BUFFER_PTR(state, TEXT_START_X, 190);
 }
 
 static void remake_options(struct options *opt) {
@@ -465,7 +473,7 @@ static void remake_options(struct options *opt) {
 
 // [=]===^=[ text rendering ]========================================================^===[=]
 __attribute__((always_inline))
-static inline void render_char(uint32_t *dst, uint8_t c, uint32_t *font_colors) {
+static inline void render_char(struct remake_state *state, uint32_t *dst, uint8_t c, uint32_t *font_colors) {
 	uint8_t *src = font->data + (c - ' ') * 16;
 
 	for(size_t row = 0; row < 6; ++row) {
@@ -475,30 +483,30 @@ static inline void render_char(uint32_t *dst, uint8_t c, uint32_t *font_colors) 
 			color[0] = dst[col];
 			dst[col] = color[val];
 		}
-		dst += BUFFER_WIDTH;
+		dst += state->buffer_width;
 		src += font->width;
 	}
 }
 
-static void render_text_right_to_left(struct text_line *line) {
+static void render_text_right_to_left(struct remake_state *state, struct text_line *line) {
 	for(size_t i = 0; i < 53; ++i) {
-		render_char(line->dst_buffer + 320 - char_movement_array[i][line->frame], line->text[i], line->colors);
+		render_char(state, line->dst_buffer + 320 - char_movement_array[i][line->frame], line->text[i], line->colors);
 	}
 }
 
-static void render_text_left_to_right(struct text_line *line) {
+static void render_text_left_to_right(struct remake_state *state, struct text_line *line) {
 	for(size_t i = 0; i < 53; ++i) {
-		render_char(line->dst_buffer - 8 + char_movement_array[i][line->frame], line->text[53 - i], line->colors);
+		render_char(state, line->dst_buffer - 8 + char_movement_array[i][line->frame], line->text[53 - i], line->colors);
 	}
 }
 
-static void render_text_static(struct text_line *line) {
+static void render_text_static(struct remake_state *state, struct text_line *line) {
 	for(size_t i = 0; i < 53; ++i) {
-		render_char(line->dst_buffer + 320 - char_movement_array[i][29], line->text[i], line->colors);
+		render_char(state, line->dst_buffer + 320 - char_movement_array[i][29], line->text[i], line->colors);
 	}
 }
 
-static uint8_t update_text_animation(void) {
+static uint8_t update_text_animation(struct remake_state *state) {
 	static size_t current_line = 0;
 
 	if(current_line < ARRAYSIZE(text_lines)) {
@@ -508,9 +516,9 @@ static uint8_t update_text_animation(void) {
 			line->state = STATE_ANIMATING;
 		} else if(line->state == STATE_ANIMATING) {
 			if(line->direction == DIR_RIGHT_TO_LEFT) {
-				render_text_right_to_left(line);
+				render_text_right_to_left(state, line);
 			} else {
-				render_text_left_to_right(line);
+				render_text_left_to_right(state, line);
 			}
 
 			line->frame++;
@@ -523,7 +531,7 @@ static uint8_t update_text_animation(void) {
 
 	for(size_t i = 0; i < current_line && i < ARRAYSIZE(text_lines); i++) {
 		if(text_lines[i].state == STATE_STATIC) {
-			render_text_static(&text_lines[i]);
+			render_text_static(state, &text_lines[i]);
 		}
 	}
 
@@ -532,41 +540,41 @@ static uint8_t update_text_animation(void) {
 
 
 // [=]===^=[ graphics rendering ]====================================================^===[=]
-static void show_vector_logo(void) {
+static void show_vector_logo(struct remake_state *state) {
 	int16_t *src = dst_rotated_xy + offset;
 	for(size_t i = 0; i < vector_ball_count; ++i) {
 		int16_t x = *src++;
 		int16_t y = *src++;
-		blit_clipped(vector_ball, x, y, remake_clip, (y < 57) ? top_vector_ball_colors : bottom_vector_ball_colors);
+		blit_clipped(state, vector_ball, x, y, remake_clip, (y < 57) ? top_vector_ball_colors : bottom_vector_ball_colors);
 	}
 }
 
-static void back_plane_star_sprites(void) {
+static void back_plane_star_sprites(struct remake_state *state) {
 	struct point *s = stars;
 
 	for(size_t layer = 0; layer < 2; ++layer) {
 		for(size_t i = 0; i < layers[layer].count; ++i, ++s) {
-			blit_clipped(layers[layer].bob, s->x, s->y, remake_clip, 0);
+			blit_clipped(state, layers[layer].bob, s->x, s->y, remake_clip, 0);
 			s->x += layers[layer].speed_x;
-			if(s->x >= 512) s->x = -((512 - BUFFER_WIDTH) >> 1);
+			if(s->x >= 512) s->x = -((512 - 346) >> 1);
 		}
 	}
 }
 
-static void front_plane_star_sprites(void) {
+static void front_plane_star_sprites(struct remake_state *state) {
 	struct point *s = &stars[19 + 16];
 
 	for(size_t layer = 2; layer < 4; ++layer) {
 		for(size_t i = 0; i < layers[layer].count; ++i, ++s) {
-			blit_clipped(layers[layer].bob, s->x, s->y, remake_clip, 0);
+			blit_clipped(state, layers[layer].bob, s->x, s->y, remake_clip, 0);
 			s->x += layers[layer].speed_x;
-			if(s->x >= 512) s->x = -((512 - BUFFER_WIDTH) >> 1);
+			if(s->x >= 512) s->x = -((512 - 346) >> 1);
 		}
 	}
 }
 
-static void vf_render_scroll_buffer(struct scroller_state *scr_state) {
-	uint32_t *scroll_dest = buffer + scr_state->dest_offset_y * BUFFER_WIDTH + ((BUFFER_WIDTH - 320) >> 1);
+static void vf_render_scroll_buffer(struct remake_state *state, struct scroller_state *scr_state) {
+	uint32_t *scroll_dest = BUFFER_PTR(state, (state->buffer_width - 320) >> 1, scr_state->dest_offset_y);
 	uint8_t *scroll_src = scr_state->buffer;
 	uint32_t color_lookup[4];
 	color_lookup[2] = 0xffffffff;
@@ -581,13 +589,13 @@ static void vf_render_scroll_buffer(struct scroller_state *scr_state) {
 			color_lookup[0] = scroll_dest[j];
 			scroll_dest[j] = color_lookup[color_index];
 		}
-		scroll_dest += BUFFER_WIDTH;
+		scroll_dest += state->buffer_width;
 		scroll_src += SCROLL_BUFFER_WIDTH;
 	}
 }
 
 // [=]===^=[ main frame logic ]======================================================^===[=]
-static void remake_frame(struct mkfw_state *window) {
+static void remake_frame(struct remake_state *state) {
 
 /*
   The screen is 320 pixels wide
@@ -597,47 +605,47 @@ static void remake_frame(struct mkfw_state *window) {
   there is 18 characters before V in vision factory = 144 pixels..
 */
 
-	if(mkfw_is_button_pressed(window, MOUSE_BUTTON_MIDDLE)) {
-		mkfw_set_mouse_cursor(window, mouse_locked);
+	if(mkfw_is_button_pressed(state->window, MOUSE_BUTTON_MIDDLE)) {
+		mkfw_set_mouse_cursor(state->window, mouse_locked);
 		mouse_locked = !mouse_locked;
-		mkfw_constrain_mouse(window, mouse_locked);
+		mkfw_constrain_mouse(state->window, mouse_locked);
 	}
 
-	uint32_t *dst0 = buffer + 6 * BUFFER_WIDTH;
-	uint32_t *dst1 = buffer + 208 * BUFFER_WIDTH;
+	uint32_t *dst0 = BUFFER_PTR(state, 0, 6);
+	uint32_t *dst1 = BUFFER_PTR(state, 0, 208);
 
-	for(size_t i = 0; i < BUFFER_WIDTH; ++i) {
+	for(size_t i = 0; i < state->buffer_width; ++i) {
 		*dst0++ = 0x0000ffff;
 		*dst1++ = 0x0000ffff;
 	}
 
-	back_plane_star_sprites();
+	back_plane_star_sprites(state);
 
 	switch(remake_state) {
 		case STATE_VECTOR_LOGO_APPEAR: {
-			show_vector_logo();
+			show_vector_logo(state);
 			vector_ball_count++;
 			if(vector_ball_count >= 145) {
 				remake_state = STATE_TEXT_ANIMATION;
 			}
-			front_plane_star_sprites();
+			front_plane_star_sprites(state);
 		} break;
 
 		case STATE_TEXT_ANIMATION: {
-			show_vector_logo();
-			front_plane_star_sprites();
+			show_vector_logo(state);
+			front_plane_star_sprites(state);
 
-			if(update_text_animation()) {
+			if(update_text_animation(state)) {
 				remake_state = STATE_DELAY;
 			}
 		} break;
 
 		case STATE_DELAY: {
-			show_vector_logo();
-			front_plane_star_sprites();
+			show_vector_logo(state);
+			front_plane_star_sprites(state);
 
 			for(size_t i = 0; i < ARRAYSIZE(text_lines); i++) {
-				render_text_static(&text_lines[i]);
+				render_text_static(state, &text_lines[i]);
 			}
 
 			static uint8_t delay = 51;
@@ -649,17 +657,17 @@ static void remake_frame(struct mkfw_state *window) {
 		} break;
 
 		case STATE_INTERACTIVE: {
-			show_vector_logo();
+			show_vector_logo(state);
 			offset = (offset == 291*127) ? 0 : offset + 291;
-			front_plane_star_sprites();
+			front_plane_star_sprites(state);
 
 
 			for(size_t i = 0; i < ARRAYSIZE(text_lines); i++) {
-				render_text_static(&text_lines[i]);
+				render_text_static(state, &text_lines[i]);
 			}
 
 			int32_t mouse_dx, mouse_dy;
-			mkfw_get_and_clear_mouse_delta(window, &mouse_dx, &mouse_dy);
+			mkfw_get_and_clear_mouse_delta(state->window, &mouse_dx, &mouse_dy);
 			delta_accumulator += mouse_dy;
 			if(delta_accumulator >= SELECTION_THRESHOLD) {
 				selected_line++;
@@ -681,17 +689,17 @@ static void remake_frame(struct mkfw_state *window) {
 				text_lines[i].colors = (i == selected_line) ? color_selected : color_muted;
 			}
 
-			vf_render_scroll_buffer(vf_scroller);
+			vf_render_scroll_buffer(state, vf_scroller);
 			scroller(vf_scroller);
 		} break;
 	}
 
-	blit_clipped(fraxion, 291, 15, remake_clip, 0);
+	blit_clipped(state, fraxion, 291, 15, remake_clip, 0);
 }
 
 
 // [=]===^=[ shutdown ]==============================================================^===[=]
-static void remake_shutdown(struct mkfw_state *window) {
+static void remake_shutdown(struct remake_state *state) {
 	mkfw_audio_callback = 0;
 	fc14_shutdown(&remake_song);
 }

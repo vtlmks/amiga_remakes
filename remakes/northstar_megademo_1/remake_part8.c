@@ -156,9 +156,9 @@ static void p8_shutdown() {
 	scroller_remove(p8_scroll_4);
 }
 
-static void p8_render_scroll_buffer(struct scroller_state *scr_state) {
+static void p8_render_scroll_buffer(struct remake_state *state, struct scroller_state *scr_state) {
 	// PROFILE_FUNCTION();
-	uint32_t *scroll_dest = buffer + scr_state->dest_offset_y * BUFFER_WIDTH;
+	uint32_t *scroll_dest = BUFFER_PTR(state, 0, scr_state->dest_offset_y);
 	uint8_t *scroll_src = scr_state->buffer;
 	uint32_t inner_color_count = ARRAYSIZE(p8_scroller_inner_colors);
 	uint32_t border_color_count = ARRAYSIZE(p8_scroller_border_colors);
@@ -170,29 +170,29 @@ static void p8_render_scroll_buffer(struct scroller_state *scr_state) {
 		color_lookup[1] = p8_scroller_inner_colors[(p8_real_inner_color_index + i) % inner_color_count];
 		color_lookup[3] = p8_scroller_border_colors[(p8_real_border_color_index + i) % border_color_count];
 
-		for(size_t j = 0; j < BUFFER_WIDTH; ++j) {
+		for(size_t j = 0; j < state->buffer_width; ++j) {
 			size_t src_index = (scr_state->char_render_offset - 370 + j) & (SCROLL_BUFFER_WIDTH - 1);
 			uint8_t color_index = scroll_src[src_index];
 			color_lookup[0] = scroll_dest[j];
 			scroll_dest[j] = color_lookup[color_index];
 		}
 
-		scroll_dest += BUFFER_WIDTH;
+		scroll_dest += state->buffer_width;
 		scroll_src += SCROLL_BUFFER_WIDTH;
 	}
 }
 
-static uint32_t p8_update()  {
+static uint32_t p8_update(struct remake_state *state)  {
 	// PROFILE_NAMED("part8 all");
 
 	scroller(p8_scroll_1);
 	scroller(p8_scroll_2);
 	scroller(p8_scroll_3);
 	scroller(p8_scroll_4);
-	p8_render_scroll_buffer(p8_scroll_1);
-	p8_render_scroll_buffer(p8_scroll_2);
-	p8_render_scroll_buffer(p8_scroll_3);
-	p8_render_scroll_buffer(p8_scroll_4);
+	p8_render_scroll_buffer(state, p8_scroll_1);
+	p8_render_scroll_buffer(state, p8_scroll_2);
+	p8_render_scroll_buffer(state, p8_scroll_3);
+	p8_render_scroll_buffer(state, p8_scroll_4);
 	p8_real_inner_color_index++;
 	p8_real_border_color_index--;
 
@@ -208,16 +208,16 @@ static uint32_t p8_update()  {
 	// mid screen THE END logo  144p to middle
 		struct ugg *end_logo_entry = (struct ugg*)p8_end_logo_entries[p8_the_end_animation_index];
 		uint32_t y_offset = 144 - (end_logo_entry->height >> 1);
-		uint32_t x_offset = (BUFFER_WIDTH>>1) - (end_logo_entry->width >> 1);
-		blit_full(end_logo_entry, x_offset, y_offset, 0);
+		uint32_t x_offset = (state->buffer_width>>1) - (end_logo_entry->width >> 1);
+		blit_full(state, end_logo_entry, x_offset, y_offset, 0);
 
-		if((state.frame_number & 0x1) == 0) {
+		if((state->frame_number & 0x1) == 0) {
 			p8_the_end_animation_index++;
 			p8_the_end_animation_index %= ARRAYSIZE(p8_end_logo_entries);
 		}
 	}
 
-	return mkfw_is_button_pressed(window, MOUSE_BUTTON_LEFT);
+	return mkfw_is_button_pressed(state->window, MOUSE_BUTTON_LEFT);
 }
 
 

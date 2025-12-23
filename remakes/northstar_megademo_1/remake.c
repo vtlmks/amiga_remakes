@@ -3,8 +3,6 @@
 
 // [=]===^=[ base setup ]============================================================^===[=]
 
-#define WINDOW_WIDTH 360
-#define WINDOW_HEIGHT 270
 #define BUFFER_WIDTH  (336 << 0)
 #define BUFFER_HEIGHT (272 << 0)
 
@@ -113,12 +111,13 @@ static void remake_audio_callback(int16_t *data, size_t frames) {
 }
 
 // [=]===^=[ remake_init ]============================================================^===[=]
-static void remake_init(struct mkfw_state *window) {
+static void remake_init(struct remake_state *state) {
+	change_resolution(state, BUFFER_WIDTH, BUFFER_HEIGHT);
 //	set_window_title(remake_title);
 	xor_init_rng(&base_rand, 187481201);
 
-	p1_init();
-	p2_init();
+	p1_init(state);
+	p2_init(state);
 	p4_init();
 	p5_init();
 	p6_init();
@@ -139,7 +138,7 @@ static void remake_init(struct mkfw_state *window) {
 }
 
 // [=]===^=[ remake_shutdown ]============================================================^===[=]
-static void remake_shutdown(struct mkfw_state *window) {
+static void remake_shutdown(struct remake_state *state) {
 	// fc14play_Close();
 	p4_shutdown();
 	p5_shutdown();
@@ -163,7 +162,7 @@ static void remake_shutdown(struct mkfw_state *window) {
 }
 
 
-typedef uint32_t (*update_function)(void);
+typedef uint32_t (*update_function)(struct remake_state *state);
 update_function update_callbacks[] = { p1_update, p2_update, p3_update, p4_update, p5_update, p6_update, p7_update, p8_update, };
 
 void remake_options(struct options *opt) {
@@ -173,7 +172,7 @@ void remake_options(struct options *opt) {
 }
 
 // [=]===^=[ remake_frame ]============================================================^===[=]
-static void remake_frame(struct mkfw_state *window) {
+static void remake_frame(struct remake_state *state) {
 	// PROFILE_FUNCTION();
 
 	// float step = keyboard_state[MKS_KEY_LSHIFT] ? 0.001f : 0.01f;
@@ -201,21 +200,21 @@ static void remake_frame(struct mkfw_state *window) {
 	// state.brightness = fminf(fmaxf(state.brightness, 0.1f), 3.0f);
 
 	for(uint32_t i = '1'; i <= '8'; ++i) {
-		if(mkfw_is_key_pressed(window, i)) {
+		if(mkfw_is_key_pressed(state->window, i)) {
 			active_demo_part = i - '1';
 			break;
 		}
 	}
 
-	if(mkfw_is_key_pressed(window, MKS_KEY_UP) || mkfw_is_key_pressed(window, MKS_KEY_LEFT)) {
+	if(mkfw_is_key_pressed(state->window, MKS_KEY_UP) || mkfw_is_key_pressed(state->window, MKS_KEY_LEFT)) {
 		active_demo_part = (active_demo_part > 0) ? active_demo_part - 1 : 7;
 	}
 
-	if(mkfw_is_key_pressed(window, MKS_KEY_RIGHT) || mkfw_is_key_pressed(window, MKS_KEY_DOWN)) {
+	if(mkfw_is_key_pressed(state->window, MKS_KEY_RIGHT) || mkfw_is_key_pressed(state->window, MKS_KEY_DOWN)) {
 		active_demo_part = (active_demo_part < 7) ? active_demo_part + 1 : 0;
 	}
 
-	if(update_callbacks[active_demo_part]()) {
+	if(update_callbacks[active_demo_part](state)) {
 		active_demo_part = (active_demo_part < 7) ? active_demo_part + 1 : 0;
 	}
 }

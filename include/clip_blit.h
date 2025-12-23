@@ -10,7 +10,7 @@ struct rect {
 };
 
 __attribute__((always_inline))
-static inline void blit_clipped_src_dst(struct ugg *src, struct rect src_rect, int32_t dst_x, int32_t dst_y, struct rect dst_clip, uint32_t *override_palette) {
+static inline void blit_clipped_src_dst(struct remake_state *state, struct ugg *src, struct rect src_rect, int32_t dst_x, int32_t dst_y, struct rect dst_clip, uint32_t *override_palette) {
 	// Clamp source rect to actual image bounds
 	int32_t src_x1 = max(src_rect.x, 0);
 	int32_t src_y1 = max(src_rect.y, 0);
@@ -44,10 +44,10 @@ static inline void blit_clipped_src_dst(struct ugg *src, struct rect src_rect, i
 	int32_t src_offset_x = src_x1 + (x1 - dst_x1);
 	int32_t src_offset_y = src_y1 + (y1 - dst_y1);
 	uint8_t * restrict data = src->data + src_offset_y * src->width + src_offset_x;
-	uint32_t * restrict dst = buffer + y1 * BUFFER_WIDTH + x1;
+	uint32_t * restrict dst = state->buffer + y1 * state->buffer_width + x1;
 	uint32_t *palette = override_palette ? override_palette : src->palette;
 
-	for(uint32_t y = 0; y < blit_height; y++, data += src->width, dst += BUFFER_WIDTH) {
+	for(uint32_t y = 0; y < blit_height; y++, data += src->width, dst += state->buffer_width) {
 		for(uint32_t x = 0; x < blit_width; x++) {
 			uint8_t val = data[x];
 			palette[0] = dst[x];
@@ -57,21 +57,20 @@ static inline void blit_clipped_src_dst(struct ugg *src, struct rect src_rect, i
 }
 
 __attribute__((always_inline))
-static inline void blit_clipped(struct ugg *src, int32_t dst_x, int32_t dst_y, struct rect clip_rect, uint32_t *override_palette) {
+static inline void blit_clipped(struct remake_state *state, struct ugg *src, int32_t dst_x, int32_t dst_y, struct rect clip_rect, uint32_t *override_palette) {
 	struct rect src_rect = { 0, 0, src->width, src->height };
-	blit_clipped_src_dst(src, src_rect, dst_x, dst_y, clip_rect, override_palette);
+	blit_clipped_src_dst(state, src, src_rect, dst_x, dst_y, clip_rect, override_palette);
 }
 
 __attribute__((always_inline))
-static inline void blit_full(struct ugg *src, int32_t dst_x, int32_t dst_y, uint32_t *override_palette) {
+static inline void blit_full(struct remake_state *state, struct ugg *src, int32_t dst_x, int32_t dst_y, uint32_t *override_palette) {
 	struct rect src_rect = { 0, 0, src->width, src->height };
-	struct rect dst_rect = { 0, 0, BUFFER_WIDTH, BUFFER_HEIGHT };
-	blit_clipped_src_dst(src, src_rect, dst_x, dst_y, dst_rect, override_palette);
+	struct rect dst_rect = { 0, 0, state->buffer_width, state->buffer_height };
+	blit_clipped_src_dst(state, src, src_rect, dst_x, dst_y, dst_rect, override_palette);
 }
 
 __attribute__((always_inline))
-static inline void blit_full_src_dst(struct ugg *src, struct rect src_rect, int32_t dst_x, int32_t dst_y, uint32_t *override_palette) {
-	struct rect dst_rect = { 0, 0, BUFFER_WIDTH, BUFFER_HEIGHT };
-	blit_clipped_src_dst(src, src_rect, dst_x, dst_y, dst_rect, override_palette);
+static inline void blit_full_src_dst(struct remake_state *state, struct ugg *src, struct rect src_rect, int32_t dst_x, int32_t dst_y, uint32_t *override_palette) {
+	struct rect dst_rect = { 0, 0, state->buffer_width, state->buffer_height };
+	blit_clipped_src_dst(state, src, src_rect, dst_x, dst_y, dst_rect, override_palette);
 }
-

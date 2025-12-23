@@ -756,18 +756,18 @@ static uint8_t text[] = {
 
 uint32_t stepping = 0;
 uint32_t obj = 0;
-static uint8_t update(void) {
+static uint8_t update(struct remake_state *state) {
 	uint32_t n_coords = objects[obj].count;
 	int16_t *object = objects[obj].vec_obj;
 	transform_and_project(object, vec_coords, n_coords, ax, ay, az);
 	sort_vec_coord(vec_coords, n_coords);
 
-	struct rect clip_area = { 0, 34, state.render_width, 204 };
+	struct rect clip_area = { 0, 34, state->buffer_width, 204 };
 	for(uint32_t i = 0; i < n_coords; ++i) {
 		// PROFILE_NAMED("bob_vector");
 		uint8_t object = vec_coords[i].object;
 		uint32_t width_over_two = bobs[object]->width >> 1;
-		blit_clipped(bobs[object], vec_coords[i].x - width_over_two, (vec_coords[i].y - width_over_two), clip_area, 0);
+		blit_clipped(state, bobs[object], vec_coords[i].x - width_over_two, (vec_coords[i].y - width_over_two), clip_area, 0);
 
 		// blit_8bit_to_32bit_lut_avx2_transparent_clipped(bobs[object], bobs[object]->palette, vec_coords[i].x - width_over_two, (vec_coords[i].y - width_over_two), clip_area);
 	}
@@ -809,15 +809,15 @@ static uint8_t update(void) {
 
 	if(mkfw_is_key_pressed(window, MKS_KEY_M)) stepping = !stepping;
 
-	if(mkfw_is_key_pressed(window, MKS_KEY_A)) state.persistence_decay = 0.02f;
-	if(mkfw_is_key_pressed(window, MKS_KEY_B)) state.persistence_decay = 0.04f;
-	if(mkfw_is_key_pressed(window, MKS_KEY_C)) state.persistence_decay = 0.06f;
-	if(mkfw_is_key_pressed(window, MKS_KEY_D)) state.persistence_decay = 0.08f;
-	if(mkfw_is_key_pressed(window, MKS_KEY_E)) state.persistence_decay = 0.10f;
-	if(mkfw_is_key_pressed(window, MKS_KEY_F)) state.persistence_decay = 0.12f;
-	if(mkfw_is_key_pressed(window, MKS_KEY_G)) state.persistence_decay = 0.14f;
-	if(mkfw_is_key_pressed(window, MKS_KEY_H)) state.persistence_decay = 0.17f;
-	if(mkfw_is_key_pressed(window, MKS_KEY_I)) state.persistence_decay = 0.80f;
+	if(mkfw_is_key_pressed(window, MKS_KEY_A)) state->persistence_decay = 0.02f;
+	if(mkfw_is_key_pressed(window, MKS_KEY_B)) state->persistence_decay = 0.04f;
+	if(mkfw_is_key_pressed(window, MKS_KEY_C)) state->persistence_decay = 0.06f;
+	if(mkfw_is_key_pressed(window, MKS_KEY_D)) state->persistence_decay = 0.08f;
+	if(mkfw_is_key_pressed(window, MKS_KEY_E)) state->persistence_decay = 0.10f;
+	if(mkfw_is_key_pressed(window, MKS_KEY_F)) state->persistence_decay = 0.12f;
+	if(mkfw_is_key_pressed(window, MKS_KEY_G)) state->persistence_decay = 0.14f;
+	if(mkfw_is_key_pressed(window, MKS_KEY_H)) state->persistence_decay = 0.17f;
+	if(mkfw_is_key_pressed(window, MKS_KEY_I)) state->persistence_decay = 0.80f;
 
 	return 0;
 }

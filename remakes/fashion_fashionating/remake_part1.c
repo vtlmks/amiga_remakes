@@ -165,7 +165,7 @@ static struct point p1_bling_sprite_locations[] = {
 struct animationstep {
 	uint32_t startFrame;
 	uint32_t endFrame;	// Inclusive
-	void (*renderFunction)(uint32_t);
+	void (*renderFunction)(struct remake_state *, uint32_t);
 };
 
 static void part_1_init(void) {
@@ -173,12 +173,12 @@ static void part_1_init(void) {
 	p1_temp_buffer = (uint8_t*)malloc((352 + p1_presents_fashionating->width) * 15);
 }
 
-static void render_blinking_cursor(uint32_t frame);
-static void render_repositioned_blinking_cursor(uint32_t frame);
-static void render_type_load_command(uint32_t frame);
-static void render_search_and_load_text(uint32_t frame);
-static void render_type_run_command(uint32_t frame);
-static void finalize_animation_sequence(uint32_t frame);
+static void render_blinking_cursor(struct remake_state *state, uint32_t frame);
+static void render_repositioned_blinking_cursor(struct remake_state *state, uint32_t frame);
+static void render_type_load_command(struct remake_state *state, uint32_t frame);
+static void render_search_and_load_text(struct remake_state *state, uint32_t frame);
+static void render_type_run_command(struct remake_state *state, uint32_t frame);
+static void finalize_animation_sequence(struct remake_state *state, uint32_t frame);
 
 // Array of animation steps (sentinel value at the end)
 static const struct  animationstep animationSteps[] = {
@@ -192,17 +192,17 @@ static const struct  animationstep animationSteps[] = {
 	{  -1,  -1, 0 }														// Sentinel value to mark the end of the array
 };
 
-static void c64_effect(void) {
+static void c64_effect(struct remake_state *state) {
 	// Fill background with the first color in the palette
-	uint32_t *dst = buffer;
+	uint32_t *dst = state->buffer;
 	uint32_t color = c64_colors_load_run[0];
-	for(uint32_t i = 0; i < BUFFER_WIDTH * BUFFER_HEIGHT; ++i) {
+	for(uint32_t i = 0; i < state->buffer_width * state->buffer_height; ++i) {
 		*dst++ = color;
 	}
 
 	// Calculate offset for centering C64 screen data
-	uint32_t skip = (BUFFER_WIDTH - p1_c64_screen->width);
-	dst = buffer + 28 * BUFFER_WIDTH + skip / 2;
+	uint32_t skip = (state->buffer_width - p1_c64_screen->width);
+	dst = BUFFER_PTR(state, skip / 2, 28);
 
 	// Copy C64 screen data with color lookups
 	uint8_t *src = p1_c64_screen->data;
@@ -217,38 +217,38 @@ static void c64_effect(void) {
 	int i = 0;
 	do {
 		if(p1_frame >= animationSteps[i].startFrame && p1_frame <= animationSteps[i].endFrame) {
-			animationSteps[i].renderFunction(p1_frame);
+			animationSteps[i].renderFunction(state, p1_frame);
 		}
 		i++;
 	} while (animationSteps[i].startFrame != -1);  // Check sentinel value
 }
 
-static void render_blinking_square(uint32_t onoff, uint32_t *dst) {
+static void render_blinking_square(struct remake_state *state, uint32_t onoff, uint32_t *dst) {
 	uint32_t color = c64_colors_load_run[onoff];
 	for(uint32_t y = 0; y < 8; ++y) {
 		uint32_t *row = dst;
 		for(uint32_t x = 0; x < 8; ++x) {
 			*row++ = color;
 		}
-		dst += BUFFER_WIDTH;
+		dst += state->buffer_width;
 	}
 }
 
-static void render_blinking_cursor(uint32_t frame) {
-	uint32_t skip = (BUFFER_WIDTH - p1_c64_screen->width);
-	uint32_t *dst = (buffer + (28 + 48) * BUFFER_WIDTH + 20 + (skip / 2));
-	render_blinking_square((frame >> 4) & 1, dst);
+static void render_blinking_cursor(struct remake_state *state, uint32_t frame) {
+	uint32_t skip = (state->buffer_width - p1_c64_screen->width);
+	uint32_t *dst = BUFFER_PTR(state, 20 + (skip / 2), 28 + 48);
+	render_blinking_square(state, (frame >> 4) & 1, dst);
 }
 
-static void render_repositioned_blinking_cursor(uint32_t frame) {
-	uint32_t skip = (BUFFER_WIDTH - p1_c64_screen->width);
-	uint32_t *dst = (buffer + (92 + 24) * BUFFER_WIDTH + 20 + (skip / 2));
-	render_blinking_square((frame >> 4) & 1, dst);
+static void render_repositioned_blinking_cursor(struct remake_state *state, uint32_t frame) {
+	uint32_t skip = (state->buffer_width - p1_c64_screen->width);
+	uint32_t *dst = BUFFER_PTR(state, 20 + (skip / 2), 92 + 24);
+	render_blinking_square(state, (frame >> 4) & 1, dst);
 }
 
-static void render_type_load_command(uint32_t frame) {
-	uint32_t skip = (BUFFER_WIDTH - p1_c64_screen->width);
-	uint32_t *dst = (buffer + (28 + 48) * BUFFER_WIDTH + 20 + (skip / 2));
+static void render_type_load_command(struct remake_state *state, uint32_t frame) {
+	uint32_t skip = (state->buffer_width - p1_c64_screen->width);
+	uint32_t *dst = BUFFER_PTR(state, 20 + (skip / 2), 28 + 48);
 	uint8_t *src = p1_c64_loading_run->data;
 
 	for(uint32_t y = 0; y < 8; ++y) {
@@ -257,14 +257,14 @@ static void render_type_load_command(uint32_t frame) {
 		for(uint32_t x = 0; x < 7 * ((p1_frame - 256) >> 3); ++x) {
 			*row++ = c64_colors_load_run[*source++];
 		}
-		dst += BUFFER_WIDTH;
+		dst += state->buffer_width;
 		src += p1_c64_loading_run->width;
 	}
 }
 
-static void render_search_and_load_text(uint32_t frame) {
-	uint32_t skip = (BUFFER_WIDTH - p1_c64_screen->width);
-	uint32_t *dst = (buffer + 76 * BUFFER_WIDTH + 20 + (skip / 2));
+static void render_search_and_load_text(struct remake_state *state, uint32_t frame) {
+	uint32_t skip = (state->buffer_width - p1_c64_screen->width);
+	uint32_t *dst = BUFFER_PTR(state, 20 + (skip / 2), 76);
 	uint8_t *src = p1_c64_loading_run->data;
 
 	for(uint32_t y = 0; y < 8; ++y) {
@@ -273,25 +273,25 @@ static void render_search_and_load_text(uint32_t frame) {
 		for(uint32_t x = 0; x < p1_c64_loading_run->width; ++x) {
 			*row++ = c64_colors_load_run[*source++];
 		}
-		dst += BUFFER_WIDTH;
+		dst += state->buffer_width;
 		src += p1_c64_loading_run->width;
 	}
 
-	dst = (buffer + 92 * BUFFER_WIDTH + 20 + (skip / 2));
+	dst = BUFFER_PTR(state, 20 + (skip / 2), 92);
 	for(uint32_t y = 0; y < 16; ++y) {
 		uint32_t *row = dst;
 		uint8_t *source = src;
 		for(uint32_t x = 0; x < p1_c64_loading_run->width; ++x) {
 			*row++ = c64_colors_load_run[*source++];
 		}
-		dst += BUFFER_WIDTH;
+		dst += state->buffer_width;
 		src += p1_c64_loading_run->width;
 	}
 }
 
-static void render_type_run_command(uint32_t frame) {
-	uint32_t skip = (BUFFER_WIDTH - p1_c64_screen->width);
-	uint32_t *dst = (buffer + (92 + 24) * BUFFER_WIDTH + 20 + (skip / 2));
+static void render_type_run_command(struct remake_state *state, uint32_t frame) {
+	uint32_t skip = (state->buffer_width - p1_c64_screen->width);
+	uint32_t *dst = BUFFER_PTR(state, 20 + (skip / 2), 92 + 24);
 	uint8_t *src = p1_c64_loading_run->data + 32 * p1_c64_loading_run->width;
 
 	for(uint32_t y = 0; y < 8; ++y) {
@@ -300,14 +300,14 @@ static void render_type_run_command(uint32_t frame) {
 		for(uint32_t x = 0; x < 7 * ((frame - 860) >> 3); ++x) {
 			*row++ = c64_colors_load_run[*source++];
 		}
-		dst += BUFFER_WIDTH;
+		dst += state->buffer_width;
 		src += p1_c64_loading_run->width;
 	}
 }
 
-static void finalize_animation_sequence(uint32_t frame) {
-	uint32_t skip = (BUFFER_WIDTH - p1_c64_screen->width);
-	uint32_t *dst = (buffer + 76 * BUFFER_WIDTH + 20 + (skip / 2));
+static void finalize_animation_sequence(struct remake_state *state, uint32_t frame) {
+	uint32_t skip = (state->buffer_width - p1_c64_screen->width);
+	uint32_t *dst = BUFFER_PTR(state, 20 + (skip / 2), 76);
 	uint8_t *src = p1_c64_loading_run->data;
 
 	for(uint32_t y = 0; y < 8; ++y) {
@@ -316,29 +316,29 @@ static void finalize_animation_sequence(uint32_t frame) {
 		for(uint32_t x = 0; x < p1_c64_loading_run->width; ++x) {
 			*row++ = c64_colors_load_run[*source++];
 		}
-		dst += BUFFER_WIDTH;
+		dst += state->buffer_width;
 		src += p1_c64_loading_run->width;
 	}
 
-	dst = (buffer + 92 * BUFFER_WIDTH + 20 + (skip / 2));
+	dst = BUFFER_PTR(state, 20 + (skip / 2), 92);
 	for(uint32_t y = 0; y < 24; ++y) {
 		uint32_t *row = dst;
 		uint8_t *source = src;
 		for(uint32_t x = 0; x < p1_c64_loading_run->width; ++x) {
 			*row++ = c64_colors_load_run[*source++];
 		}
-		dst += BUFFER_WIDTH;
+		dst += state->buffer_width;
 		src += p1_c64_loading_run->width;
 	}
 }
 
 // [=]===^=====================================================================================^===[=]
-static void decrunchEffect(void) {
-	uint32_t *dest = buffer;
+static void decrunchEffect(struct remake_state *state) {
+	uint32_t *dest = state->buffer;
 	uint32_t temp_color_index = color_index++;
 	uint32_t temp_color = c64_colors[temp_color_index & 0xf];
-	uint32_t total_pixels = BUFFER_WIDTH * BUFFER_HEIGHT;
-	uint32_t set_size = 9 * BUFFER_WIDTH + ((temp_color_index % 3) * BUFFER_WIDTH);
+	uint32_t total_pixels = state->buffer_width * state->buffer_height;
+	uint32_t set_size = 9 * state->buffer_width + ((temp_color_index % 3) * state->buffer_width);
 	uint32_t i = 0;
 
 	for(i = 0; i < (set_size - (pixel_counter % set_size)); ++i) {
@@ -350,7 +350,7 @@ static void decrunchEffect(void) {
 
 	for(;;) {
 		temp_color = c64_colors[++temp_color_index % 0xf];
-		set_size = 5 * BUFFER_WIDTH + ((temp_color_index % 10) * BUFFER_WIDTH);
+		set_size = 5 * state->buffer_width + ((temp_color_index % 10) * state->buffer_width);
 
 		if(total_pixels < set_size) {
 			for(i = 0; i < total_pixels; ++i) {
@@ -369,7 +369,7 @@ static void decrunchEffect(void) {
 }
 
 // [=]===^=====================================================================================^===[=]
-static void p1_scroller(void) {
+static void p1_scroller(struct remake_state *state) {
 	static uint8_t *scroll_text_ptr = p1_scroll_text;
 	static uint32_t count = 96;
 
@@ -413,33 +413,33 @@ static void p1_scroller(void) {
 		*scr_dst++ = *scr_src++;
 	}
 
-	uint32_t *data = buffer + P1_SCROLLER_Y_START * BUFFER_WIDTH;
+	uint32_t *data = BUFFER_PTR(state, 0, P1_SCROLLER_Y_START);
 
-	uint8_t *source = p1_scroll_buffer + CENTER_X(p1_scroll_buffer_width);
+	uint8_t *source = p1_scroll_buffer + CENTER_X(state, p1_scroll_buffer_width);
 	uint32_t *dest = data;
 
 	uint32_t max_lines = 18;
-	if(P1_SCROLLER_Y_START + max_lines > BUFFER_HEIGHT) {
-		max_lines = BUFFER_HEIGHT - P1_SCROLLER_Y_START;
+	if(P1_SCROLLER_Y_START + max_lines > state->buffer_height) {
+		max_lines = state->buffer_height - P1_SCROLLER_Y_START;
 	}
 
 	for(uint32_t y = 0; y < max_lines; ++y) {
 		uint32_t *row = dest;
 		uint32_t color = scroll_colors[y];
 
-		for(uint32_t x = 0; x < BUFFER_WIDTH; ++x) {
+		for(uint32_t x = 0; x < state->buffer_width; ++x) {
 			if(source[x]) {
 				row[x] = color;
 			}
 		}
 		source += p1_scroll_buffer_width * 2;
-		dest += BUFFER_WIDTH;
+		dest += state->buffer_width;
 	}
 
 	count++;
 }
 
-static uint32_t part_1_render(void) {
+static uint32_t part_1_render(struct remake_state *state) {
 	static uint32_t decrunchTime = 256;
 	static float accumulator = 0.f;
 	static uint32_t cursorCounter = 0;
@@ -451,11 +451,11 @@ static uint32_t part_1_render(void) {
 	// accumulator += dt;
 
 	if(p1_frame < 906) {
-		c64_effect();
+		c64_effect(state);
 	}
 
 	if(p1_frame >= 906 && p1_frame < 1092) {
-		decrunchEffect();
+		decrunchEffect(state);
 	}
 
 	if(p1_frame == 1100) {
@@ -495,34 +495,34 @@ static uint32_t part_1_render(void) {
 		 *  Stars
 		 */
 		if(!p1_initialized) {
-			uint32_t offset = BUFFER_WIDTH + 30;
-			for(uint32_t i = 0; i < BUFFER_HEIGHT; ++i) {
-				p1_stars[i] = offset + xor_generate_random(&rand_state) % (BUFFER_WIDTH + 30);
+			uint32_t offset = state->buffer_width + 30;
+			for(uint32_t i = 0; i < state->buffer_height; ++i) {
+				p1_stars[i] = offset + xor_generate_random(&rand_state) % (state->buffer_width + 30);
 			}
 			p1_initialized = 1;
 		}
 
-		uint32_t *row = buffer;
-		for(uint32_t i = 0; i < BUFFER_HEIGHT; ++i) {
+		uint32_t *row = state->buffer;
+		for(uint32_t i = 0; i < state->buffer_height; ++i) {
 			uint32_t offs = p1_stars[i];
 
-			if((offs > 0) & (offs < BUFFER_WIDTH)) {
+			if((offs > 0) & (offs < state->buffer_width)) {
 				*(row + offs) = p1_star_colors[(i % 4)];
 			}
 
 			p1_stars[i] -= (1 + (i % 4));
 			if(p1_stars[i] <= 0) {
-				p1_stars[i] += BUFFER_WIDTH + 30;
+				p1_stars[i] += state->buffer_width + 30;
 			}
 
-			row += BUFFER_WIDTH;
+			row += state->buffer_width;
 		}
 
 		/*
 		 *  Logo
 		 */
 		uint32_t p1_rotating_logo_frame_height = p1_rotating_logo->height / p1_rotating_logo_steps;
-		uint32_t *data = buffer + P1_ROTATING_LOGO_Y_START * BUFFER_WIDTH + ((BUFFER_WIDTH - p1_rotating_logo->width) / 2);
+		uint32_t *data = BUFFER_PTR(state, (state->buffer_width - p1_rotating_logo->width) / 2, P1_ROTATING_LOGO_Y_START);
 		uint8_t *src = p1_rotating_logo->data + 2 * p1_rotating_logo->width + (((rotatingLogoStep / 2) % p1_rotating_logo_steps) * p1_rotating_logo->width * p1_rotating_logo_frame_height);
 		for(uint32_t y = 0; y < p1_rotating_logo_frame_height - 6; ++y) {
 			row = data;
@@ -532,7 +532,7 @@ static uint32_t part_1_render(void) {
 				}
 				++row;
 			}
-			data += BUFFER_WIDTH;
+			data += state->buffer_width;
 		}
 	}
 
@@ -552,18 +552,18 @@ static uint32_t part_1_render(void) {
 
 		memset(p1_temp_buffer, 0, (352 + p1_presents_fashionating->width) * 15);
 		source = p1_presents_fashionating->data;
-		dest = p1_temp_buffer + BUFFER_WIDTH - (p1_presents_counter * 15);
+		dest = p1_temp_buffer + state->buffer_width - (p1_presents_counter * 15);
 		for(uint32_t y = 0; y < 14; ++y) {
 			for(uint32_t x = 0; x < p1_presents_fashionating->width; ++x) {
 				*dest++ = *source++;
 			}
-			dest += BUFFER_WIDTH;
+			dest += state->buffer_width;
 		}
 
 		source = p1_temp_buffer;
-		row = buffer + P1_PRESENTS_Y_START * BUFFER_WIDTH;
+		row = BUFFER_PTR(state, 0, P1_PRESENTS_Y_START);
 		for(uint32_t y = 0; y < 14; ++y) {
-			for(uint32_t x = 0; x < BUFFER_WIDTH; ++x) {
+			for(uint32_t x = 0; x < state->buffer_width; ++x) {
 				if(*source++) {
 					*row = p1_presents_colors[y];
 				}
@@ -579,13 +579,13 @@ static uint32_t part_1_render(void) {
 			for(uint32_t x = 0; x < p1_presents_fashionating->width; ++x) {
 				*dest++ = *source++;
 			}
-			dest += BUFFER_WIDTH;
+			dest += state->buffer_width;
 		}
 
 		source = p1_temp_buffer + p1_presents_fashionating->width;
-		row = buffer + P1_FASHIONATING_Y_START * BUFFER_WIDTH;
+		row = BUFFER_PTR(state, 0, P1_FASHIONATING_Y_START);
 		for(uint32_t y = 0; y < 14; ++y) {
-			for(uint32_t x = 0; x < BUFFER_WIDTH; ++x) {
+			for(uint32_t x = 0; x < state->buffer_width; ++x) {
 				if(*source++) {
 					*row = p1_fashionating_colors[y];
 				}
@@ -600,7 +600,7 @@ static uint32_t part_1_render(void) {
 	 * scroller
 	 */
 	if(p1_frame >= 1940) {
-		p1_scroller();
+		p1_scroller(state);
 
 		/*
 		 * Render Bling stars
@@ -615,7 +615,7 @@ static uint32_t part_1_render(void) {
 		if(p1_bling_star_phase_index) {
 
 			uint8_t *src = p3_stars->data + p1_bling_star_phases[p1_bling_star_phase_index] * 15;
-			uint32_t *dest = buffer + (BUFFER_WIDTH * p1_bling_sprite_locations[p1_bling_pos_index].y + p1_bling_sprite_locations[p1_bling_pos_index].x);
+			uint32_t *dest = BUFFER_PTR(state, p1_bling_sprite_locations[p1_bling_pos_index].x, p1_bling_sprite_locations[p1_bling_pos_index].y);
 			for(uint32_t y = 0; y < p3_stars->height; ++y) {
 				uint32_t *row = dest;
 				for(uint32_t x = 0; x < p3_stars->height; ++x) {
@@ -625,7 +625,7 @@ static uint32_t part_1_render(void) {
 					++src;
 					++row;
 				}
-				dest += BUFFER_WIDTH;
+				dest += state->buffer_width;
 				src += p3_stars->width - p3_stars->height;
 
 			}

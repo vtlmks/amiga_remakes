@@ -3,8 +3,6 @@
 
 // [=]===^=[ base setup ]============================================================^===[=]
 
-#define WINDOW_WIDTH 360
-#define WINDOW_HEIGHT 270
 #define BUFFER_WIDTH  (346 << 0)
 #define BUFFER_HEIGHT (270 << 0)
 
@@ -38,7 +36,9 @@ static void remake_audio_callback(int16_t *data, size_t frames) {
 }
 
 // [=]===^=[ remake_init ]============================================================^===[=]
-static void remake_init(struct mkfw_state *window) {
+static void remake_init(struct remake_state *state) {
+	change_resolution(state, BUFFER_WIDTH, BUFFER_HEIGHT);
+
 	// mkfw_set_window_title(remake_title);
 	// int mod_size = _2d6_end - _2d6_data;
 	// micromod_initialise(&ctx, (signed char*)_2d6_data, 48000);
@@ -56,19 +56,19 @@ static void remake_options(struct options *opt) {
 }
 
 // [=]===^=[ remake_frame ]============================================================^===[=]
-static void remake_frame(struct mkfw_state *window) {
-	uint32_t *dst1 = buffer + 33 * BUFFER_WIDTH;
-	uint32_t *dst2 = buffer + 238 * BUFFER_WIDTH;
-	for(uint32_t i = 0; i < state.render_width; ++i) {
+static void remake_frame(struct remake_state *state) {
+	uint32_t *dst1 = BUFFER_PTR(state, 0, 33);
+	uint32_t *dst2 = BUFFER_PTR(state, 0, 238);
+	for(uint32_t i = 0; i < state->buffer_width; ++i) {
 		*dst1++ = 0x000099ff;
 		*dst2++ = 0x000099ff;
 	}
-	update();
+	update(state);
 }
 
 // [=]===^=[ remake_shutdown ]============================================================^===[=]
-static void remake_shutdown(struct mkfw_state *window) {
-	mkfw_audio_callback =0;
+static void remake_shutdown(struct remake_state *state) {
+	mkfw_audio_callback = 0;
 	// fc14play_Close();
 }
 

@@ -3,8 +3,6 @@
 
 // [=]===^=[ base setup ]============================================================^===[=]
 
-#define WINDOW_WIDTH 360
-#define WINDOW_HEIGHT 270
 #define BUFFER_WIDTH  (346 << 0)
 #define BUFFER_HEIGHT (270 << 0)
 
@@ -123,7 +121,7 @@ struct rng_state base_rand;
 
 static struct scroller_state *scroll_state;
 
-static struct rect clip_rect = { 0, 44, BUFFER_WIDTH, 130 };
+static struct rect clip_rect = { 0, 44, 346, 130 };
 
 enum af_state {
 	STATE_WAIT_LOGO,
@@ -164,11 +162,13 @@ static size_t get_font_offset(struct scroller_state *scr_state, uint8_t char_ind
 }
 
 // [=]===^=[ remake_init ]============================================================^===[=]
-static void remake_init(struct mkfw_state *window) {
+static void remake_init(struct remake_state *state) {
+	change_resolution(state, BUFFER_WIDTH, BUFFER_HEIGHT);
+
 	xor_init_rng(&base_rand, 187481201);
 
 	for(size_t i = 0; i < 95; ++i) {
-		stars[i] = xor_generate_random(&base_rand) % BUFFER_WIDTH;
+		stars[i] = xor_generate_random(&base_rand) % state->buffer_width;
 	}
 
 	for(size_t pixel = 0; pixel < 452 * 5; ++pixel) {
@@ -188,8 +188,8 @@ static void remake_options(struct options *opt) {
 	opt->window_title = "Alpha Flight - Dirty Rotten Intro 1992-10\0";
 }
 
-static void af_render_scroll_buffer(struct scroller_state *scr_state) {
-	uint32_t *scroll_dest = buffer + scr_state->dest_offset_y * BUFFER_WIDTH;
+static void af_render_scroll_buffer(struct remake_state *state, struct scroller_state *scr_state) {
+	uint32_t *scroll_dest = BUFFER_PTR(state, 0, scr_state->dest_offset_y);
 	uint8_t *scroll_src = scr_state->buffer;
 
 	// NOTE(peter): Copper colors start off-screen, 70 is first visible color on screen
@@ -197,37 +197,37 @@ static void af_render_scroll_buffer(struct scroller_state *scr_state) {
 
 	size_t base_src_index = (scr_state->char_render_offset - 370) & (SCROLL_BUFFER_WIDTH - 1);
 	for(size_t i = 0; i < scr_state->char_height; ++i) {
-		for(size_t j = 0; j < BUFFER_WIDTH; ++j) {
+		for(size_t j = 0; j < state->buffer_width; ++j) {
 			size_t src_index = (base_src_index + j) & (SCROLL_BUFFER_WIDTH - 1);
 			uint8_t color_index = scroll_src[src_index];
 			if(!color_index) continue;
 
 			scroll_dest[j] = color[j];
 		}
-		scroll_dest += BUFFER_WIDTH;
+		scroll_dest += state->buffer_width;
 		scroll_src += SCROLL_BUFFER_WIDTH;
 		color += 452;
 	}
 }
 
-static void render_background(void) {
-	uint32_t *dst = buffer;
+static void render_background(struct remake_state *state) {
+	uint32_t *dst = state->buffer;
 	// Top grey area (43 scanlines)
-	for(size_t i = 0; i < 43 * BUFFER_WIDTH; ++i) {
+	for(size_t i = 0; i < 43 * state->buffer_width; ++i) {
 		*dst++ = 0x555555ff;
 	}
 	// Blue separator line (scanline 44)
-	for(size_t i = 0 ; i < BUFFER_WIDTH; ++i) {
+	for(size_t i = 0 ; i < state->buffer_width; ++i) {
 		*dst++ = 0x7777ffff;
 	}
 
 	// Blue separator line (scanline 174)
-	dst = buffer + 174 * BUFFER_WIDTH;
-	for(size_t i = 0 ; i < BUFFER_WIDTH; ++i) {
+	dst = BUFFER_PTR(state, 0, 174);
+	for(size_t i = 0 ; i < state->buffer_width; ++i) {
 		*dst++ = 0x7777ffff;
 	}
 	// Bottom grey area (95 scanlines)
-	for(size_t i = 0; i < 95 * BUFFER_WIDTH; ++i) {
+	for(size_t i = 0; i < 95 * state->buffer_width; ++i) {
 		*dst++ = 0x555555ff;
 	}
 }
@@ -250,27 +250,27 @@ static void fade_star_color(void) {
 	}
 }
 
-static void render_stars(void) {
-	uint32_t *dst = buffer + 45 * BUFFER_WIDTH;	// Start below blue line
+static void render_stars(struct remake_state *state) {
+	uint32_t *dst = BUFFER_PTR(state, 0, 45);	// Start below blue line
 	for(size_t i = 0; i < NUM_STARS; ++i) {
 		dst[stars[i]] = star_color;
-		dst += 2*BUFFER_WIDTH;
+		dst += 2*state->buffer_width;
 		stars[i] += star_speeds[i] << 1;
-		if(stars[i] > BUFFER_WIDTH) stars[i] -= BUFFER_WIDTH;
+		if(stars[i] > state->buffer_width) stars[i] -= state->buffer_width;
 	}
 }
 
 // [=]===^=[ remake_frame ]============================================================^===[=]
-static void remake_frame(struct mkfw_state *window) {
+static void remake_frame(struct remake_state *state) {
 
 	scroller(scroll_state);
-	render_background();
-	render_stars();
+	render_background(state);
+	render_stars(state);
 
 	switch(af_remake_state) {
 		case STATE_WAIT_LOGO: {
-			blit_clipped(alpha_flight_logo, CENTER_X(alpha_flight_logo->width), logo_y, clip_rect, 0);
-			if(state.frame_number & 1) {
+			blit_clipped(state, alpha_flight_logo, CENTER_X(state, alpha_flight_logo->width), logo_y, clip_rect, 0);
+			if(state->frame_number & 1) {
 				logo_y = (logo_y == LOGO_Y_POS) ? LOGO_Y_POS : logo_y - 1;
 			}
 			if(logo_y == LOGO_Y_POS) {
@@ -279,19 +279,19 @@ static void remake_frame(struct mkfw_state *window) {
 		} break;
 
 		case STATE_FADE_STARS: {
-			blit_full(alpha_flight_logo, CENTER_X(alpha_flight_logo->width), LOGO_Y_POS, 0);
+			blit_full(state, alpha_flight_logo, CENTER_X(state, alpha_flight_logo->width), LOGO_Y_POS, 0);
 			fade_star_color();
 		} break;
 
 		case STATE_RUN: {
-			blit_full(alpha_flight_logo, CENTER_X(alpha_flight_logo->width), LOGO_Y_POS, 0);
+			blit_full(state, alpha_flight_logo, CENTER_X(state, alpha_flight_logo->width), LOGO_Y_POS, 0);
 		} break;
 	}
 
-	af_render_scroll_buffer(scroll_state);
+	af_render_scroll_buffer(state, scroll_state);
 }
 
 // [=]===^=[ remake_shutdown ]============================================================^===[=]
-static void remake_shutdown(struct mkfw_state *window) {
+static void remake_shutdown(struct remake_state *state) {
 	mkfw_audio_callback = 0;
 }

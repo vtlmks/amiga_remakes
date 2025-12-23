@@ -11,7 +11,7 @@ static uint32_t loader_logo_red_palette[] = {
 	0xcc6666ff,0xaa4444ff,0x993333ff,0x771111ff,0x661111ff,0x440000ff,0x330000ff,0x661111ff,
 };
 
-static uint32_t loader(void) {
+static uint32_t loader(struct remake_state *state) {
 	static uint32_t loader_timer = 200;
 	static uint32_t counter = 0;
 	static uint32_t roller = 0;
@@ -30,8 +30,8 @@ static uint32_t loader(void) {
 		--roller;
 	}
 
-	uint32_t y = (BUFFER_HEIGHT - loader_logo->height) >> 1;
-	blit_full(loader_logo, CENTER_X(loader_logo->width), y, loader_logo_red_palette);
+	uint32_t y = (state->buffer_height - loader_logo->height) >> 1;
+	blit_full(state, loader_logo, CENTER_X(state, loader_logo->width), y, loader_logo_red_palette);
 
 	if(loader_timer) {
 		--loader_timer;
