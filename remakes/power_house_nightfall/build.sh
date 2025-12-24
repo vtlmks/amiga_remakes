@@ -13,20 +13,48 @@ CC=gcc
 WINCC=x86_64-w64-mingw32-gcc
 
 # Base configuration common to all builds
-CFLAGS="-std=gnu11 -mtune=generic "
-CFLAGS+="-fno-argument-alias "
-CFLAGS+="-mfunction-return=keep -mindirect-branch=keep "
-CFLAGS+="-fwrapv -ffast-math -fno-trapping-math -fvisibility=hidden "
-CFLAGS+="-fno-stack-protector -fno-PIE -no-pie -fcf-protection=none "
-CFLAGS+="-fno-non-call-exceptions -fno-unwind-tables -fno-asynchronous-unwind-tables "
-CFLAGS+="-Wall -Wextra -Wstrict-aliasing=3 "
-CFLAGS+="-Wno-unused-parameter -Wno-sign-compare -Wno-trigraphs -Wno-maybe-uninitialized "
-CFLAGS+="-Wno-unused-variable -Wno-unused-const-variable -Wno-unused-function -Wno-write-strings -Wno-missing-field-initializers "
-CFLAGS+="-U_FORTIFY_SOURCE -fno-pic -fno-ident "
+CFLAGS="-std=gnu99 "
+CFLAGS+="-mtune=generic "
 
-# harden semantics + warn on UB-prone patterns with near-zero build-time cost
-CFLAGS+="-fno-strict-overflow -fno-delete-null-pointer-checks "
-CFLAGS+="-Wstrict-overflow=5 -Warray-bounds -Wshift-overflow=2 -Woverflow -Wstringop-overflow=4 -Wstringop-truncation -Wvla "
+CFLAGS+="-fno-math-errno "
+CFLAGS+="-fno-non-call-exceptions "
+CFLAGS+="-fno-pic "
+CFLAGS+="-fno-signaling-nans "
+CFLAGS+="-fno-stack-protector "
+CFLAGS+="-fno-trapping-math "
+CFLAGS+="-fno-unwind-tables "
+
+CFLAGS+="-fcf-protection=none "
+CFLAGS+="-ffast-math "
+CFLAGS+="-fstrict-aliasing "
+CFLAGS+="-fvisibility=hidden "
+CFLAGS+="-fwrapv "
+
+CFLAGS+="-no-pie "
+
+CFLAGS+="-Wall "
+CFLAGS+="-Wextra "
+
+# CFLAGS+="-Wconversion "
+CFLAGS+="-Wshift-overflow=2 "
+CFLAGS+="-Wstrict-aliasing=3 "
+CFLAGS+="-Wstrict-overflow=5 "
+CFLAGS+="-Wstringop-overflow=4 "
+CFLAGS+="-Wstringop-truncation "
+
+# CFLAGS+="-Wno-sign-conversion "
+
+CFLAGS+="-Wno-missing-field-initializers "
+CFLAGS+="-Wno-trigraphs "
+CFLAGS+="-Wno-unused-const-variable "
+CFLAGS+="-Wno-unused-function "
+CFLAGS+="-Wno-unused-parameter "
+CFLAGS+="-Wno-unused-variable "
+CFLAGS+="-Wno-write-strings "
+CFLAGS+="-Wvla "
+
+CFLAGS+="-U_FORTIFY_SOURCE "
+
 
 # Enable occationally to check for errors..
 # CFLAGS+="-fopt-info-vec-optimized "
@@ -76,7 +104,8 @@ case "$BUILD_TYPE" in
 		# CFLAGS+="-O2 -fprofile-use "
 		;;
 	"debug")
-		CFLAGS+="-g -O0 -DMKFW_TIMER_DEBUG -DDEBUGPRINT "
+		CFLAGS+="-g -O0 -DDEBUGPRINT "
+		# CFLAGS+="-DMKFW_TIMER_DEBUG "
 		# tripwires for UB; non-recovering so failures are loud
 #		CFLAGS+="-fsanitize=undefined,alignment,shift,signed-integer-overflow,pointer-overflow,object-size,unreachable "
 #		CFLAGS+="-fno-sanitize-recover=undefined,alignment,shift,signed-integer-overflow,pointer-overflow,object-size,unreachable "
@@ -102,8 +131,11 @@ esac
 set -e
 
 # Process assets
-
-(cd data && [ -n "$(ls *.bmp 2>/dev/null)" ] && bmp2ugg -o . *.bmp || true)
+(
+	cd data
+	# Convert BMPs to UGG format
+	[ -n "$(ls *.bmp 2>/dev/null)" ] && bmp2ugg -o . *.bmp || true
+)
 
 # Build Linux version
 (

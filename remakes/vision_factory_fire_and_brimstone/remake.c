@@ -243,10 +243,10 @@ struct text_line {
 };
 
 struct star_layer {
-	int count;
-	int start_y;
-	int delta_y;
-	int speed_x;
+	uint32_t count;
+	int32_t start_y;
+	int32_t delta_y;
+	int32_t speed_x;
 	struct ugg *bob;
 };
 

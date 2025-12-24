@@ -189,7 +189,7 @@ static const struct  animationstep animationSteps[] = {
 	{ 600, 859, render_repositioned_blinking_cursor },			// Repositions and displays a blinking cursor
 	{ 860, 905, render_type_run_command },							// Types out the word `run`
 	{ 600, 905, finalize_animation_sequence },					// Finalizes the sequence, overlaps with previous steps
-	{  -1,  -1, 0 }														// Sentinel value to mark the end of the array
+	{  0xffffffff,  0, 0 }												// Sentinel value to mark the end of the array
 };
 
 static void c64_effect(struct platform_state *state) {
@@ -220,7 +220,7 @@ static void c64_effect(struct platform_state *state) {
 			animationSteps[i].renderFunction(state, p1_frame);
 		}
 		i++;
-	} while (animationSteps[i].startFrame != -1);  // Check sentinel value
+	} while (animationSteps[i].startFrame != 0xffffffff);  // Check sentinel value
 }
 
 static void render_blinking_square(struct platform_state *state, uint32_t onoff, uint32_t *dst) {
