@@ -87,7 +87,6 @@ audio_function audio_callbacks[] = {
 
 // [=]===^=[ audio_callback ]============================================================^===[=]
 static void remake_audio_callback(int16_t *data, size_t frames) {
-	// PROFILE_FUNCTION();
 	memset(data, 0, 2*2*frames);
 	audio_callbacks[active_demo_part](data, frames);
 	// micromod_get_audio(&part2_song, (short*)data, frames);
@@ -173,7 +172,6 @@ void remake_options(struct options *opt) {
 
 // [=]===^=[ remake_frame ]============================================================^===[=]
 static void remake_frame(struct platform_state *state) {
-	// PROFILE_FUNCTION();
 
 	// float step = keyboard_state[MKS_KEY_LSHIFT] ? 0.001f : 0.01f;
 

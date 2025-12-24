@@ -157,7 +157,6 @@ static void p8_shutdown() {
 }
 
 static void p8_render_scroll_buffer(struct platform_state *state, struct scroller_state *scr_state) {
-	// PROFILE_FUNCTION();
 	uint32_t *scroll_dest = BUFFER_PTR(state, 0, scr_state->dest_offset_y);
 	uint8_t *scroll_src = scr_state->buffer;
 	uint32_t inner_color_count = ARRAYSIZE(p8_scroller_inner_colors);
@@ -170,8 +169,8 @@ static void p8_render_scroll_buffer(struct platform_state *state, struct scrolle
 		color_lookup[1] = p8_scroller_inner_colors[(p8_real_inner_color_index + i) % inner_color_count];
 		color_lookup[3] = p8_scroller_border_colors[(p8_real_border_color_index + i) % border_color_count];
 
-		for(size_t j = 0; j < state->buffer_width; ++j) {
-			size_t src_index = (scr_state->char_render_offset - 370 + j) & (SCROLL_BUFFER_WIDTH - 1);
+		for(uint32_t j = 0; j < state->buffer_width; ++j) {
+			size_t src_index = (scr_state->char_render_offset - 370 + j) & SCROLL_BUFFER_MASK;
 			uint8_t color_index = scroll_src[src_index];
 			color_lookup[0] = scroll_dest[j];
 			scroll_dest[j] = color_lookup[color_index];
@@ -183,8 +182,6 @@ static void p8_render_scroll_buffer(struct platform_state *state, struct scrolle
 }
 
 static uint32_t p8_update(struct platform_state *state)  {
-	// PROFILE_NAMED("part8 all");
-
 	scroller(p8_scroll_1);
 	scroller(p8_scroll_2);
 	scroller(p8_scroll_3);
@@ -196,10 +193,7 @@ static uint32_t p8_update(struct platform_state *state)  {
 	p8_real_inner_color_index++;
 	p8_real_border_color_index--;
 
-
-
 	{
-		// PROFILE_NAMED("part 8 end logo");
 		struct ugg *p8_end_logo_entries[] = {
 			part8_end_logo_1_data, part8_end_logo_2_data, part8_end_logo_3_data, part8_end_logo_4_data, part8_end_logo_5_data, part8_end_logo_6_data, part8_end_logo_7_data, part8_end_logo_8_data,
 			part8_end_logo_9_data, part8_end_logo_8_data, part8_end_logo_7_data, part8_end_logo_6_data, part8_end_logo_5_data, part8_end_logo_4_data, part8_end_logo_3_data, part8_end_logo_2_data,

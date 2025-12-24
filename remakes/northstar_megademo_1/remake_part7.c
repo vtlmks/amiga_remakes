@@ -133,7 +133,7 @@ static int32_t md1_p7_stars[188];
 
 static struct scroller_state *p7_scroll;
 
-static uint32_t p7_logo_index = -1;
+static uint32_t p7_logo_index = 0xffffffff;
 
 static uint8_t p7_scroll_callback(struct scroller_state *scr_state, uint8_t scroll_character) {
 	switch(scroll_character) {
@@ -182,7 +182,6 @@ static void p7_shutdown() {
 }
 
 static void p7_render_scroll_buffer(struct platform_state *state, struct scroller_state *scr_state) {
-	// PROFILE_FUNCTION();
 	uint32_t *scroll_dest = BUFFER_PTR(state, 0, scr_state->dest_offset_y);
 	uint8_t *scroll_src = scr_state->buffer;
 
@@ -195,8 +194,8 @@ static void p7_render_scroll_buffer(struct platform_state *state, struct scrolle
 	for(size_t i = 0; i < scr_state->char_height; ++i) {
 		color_lookup[1] = p7_scroll_color[i]; // Only update color 1 per row
 
-		for(size_t j = 0; j < state->buffer_width; ++j) {
-			uint8_t color_index = scroll_src[(scr_state->char_render_offset - 370 + j) & (SCROLL_BUFFER_WIDTH - 1)];
+		for(uint32_t j = 0; j < state->buffer_width; ++j) {
+			uint8_t color_index = scroll_src[(scr_state->char_render_offset - 370 + j) & SCROLL_BUFFER_MASK];
 			scroll_dest[j] = color_lookup[color_index];
 		}
 
@@ -215,7 +214,6 @@ static uint8_t p7_item_count = 0;
 static uint8_t p7_item_scroll_offset = 47;
 
 static void p7_bar_scrollers(struct platform_state *state) {
-	// PROFILE_FUNCTION();
 // 20 objects before change
 	if(p7_item_scroll_offset++ == 47) {
 		p7_item_scroll_offset = 0;
@@ -255,7 +253,6 @@ static void p7_bar_scrollers(struct platform_state *state) {
 }
 
 static void p7_show_logos(struct platform_state *state) {
-	// PROFILE_FUNCTION();
 
 
 // a - ATOM - address
@@ -278,7 +275,7 @@ static void p7_show_logos(struct platform_state *state) {
 	};
 
 
-	if(p7_logo_index != -1) {
+	if(p7_logo_index != 0xffffffff) {
 		uint32_t logo_x = (state->buffer_width - p7_logos[p7_logo_index].image->width) >> 1;
 		blit_full(state, p7_logos[p7_logo_index].image, logo_x, p7_logos[p7_logo_index].logo_y, 0);
 	}

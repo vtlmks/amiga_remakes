@@ -37,7 +37,6 @@ static uint32_t rng_next(void) {
 
 // [=]===^=[ audio_callback ]============================================================^===[=]
 static void remake_audio_callback(int16_t *data, size_t frames) {
-	// PROFILE_FUNCTION();
 	// memset(data, 0, 2*2*frames);
 	// micromod_get_audio(&ctx, (short*)data, frames);
 	fc14_get_audio(&remake_song, data, frames);
@@ -149,7 +148,6 @@ static uint8_t scrolltext[] = {
 static struct scroller_state *scroll;
 
 static void render_scroll_buffer(struct platform_state *state, struct scroller_state *scr_state) {
-	// PROFILE_FUNCTION();
 	uint32_t *scroll_dest = BUFFER_PTR(state, 0, scr_state->dest_offset_y);
 	uint8_t *scroll_src = scr_state->buffer;
 
@@ -176,7 +174,6 @@ static uint32_t copperbar_colors[10] = {
 };
 
 static void render_copperbar(struct platform_state *state) {
-	// PROFILE_FUNCTION();
 	uint32_t color;
 	uint32_t *src = copperbar_colors;
 	uint32_t *dst = BUFFER_PTR(state, 0, (0xe4-36));
@@ -218,7 +215,6 @@ static void initialize_stars(void) {
 
 // [=]===^=[ render_stars ]============================================================^===[=]
 static void render_stars(struct platform_state *state) {
-	// PROFILE_FUNCTION();
 	for(size_t i = 0; i < 19; ++i) {
 		// PROFILE_NAMED("Large_star");
 		int32_t temp_x = large_star_positions[i].x;
@@ -241,7 +237,6 @@ static void render_stars(struct platform_state *state) {
 static int32_t y_offset;	// NOTE(peter): y-offset for the logo 'reveal' function, initialized further down
 
 static void render_logo(struct platform_state *state) {
-	// PROFILE_FUNCTION();
 	struct rect full_rect = { 0, 0, state->buffer_width, (0x2d-36) + powerhouse_logo->height };
 	blit_clipped(state, powerhouse_logo, (state->buffer_width - powerhouse_logo->width) / 2, (0x2d-36) + y_offset, full_rect, 0);
 	y_offset = (y_offset > 0) ? y_offset - 1 : 0;
@@ -274,7 +269,6 @@ static const uint8_t water_displacement[] = {
 
 
 static void render_trees(struct platform_state *state) {
-	// PROFILE_FUNCTION();
 
 	struct ugg * restrict trees_data = (struct ugg*)powerhouse_trees_data;
 
@@ -356,7 +350,6 @@ static void remake_init(struct platform_state *state) {
 
 // [=]===^=[ remake_frame ]============================================================^===[=]
 static void remake_frame(struct platform_state *state) {
-	// PROFILE_FUNCTION();
 	render_logo(state);
 	render_stars(state);
 	render_copperbar(state);

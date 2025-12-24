@@ -23,8 +23,8 @@ struct platform_state {
 
 	// Framebuffer (fixed 1024x1024, only buffer_width x buffer_height is used)
 	uint32_t buffer[1024 * 1024] __attribute__((aligned(4096)));
-	uint32_t buffer_width;   // Current logical buffer width
-	uint32_t buffer_height;  // Current logical buffer height
+	uint32_t buffer_width;	// Current logical buffer width
+	uint32_t buffer_height;	// Current logical buffer height
 
 	struct { int32_t x, y, w, h; } viewport;
 	int32_t mouse_dx;

@@ -96,7 +96,6 @@ struct callback update_callbacks[] = {
 
 // [=]===^=[ audio_callback ]============================================================^===[=]
 static void remake_audio_callback(int16_t *data, size_t frames) {
-	// PROFILE_FUNCTION();
 	memset(data, 0, 2*2*frames);
 	if(update_callbacks[active_demo_part].audio) {
 		update_callbacks[active_demo_part].audio(data, frames);
@@ -142,7 +141,6 @@ static void remake_init(struct platform_state *state) {
 
 // [=]===^=[ remake_frame ]============================================================^===[=]
 static void remake_frame(struct platform_state *state) {
-	// PROFILE_FUNCTION();
 
 	if(update_callbacks[active_demo_part].render(state)) {
 		active_demo_part = (active_demo_part < 7) ? active_demo_part + 1 : 0;

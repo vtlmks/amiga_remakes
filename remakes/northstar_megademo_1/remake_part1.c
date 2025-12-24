@@ -52,7 +52,6 @@ static uint32_t firework_buffer[FIREWORK_BUFFER_WIDTH * FIREWORK_BUFFER_HEIGHT];
 static uint32_t firework_noclear = 0;
 
 static void p1_firework(struct platform_state *state) {
-	// PROFILE_FUNCTION();
 	if((state->frame_number % 3) == 0) {
 		for(uint32_t particle_index = 0; particle_index < 216; ++particle_index) {
 			struct Firework *data = &firework_data_copy[particle_index];

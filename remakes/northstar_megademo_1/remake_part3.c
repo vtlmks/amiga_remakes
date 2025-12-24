@@ -42,7 +42,6 @@ uint32_t p3_bounce_sine[] = {
 };
 
 static void p3_render_bouncing_logo(struct platform_state *state, uint32_t center_x, uint32_t center_y, uint32_t bounce_offset, uint32_t color) {
-	// PROFILE_FUNCTION();
 	uint8_t * restrict src = part3_logo_bounce_data->data;
 	uint32_t * restrict dst = BUFFER_PTR(state, center_x, center_y - bounce_offset);
 
@@ -90,7 +89,6 @@ static struct stripe stripes[] = {
 };
 
 static void p3_render_big_bouncer(struct platform_state *state) {
-	// PROFILE_FUNCTION();
 
 	p3_src_offset_y += p3_direction;
 	if(p3_src_offset_y == 0 || p3_src_offset_y == (part3_large_bg_data->height - state->buffer_height)) {
@@ -110,7 +108,7 @@ static void p3_render_big_bouncer(struct platform_state *state) {
 
 		for(uint32_t y = 0; y < count; ++y) {
 			palette[1] = background_palette[index_y++];
-			for(int32_t x = 0; x < part3_large_bg_data->width; ++x) {
+			for(int32_t x = 0; x < (int32_t)part3_large_bg_data->width; ++x) {
 				dst[x + displacement] = palette[src[x]];
 			}
 			dst += state->buffer_width;

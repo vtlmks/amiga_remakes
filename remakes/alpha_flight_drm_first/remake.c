@@ -306,7 +306,6 @@ static void remake(struct platform_state *state) {
 
 // [=]===^=[ audio_callback ]============================================================^===[=]
 static void remake_audio_callback(int16_t *data, size_t frames) {
-	// PROFILE_FUNCTION();
 	process_sampled_audio(data, frames, &part1_sample);
 }
 
@@ -325,7 +324,6 @@ static void remake_init(struct platform_state *state) {
 
 // [=]===^=[ remake_frame ]============================================================^===[=]
 static void remake_frame(struct platform_state *state) {
-	// PROFILE_FUNCTION();
 	remake(state);
 }
 

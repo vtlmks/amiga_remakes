@@ -159,7 +159,6 @@ static void p4_shutdown() {
 }
 
 static void p4_render_scroll_buffer(struct platform_state *state, struct scroller_state *scr_state) {
-	// PROFILE_FUNCTION();
 	uint32_t *scroll_dest = BUFFER_PTR(state, 0, scr_state->dest_offset_y);
 	uint8_t *scroll_src = scr_state->buffer;
 	uint32_t color_lookup[4];
@@ -168,12 +167,12 @@ static void p4_render_scroll_buffer(struct platform_state *state, struct scrolle
 	uint8_t real_inner_color_index = p4_real_inner_color_index % P4_INNER_COLOR_COUNT;
 	uint8_t real_border_color_index = p4_real_border_color_index % P4_BORDER_COLOR_COUNT;
 
-	size_t base_src_index = (scr_state->char_render_offset - 370) & (SCROLL_BUFFER_WIDTH - 1);
+	size_t base_src_index = (scr_state->char_render_offset - 370) & SCROLL_BUFFER_MASK;
 	for(size_t i = 0; i < scr_state->char_height; ++i) {
 		color_lookup[1] = p4_scroller_inner_colors[real_inner_color_index];
 		color_lookup[3] = p4_scroller_border_colors[real_border_color_index];
-		for(size_t j = 0; j < state->buffer_width; ++j) {
-			size_t src_index = (base_src_index + j) & (SCROLL_BUFFER_WIDTH - 1);
+		for(uint32_t j = 0; j < state->buffer_width; ++j) {
+			size_t src_index = (base_src_index + j) & SCROLL_BUFFER_MASK;
 			uint8_t color_index = scroll_src[src_index];
 
 			color_lookup[0] = scroll_dest[j];

@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: MIT
 
 
-#define SCROLL_BUFFER_WIDTH 512 // Fixed buffer width for wrapping
+#define SCROLL_BUFFER_WIDTH 512U // Fixed buffer width for wrapping
+#define SCROLL_BUFFER_MASK 511U
 
 struct scroller_state {
 	uint8_t (*process_char)(struct scroller_state *scr_state, uint8_t scroll_character); // Callback for custom behavior
@@ -63,7 +64,6 @@ static void scroller_remove(struct scroller_state *scr_state) {
 }
 
 static void scroller(struct scroller_state * restrict scr_state) {
-	// PROFILE_FUNCTION();
 	if(scr_state->pause_timer) {
 		scr_state->pause_timer--;
 		return;
@@ -79,7 +79,7 @@ static void scroller(struct scroller_state * restrict scr_state) {
 		size_t dst_offset = scr_state->char_next_render_offset;
 		for(size_t i = 0; i < scr_state->char_height; ++i) {
 			for(size_t j = 0; j < scr_state->char_width; ++j) {
-				dst[(dst_offset + j) & (SCROLL_BUFFER_WIDTH - 1)] = font_src[j];
+				dst[(dst_offset + j) & SCROLL_BUFFER_MASK] = font_src[j];
 			}
 			font_src += scr_state->font->width;
 			dst += SCROLL_BUFFER_WIDTH;

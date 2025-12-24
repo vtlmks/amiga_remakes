@@ -74,7 +74,6 @@ static const uint8_t p2_scroll_text[] = {
 };
 
 static uint32_t logo_render(struct platform_state *state) {
-	// PROFILE_FUNCTION();
 	// NOTE(peter): Update and scroll the northstar logo into place
 	uint32_t scroll_speed = 2;
 	uint32_t target_x = (state->buffer_width - part2_ns_logo_data->width) >> 1;
@@ -86,8 +85,8 @@ static uint32_t logo_render(struct platform_state *state) {
 			logo_target_reached = 0;
 		}
 
-		uint32_t current_x = scroll_positions[line];
-		if(current_x >= state->buffer_width) continue; // Skip rendering if the line is completely off-screen
+		int32_t current_x = scroll_positions[line];
+		if(current_x >= (int32_t)state->buffer_width) continue; // Skip rendering if the line is completely off-screen
 
 		uint32_t *dest = BUFFER_PTR(state, 0, 15 + line);
 		uint8_t *src = &part2_ns_logo_data->data[line * part2_ns_logo_data->width];
@@ -112,7 +111,6 @@ static uint32_t p2_logo_reveal_done = 0;
 static uint32_t p2_colors_done = 0;
 
 static void p2_texteffect(struct platform_state *state) {
-	// PROFILE_FUNCTION();
 	if(p2_logo_reveal_done & !p2_colors_done) {
 		if((state->frame_number & 0x3) == 0) {
 			part2_color_rows++;
@@ -147,7 +145,6 @@ static void p2_texteffect(struct platform_state *state) {
 
 
 static void p2_render_char_clipped(struct platform_state *state, uint8_t *glyph_data, int32_t dest_x, int32_t dest_y) {
-	// PROFILE_FUNCTION();
 
 	int glyph_size = 16;
 
@@ -241,7 +238,7 @@ static void p2_init(struct platform_state *state) {
 	}
 	int32_t middle = part2_ns_logo_data->height / 2;
 
-	for(uint32_t i = 0; i < part2_ns_logo_data->height; i++) {
+	for(int32_t i = 0; i < (int32_t)part2_ns_logo_data->height; i++) {
 		uint32_t diff = (i >= middle) ? (i - middle) : (middle - i);
 		uint32_t line_offset = diff * 22;
 		scroll_positions[i] = state->buffer_width + part2_ns_logo_data->width + line_offset;
@@ -301,7 +298,6 @@ static void p2_starfield(struct platform_state *state) {
 }
 
 static void p2_render_logo(struct platform_state *state) {
-	// PROFILE_FUNCTION();
 	if(p2_logo_reveal_done) {
 		uint32_t logo_x_offset = (state->buffer_width - part2_ns_logo_data->width) >> 1;
 		blit_full(state, part2_ns_logo_data, logo_x_offset, 15, 0);

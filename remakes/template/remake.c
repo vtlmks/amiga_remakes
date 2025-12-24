@@ -13,7 +13,6 @@
 
 // [=]===^=[ audio_callback ]============================================================^===[=]
 static void remake_audio_callback(int16_t *data, size_t frames) {
-	// PROFILE_FUNCTION();
 	// memset(data, 0, 2*2*frames);
 	// micromod_get_audio(&ctx, (short*)data, frames);
 	// fc14play_FillAudioBuffer(data, frames);
@@ -57,7 +56,6 @@ static void remake_options(struct options *opt) {
 
 // [=]===^=[ remake_frame ]============================================================^===[=]
 static void remake_frame(struct platform_state *state) {
-	// PROFILE_FUNCTION();
 }
 
 // [=]===^=[ remake_shutdown ]============================================================^===[=]

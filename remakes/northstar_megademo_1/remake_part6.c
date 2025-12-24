@@ -75,7 +75,6 @@ static void p6_shutdown() {
 #define P6_OFFSET_BOTTOM (400 - 164)
 
 static void p6_bouncing_logo(struct platform_state *state) {
-	// PROFILE_FUNCTION();
 
 	p6_offset += p6_offset_direction;
 	p6_offset_direction = (p6_offset == 0) ? 1 : (p6_offset == P6_OFFSET_BOTTOM) ? -1 : p6_offset_direction;
@@ -87,12 +86,11 @@ static void p6_bouncing_logo(struct platform_state *state) {
 }
 
 static void p6_render_scroll_buffer(struct platform_state *state, struct scroller_state *dat) {
-	// PROFILE_FUNCTION();
 	uint32_t *scroll_dest = BUFFER_PTR(state, (state->buffer_width - 320) >> 1, dat->dest_offset_y);
 	uint8_t *scroll_src = dat->buffer;
 	for(size_t i = 0; i < 32; ++i) {
 		for(size_t j = 0; j < 320; ++j) {
-			uint8_t color_index = scroll_src[(dat->char_render_offset - 370 + j) & (SCROLL_BUFFER_WIDTH - 1)];
+			uint8_t color_index = scroll_src[(dat->char_render_offset - 370 + j) & SCROLL_BUFFER_MASK];
 			scroll_dest[j] = dat->font->palette[color_index];
 		}
 		scroll_dest += state->buffer_width;

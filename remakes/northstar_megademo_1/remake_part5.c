@@ -324,7 +324,6 @@ static struct sprite sprites[4] = {
 
 
 static void p5_sprite_bounce(struct platform_state *state) {
-	// PROFILE_FUNCTION();
 
 	// NOTE(peter): forced nonsense fix because ugg data is no longer const (C is garbage)...
 	sprites[0].sprite = p5_ball_blue_data;
@@ -352,40 +351,37 @@ static void p5_sprite_bounce(struct platform_state *state) {
 }
 
 static void p5_render_logo(struct platform_state *state, struct ugg *image, int32_t offset_x, uint32_t offset_y) {
-	// PROFILE_FUNCTION();
-
-	int32_t left_clip = 12;
-	int32_t right_clip = state->buffer_width;
-
-	// Clip against the left and right edges
-	int32_t source_x_start = (offset_x < left_clip) ? (left_clip - offset_x) : 0;
-	int32_t dest_x_start = (offset_x < left_clip) ? left_clip : offset_x;
-	int32_t width_to_render = image->width - source_x_start;
-
-	if(dest_x_start + width_to_render > right_clip) {
-		width_to_render = right_clip - dest_x_start;
+	// Calculate center offset for 352-pixel logo area
+	int32_t center_offset = ((int32_t)state->buffer_width - 352) / 2;
+	if(center_offset < 0) {
+		center_offset = 0;
 	}
 
-	// If completely outside the screen, skip rendering
-	if(width_to_render <= 0 || dest_x_start >= right_clip) {
+	struct rect clip_rect = { 0, 0, state->buffer_width - 2, state->buffer_height };
+
+	struct clip_info clip = calculate_clip_rect(state, image, center_offset + offset_x, 103 + offset_y, clip_rect);
+
+	if(!clip.visible) {
 		return;
 	}
 
-	uint32_t *dst = BUFFER_PTR(state, ((state->buffer_width - 352) >> 1) + dest_x_start, 103 + offset_y);
-	uint8_t * restrict src = image->data + source_x_start;
+	// Set up pointers and palette
+	uint8_t * restrict src = clip.src;
+	uint32_t * restrict dst = clip.dst;
 	uint32_t * restrict palette = &p5_logo_background_colors[offset_y];
 
-	uint32_t tmp_palette[2];
+	uint32_t color_table[2];
 
-	for(uint32_t y = 0; y < image->height; ++y) {
-		tmp_palette[1] = palette[y];
-		for(uint32_t x = 0; x < width_to_render; ++x) {
-			uint8_t color_index = src[x];
-			tmp_palette[0] = dst[x];
-			dst[x] = tmp_palette[color_index];
+	for(uint32_t y = 0; y < clip.height; ++y) {
+		color_table[1] = palette[y];
+
+		for(uint32_t x = 0; x < clip.width; ++x) {
+			color_table[0] = dst[x];  // Transparent: keep destination color
+			dst[x] = color_table[src[x]];
 		}
-		dst += state->buffer_width;
-		src += image->width;
+
+		dst += clip.dst_stride;
+		src += clip.src_stride;
 	}
 }
 
@@ -465,7 +461,6 @@ static void p5_mid_screen_logos(struct platform_state *state) {
 }
 
 static void p5_render_heads(struct platform_state *state) {
-	// PROFILE_FUNCTION();
 	int32_t half_head_w = p5_faces_data->width >> 1;
 	blit_full(state, p5_faces_data, -half_head_w, 206, 0);
 	blit_full(state, p5_faces_data, state->buffer_width-half_head_w, 206, 0);
@@ -473,7 +468,6 @@ static void p5_render_heads(struct platform_state *state) {
 
 #define LOGO_Y_OFFSET 224
 static void p5_render_atom_logo(struct platform_state *state) {
-	// PROFILE_FUNCTION();
 	uint32_t temp_offset = md1_p5_atom_logo_offset;
 	uint8_t * restrict logo_ptr = p5_atom_demo_ii_logo_data->data;
 	uint32_t * restrict base_dest = BUFFER_PTR(state, ((state->buffer_width - p5_atom_demo_ii_logo_data->width) >> 1) - 8, LOGO_Y_OFFSET);
@@ -500,7 +494,6 @@ static void p5_render_atom_logo(struct platform_state *state) {
 }
 
 static void p5_render_copperbars(struct platform_state *state) {
-	// PROFILE_FUNCTION();
 
 	uint32_t * restrict copper_bars_dest = BUFFER_PTR(state, 0, 103);
 	uint32_t * restrict copper_bars_src = md1_p5_large_copper_bars;
@@ -516,7 +509,6 @@ static void p5_render_copperbars(struct platform_state *state) {
 }
 
 static void p5_render_small_scroller(struct platform_state *state) {
-	// PROFILE_FUNCTION();
 	const uint8_t * restrict src = p5_scroller1->buffer;
 	uint32_t * restrict dst = BUFFER_PTR(state, (state->buffer_width - 336) / 2, 86);
 
@@ -530,7 +522,7 @@ static void p5_render_small_scroller(struct platform_state *state) {
 		color_lookup[1] = md1_p5_small_scroller_inner_color[y];
 
 		for(uint32_t x = 0; x < 336; ++x) {
-			size_t src_index = (scroll_render_offset + x) & (SCROLL_BUFFER_WIDTH - 1);
+			size_t src_index = (scroll_render_offset + x) & SCROLL_BUFFER_MASK;
 			uint8_t color_index = src[src_index];
 			color_lookup[0] = dst[x];
 			dst[x] = color_lookup[color_index];
@@ -542,7 +534,6 @@ static void p5_render_small_scroller(struct platform_state *state) {
 }
 
 static void p5_render_large_scroller(struct platform_state *state) {
-	// PROFILE_FUNCTION();
 	uint8_t * restrict src = p5_scroller2->buffer;
 	uint32_t * restrict dst = BUFFER_PTR(state, (state->buffer_width - 336) / 2, 170);
 
@@ -554,7 +545,7 @@ static void p5_render_large_scroller(struct platform_state *state) {
 		color_lookup[3] = md1_p5_large_scroller_inner_color2[y];
 
 		for(uint32_t x = 0; x < 336; ++x) {
-			size_t src_index = (p5_scroller2->char_render_offset - 360 + x) & (SCROLL_BUFFER_WIDTH - 1);
+			size_t src_index = (p5_scroller2->char_render_offset - 360 + x) & SCROLL_BUFFER_MASK;
 			color_lookup[0] = dst[x];
 			dst[x] = color_lookup[src[src_index]];
 		}
@@ -594,7 +585,6 @@ static inline void p5_render_image_with_palette(struct platform_state *state, st
 }
 
 static void p5_render_warhammer_40k(struct platform_state *state) {
-	// PROFILE_FUNCTION();
 	p5_render_image_with_palette(state, p5_warhammer_logo_data, p5_warhammer_palette, 0, 14);
 	p5_render_image_with_palette(state, p5_rogue_40k_logo_data, p5_40k_palette, p5_rogue_palette, 41);
 	p5_warhammer_index = (p5_warhammer_index == 0) ? 29 : p5_warhammer_index - 1;
