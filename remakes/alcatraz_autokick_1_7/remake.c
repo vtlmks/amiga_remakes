@@ -302,7 +302,7 @@ static void remake_options(struct options *opt) {
 	opt->window_title = "Alcatraz - Autokick 1.7 - 1988-09\0";
 }
 
-static void af_render_scroll_buffer(struct remake_state *state, struct scroller_state *scr_state, uint32_t *palette) {
+static void af_render_scroll_buffer(struct platform_state *state, struct scroller_state *scr_state, uint32_t *palette) {
 	uint32_t *scroll_dest = BUFFER_PTR(state, 0, scr_state->dest_offset_y);
 	uint8_t *scroll_src = scr_state->buffer;
 
@@ -319,7 +319,7 @@ static void af_render_scroll_buffer(struct remake_state *state, struct scroller_
 	}
 }
 
-static void render_logo(struct remake_state *state) {
+static void render_logo(struct platform_state *state) {
 	uint32_t *dst = BUFFER_PTR(state, CENTER_X(state, logo->width), 7);
 	uint8_t *src = logo->data;
 
@@ -403,7 +403,7 @@ static void init_stars(void) {
 	}
 }
 
-static void render_stars(struct remake_state *state) {
+static void render_stars(struct platform_state *state) {
    int32_t left_border = LOGO_RIGHT_BORDER_START - LOGO_INNER_WIDTH;
    int32_t right_border = LOGO_RIGHT_BORDER_START;
 
@@ -425,7 +425,7 @@ static void render_stars(struct remake_state *state) {
 }
 
 // [=]===^=[ remake_init ]============================================================^===[=]
-static void remake_init(struct remake_state *state) {
+static void remake_init(struct platform_state *state) {
 	change_resolution(state, BUFFER_WIDTH, BUFFER_HEIGHT);
 
 	init_stars();
@@ -443,7 +443,7 @@ static void remake_init(struct remake_state *state) {
 }
 
 // [=]===^=[ remake_frame ]============================================================^===[=]
-static void remake_frame(struct remake_state *state) {
+static void remake_frame(struct platform_state *state) {
 
 	update_stars();
 	update_star_pattern();
@@ -471,6 +471,6 @@ static void remake_frame(struct remake_state *state) {
 }
 
 // [=]===^=[ remake_shutdown ]============================================================^===[=]
-static void remake_shutdown(struct remake_state *state) {
+static void remake_shutdown(struct platform_state *state) {
 	mkfw_audio_callback = 0;
 }

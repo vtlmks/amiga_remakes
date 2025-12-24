@@ -444,7 +444,7 @@ static void remake_audio_callback(int16_t *data, size_t frames) {
 	fc14_get_audio(&remake_song, data, frames);
 }
 
-static void remake_init(struct remake_state *state) {
+static void remake_init(struct platform_state *state) {
 	change_resolution(state, BUFFER_WIDTH, BUFFER_HEIGHT);
 	xor_init_rng(&vf_rand_state, 0x34872d9);
 	precalc_rotated_vertices();
@@ -473,7 +473,7 @@ static void remake_options(struct options *opt) {
 
 // [=]===^=[ text rendering ]========================================================^===[=]
 __attribute__((always_inline))
-static inline void render_char(struct remake_state *state, uint32_t *dst, uint8_t c, uint32_t *font_colors) {
+static inline void render_char(struct platform_state *state, uint32_t *dst, uint8_t c, uint32_t *font_colors) {
 	uint8_t *src = font->data + (c - ' ') * 16;
 
 	for(size_t row = 0; row < 6; ++row) {
@@ -488,25 +488,25 @@ static inline void render_char(struct remake_state *state, uint32_t *dst, uint8_
 	}
 }
 
-static void render_text_right_to_left(struct remake_state *state, struct text_line *line) {
+static void render_text_right_to_left(struct platform_state *state, struct text_line *line) {
 	for(size_t i = 0; i < 53; ++i) {
 		render_char(state, line->dst_buffer + 320 - char_movement_array[i][line->frame], line->text[i], line->colors);
 	}
 }
 
-static void render_text_left_to_right(struct remake_state *state, struct text_line *line) {
+static void render_text_left_to_right(struct platform_state *state, struct text_line *line) {
 	for(size_t i = 0; i < 53; ++i) {
 		render_char(state, line->dst_buffer - 8 + char_movement_array[i][line->frame], line->text[53 - i], line->colors);
 	}
 }
 
-static void render_text_static(struct remake_state *state, struct text_line *line) {
+static void render_text_static(struct platform_state *state, struct text_line *line) {
 	for(size_t i = 0; i < 53; ++i) {
 		render_char(state, line->dst_buffer + 320 - char_movement_array[i][29], line->text[i], line->colors);
 	}
 }
 
-static uint8_t update_text_animation(struct remake_state *state) {
+static uint8_t update_text_animation(struct platform_state *state) {
 	static size_t current_line = 0;
 
 	if(current_line < ARRAYSIZE(text_lines)) {
@@ -540,7 +540,7 @@ static uint8_t update_text_animation(struct remake_state *state) {
 
 
 // [=]===^=[ graphics rendering ]====================================================^===[=]
-static void show_vector_logo(struct remake_state *state) {
+static void show_vector_logo(struct platform_state *state) {
 	int16_t *src = dst_rotated_xy + offset;
 	for(size_t i = 0; i < vector_ball_count; ++i) {
 		int16_t x = *src++;
@@ -549,7 +549,7 @@ static void show_vector_logo(struct remake_state *state) {
 	}
 }
 
-static void back_plane_star_sprites(struct remake_state *state) {
+static void back_plane_star_sprites(struct platform_state *state) {
 	struct point *s = stars;
 
 	for(size_t layer = 0; layer < 2; ++layer) {
@@ -561,7 +561,7 @@ static void back_plane_star_sprites(struct remake_state *state) {
 	}
 }
 
-static void front_plane_star_sprites(struct remake_state *state) {
+static void front_plane_star_sprites(struct platform_state *state) {
 	struct point *s = &stars[19 + 16];
 
 	for(size_t layer = 2; layer < 4; ++layer) {
@@ -573,7 +573,7 @@ static void front_plane_star_sprites(struct remake_state *state) {
 	}
 }
 
-static void vf_render_scroll_buffer(struct remake_state *state, struct scroller_state *scr_state) {
+static void vf_render_scroll_buffer(struct platform_state *state, struct scroller_state *scr_state) {
 	uint32_t *scroll_dest = BUFFER_PTR(state, (state->buffer_width - 320) >> 1, scr_state->dest_offset_y);
 	uint8_t *scroll_src = scr_state->buffer;
 	uint32_t color_lookup[4];
@@ -595,7 +595,7 @@ static void vf_render_scroll_buffer(struct remake_state *state, struct scroller_
 }
 
 // [=]===^=[ main frame logic ]======================================================^===[=]
-static void remake_frame(struct remake_state *state) {
+static void remake_frame(struct platform_state *state) {
 
 /*
   The screen is 320 pixels wide
@@ -699,7 +699,7 @@ static void remake_frame(struct remake_state *state) {
 
 
 // [=]===^=[ shutdown ]==============================================================^===[=]
-static void remake_shutdown(struct remake_state *state) {
+static void remake_shutdown(struct platform_state *state) {
 	mkfw_audio_callback = 0;
 	fc14_shutdown(&remake_song);
 }

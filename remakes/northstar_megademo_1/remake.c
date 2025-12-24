@@ -111,7 +111,7 @@ static void remake_audio_callback(int16_t *data, size_t frames) {
 }
 
 // [=]===^=[ remake_init ]============================================================^===[=]
-static void remake_init(struct remake_state *state) {
+static void remake_init(struct platform_state *state) {
 	change_resolution(state, BUFFER_WIDTH, BUFFER_HEIGHT);
 //	set_window_title(remake_title);
 	xor_init_rng(&base_rand, 187481201);
@@ -138,7 +138,7 @@ static void remake_init(struct remake_state *state) {
 }
 
 // [=]===^=[ remake_shutdown ]============================================================^===[=]
-static void remake_shutdown(struct remake_state *state) {
+static void remake_shutdown(struct platform_state *state) {
 	// fc14play_Close();
 	p4_shutdown();
 	p5_shutdown();
@@ -162,7 +162,7 @@ static void remake_shutdown(struct remake_state *state) {
 }
 
 
-typedef uint32_t (*update_function)(struct remake_state *state);
+typedef uint32_t (*update_function)(struct platform_state *state);
 update_function update_callbacks[] = { p1_update, p2_update, p3_update, p4_update, p5_update, p6_update, p7_update, p8_update, };
 
 void remake_options(struct options *opt) {
@@ -172,7 +172,7 @@ void remake_options(struct options *opt) {
 }
 
 // [=]===^=[ remake_frame ]============================================================^===[=]
-static void remake_frame(struct remake_state *state) {
+static void remake_frame(struct platform_state *state) {
 	// PROFILE_FUNCTION();
 
 	// float step = keyboard_state[MKS_KEY_LSHIFT] ? 0.001f : 0.01f;

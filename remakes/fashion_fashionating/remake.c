@@ -75,7 +75,7 @@ static void part_2_audio(int16_t *audio_buffer, size_t frames) { micromod_get_au
 static void part_4_audio(int16_t *audio_buffer, size_t frames) { micromod_get_audio(&part4_song, audio_buffer, frames); };
 static void part_3_audio(int16_t *audio_buffer, size_t frames) { micromod_get_audio(&part3_song, audio_buffer, frames); };
 
-typedef uint32_t (*render_function)(struct remake_state *state);
+typedef uint32_t (*render_function)(struct platform_state *state);
 typedef void (*audio_function)(int16_t *data, size_t frames);
 
 struct callback {
@@ -123,7 +123,7 @@ static void remake_options(struct options *opt) {
 }
 
 // [=]===^=[ remake_init ]============================================================^===[=]
-static void remake_init(struct remake_state *state) {
+static void remake_init(struct platform_state *state) {
 	change_resolution(state, BUFFER_WIDTH, BUFFER_HEIGHT);
 
 	xor_init_rng(&rand_state, 0x47189239);
@@ -141,7 +141,7 @@ static void remake_init(struct remake_state *state) {
 
 
 // [=]===^=[ remake_frame ]============================================================^===[=]
-static void remake_frame(struct remake_state *state) {
+static void remake_frame(struct platform_state *state) {
 	// PROFILE_FUNCTION();
 
 	if(update_callbacks[active_demo_part].render(state)) {
@@ -150,7 +150,7 @@ static void remake_frame(struct remake_state *state) {
 }
 
 // [=]===^=[ remake_shutdown ]============================================================^===[=]
-static void remake_shutdown(struct remake_state *state) {
+static void remake_shutdown(struct platform_state *state) {
 	free(part1_sample.data);
 }
 

@@ -126,7 +126,7 @@ static uint8_t half_sine_tab[] = {
 };
 
 // [=]===^=====================================================================================^===[=]
-static void render_copper(struct remake_state *state, uint32_t start_line, uint32_t *copper_data, uint32_t rows) {
+static void render_copper(struct platform_state *state, uint32_t start_line, uint32_t *copper_data, uint32_t rows) {
 	if(start_line >= state->buffer_height) return;
 
 	uint32_t max_rows = (start_line + rows > state->buffer_height) ? (state->buffer_height - start_line) : rows;
@@ -180,7 +180,7 @@ static void update_scroller(void) {
 }
 
 // [=]===^=====================================================================================^===[=]
-static void render_tech_tech(struct remake_state *state) {
+static void render_tech_tech(struct platform_state *state) {
 	uint8_t logo_line = 0;
 	uint8_t tmp_dup_line_index = dup_line_index;
 	uint8_t dup_lines = dup_line_tab[tmp_dup_line_index];
@@ -221,7 +221,7 @@ static void render_tech_tech(struct remake_state *state) {
 	}
 }
 
-static void render_scroller(struct remake_state *state) {
+static void render_scroller(struct platform_state *state) {
 	uint32_t *row = BUFFER_PTR(state, (state->buffer_width - p2_scrollerWidth) / 2, 233);
 	uint8_t *src = scroll_buffer;
 
@@ -239,7 +239,7 @@ static void render_scroller(struct remake_state *state) {
 	}
 }
 
-static void render_spring_and_ball(struct remake_state *state, struct ballSpring *spring, uint32_t index) {
+static void render_spring_and_ball(struct platform_state *state, struct ballSpring *spring, uint32_t index) {
 #define first_ball_spring_x 68
 #define distance_to_next 32
 #define spring_width 18
@@ -305,7 +305,7 @@ static void update_springs() {
 	}
 }
 
-static uint32_t part_2_render(struct remake_state *state) {
+static uint32_t part_2_render(struct platform_state *state) {
 	if(!p2_initialized) {
 		for(uint8_t i = 0; i < ARRAYSIZE(ball_springs); ++i) {
 			ball_springs[i].ball_anim_offset = 2 * i;

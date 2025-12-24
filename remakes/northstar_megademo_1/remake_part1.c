@@ -51,7 +51,7 @@ static const uint32_t p1_copper_background[207] = {	// cyan -> blue -> purple ->
 static uint32_t firework_buffer[FIREWORK_BUFFER_WIDTH * FIREWORK_BUFFER_HEIGHT];
 static uint32_t firework_noclear = 0;
 
-static void p1_firework(struct remake_state *state) {
+static void p1_firework(struct platform_state *state) {
 	// PROFILE_FUNCTION();
 	if((state->frame_number % 3) == 0) {
 		for(uint32_t particle_index = 0; particle_index < 216; ++particle_index) {
@@ -146,7 +146,7 @@ static inline uint32_t fade_down(uint32_t color) {
 	return (color > 0) ? (color - COLOR_INCREMENT) : color;
 }
 
-static void p1_render_text(struct remake_state *state) {
+static void p1_render_text(struct platform_state *state) {
 	for(uint32_t i = 0; i < 2; ++i) {
 		uint32_t y_offset = p1_text_data[p1_text_writer_line][i].y_offset;
 		uint32_t x_offset = p1_text_data[p1_text_writer_line][i].x_offset;
@@ -211,7 +211,7 @@ static void p1_render_text(struct remake_state *state) {
 	}
 }
 
-static void p1_init(struct remake_state *state) {
+static void p1_init(struct platform_state *state) {
 	memcpy(firework_data_copy, firework_data, sizeof(firework_data));
 	memcpy(p1_text_data, p1_text_data_template, sizeof(p1_text_data_template));
 	for(uint32_t i = 0; i < 5; ++i) {
@@ -222,7 +222,7 @@ static void p1_init(struct remake_state *state) {
 	}
 }
 
-static uint32_t p1_update(struct remake_state *state)  {
+static uint32_t p1_update(struct platform_state *state)  {
 	// PROFILE_NAMED("part1 all");
 	if(mkfw_is_button_pressed(state->window, MOUSE_BUTTON_RIGHT)) {
 		firework_noclear = !firework_noclear;

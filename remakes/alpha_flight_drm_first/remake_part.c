@@ -12,7 +12,7 @@ const char remake_name[] = "Alpha Flight - Dr.Mabuse first intro";
 #include "audio/music.h"
 #include "resample.c"
 
-struct remake_state {
+struct platform_state {
 	uint32_t *frame_buffer;			// The buffer is RGBA formatted!
 	uint32_t frame_buffer_size;	// In bytes, for clearsize or whatnot
 	uint32_t frame_buffer_width;
@@ -66,14 +66,14 @@ void audio_data_callback(ma_device *device, void *output, const void *input, ma_
 /*
  * Here you should load/initialize images, music, convert data, whatever you need to do
  */
-static void remake_init(struct remake_state *state) {
+static void remake_init(struct platform_state *state) {
 	// NOTE(peter): Audio setup, after ma_device_start(..) our audio_data_callback(..) will be active, make sure you have set it up!
 	device_config = ma_device_config_init(ma_device_type_playback);
 	device_config.playback.format = DEVICE_FORMAT;
 	device_config.playback.channels = DEVICE_CHANNELS;
 	device_config.sampleRate = DEVICE_SAMPLE_RATE;
 	device_config.dataCallback = audio_data_callback;
-	device_config.pUserData = state;					// NOTE(peter): If we need it from the callback, do: struct remake_state *state = (struct remake_state *)device->pUserData;
+	device_config.pUserData = state;					// NOTE(peter): If we need it from the callback, do: struct platform_state *state = (struct platform_state *)device->pUserData;
 	ma_device_init(0, &device_config, &device);
 
 	{
@@ -95,7 +95,7 @@ static void remake_init(struct remake_state *state) {
  */
 
 
-static void remake_shutdown(struct remake_state *state) {
+static void remake_shutdown(struct platform_state *state) {
 	ma_device_uninit(&device);			// PLEASE MAKE IT STOP!!111
 }
 

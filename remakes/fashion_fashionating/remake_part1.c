@@ -165,7 +165,7 @@ static struct point p1_bling_sprite_locations[] = {
 struct animationstep {
 	uint32_t startFrame;
 	uint32_t endFrame;	// Inclusive
-	void (*renderFunction)(struct remake_state *, uint32_t);
+	void (*renderFunction)(struct platform_state *, uint32_t);
 };
 
 static void part_1_init(void) {
@@ -173,12 +173,12 @@ static void part_1_init(void) {
 	p1_temp_buffer = (uint8_t*)malloc((352 + p1_presents_fashionating->width) * 15);
 }
 
-static void render_blinking_cursor(struct remake_state *state, uint32_t frame);
-static void render_repositioned_blinking_cursor(struct remake_state *state, uint32_t frame);
-static void render_type_load_command(struct remake_state *state, uint32_t frame);
-static void render_search_and_load_text(struct remake_state *state, uint32_t frame);
-static void render_type_run_command(struct remake_state *state, uint32_t frame);
-static void finalize_animation_sequence(struct remake_state *state, uint32_t frame);
+static void render_blinking_cursor(struct platform_state *state, uint32_t frame);
+static void render_repositioned_blinking_cursor(struct platform_state *state, uint32_t frame);
+static void render_type_load_command(struct platform_state *state, uint32_t frame);
+static void render_search_and_load_text(struct platform_state *state, uint32_t frame);
+static void render_type_run_command(struct platform_state *state, uint32_t frame);
+static void finalize_animation_sequence(struct platform_state *state, uint32_t frame);
 
 // Array of animation steps (sentinel value at the end)
 static const struct  animationstep animationSteps[] = {
@@ -192,7 +192,7 @@ static const struct  animationstep animationSteps[] = {
 	{  -1,  -1, 0 }														// Sentinel value to mark the end of the array
 };
 
-static void c64_effect(struct remake_state *state) {
+static void c64_effect(struct platform_state *state) {
 	// Fill background with the first color in the palette
 	uint32_t *dst = state->buffer;
 	uint32_t color = c64_colors_load_run[0];
@@ -223,7 +223,7 @@ static void c64_effect(struct remake_state *state) {
 	} while (animationSteps[i].startFrame != -1);  // Check sentinel value
 }
 
-static void render_blinking_square(struct remake_state *state, uint32_t onoff, uint32_t *dst) {
+static void render_blinking_square(struct platform_state *state, uint32_t onoff, uint32_t *dst) {
 	uint32_t color = c64_colors_load_run[onoff];
 	for(uint32_t y = 0; y < 8; ++y) {
 		uint32_t *row = dst;
@@ -234,19 +234,19 @@ static void render_blinking_square(struct remake_state *state, uint32_t onoff, u
 	}
 }
 
-static void render_blinking_cursor(struct remake_state *state, uint32_t frame) {
+static void render_blinking_cursor(struct platform_state *state, uint32_t frame) {
 	uint32_t skip = (state->buffer_width - p1_c64_screen->width);
 	uint32_t *dst = BUFFER_PTR(state, 20 + (skip / 2), 28 + 48);
 	render_blinking_square(state, (frame >> 4) & 1, dst);
 }
 
-static void render_repositioned_blinking_cursor(struct remake_state *state, uint32_t frame) {
+static void render_repositioned_blinking_cursor(struct platform_state *state, uint32_t frame) {
 	uint32_t skip = (state->buffer_width - p1_c64_screen->width);
 	uint32_t *dst = BUFFER_PTR(state, 20 + (skip / 2), 92 + 24);
 	render_blinking_square(state, (frame >> 4) & 1, dst);
 }
 
-static void render_type_load_command(struct remake_state *state, uint32_t frame) {
+static void render_type_load_command(struct platform_state *state, uint32_t frame) {
 	uint32_t skip = (state->buffer_width - p1_c64_screen->width);
 	uint32_t *dst = BUFFER_PTR(state, 20 + (skip / 2), 28 + 48);
 	uint8_t *src = p1_c64_loading_run->data;
@@ -262,7 +262,7 @@ static void render_type_load_command(struct remake_state *state, uint32_t frame)
 	}
 }
 
-static void render_search_and_load_text(struct remake_state *state, uint32_t frame) {
+static void render_search_and_load_text(struct platform_state *state, uint32_t frame) {
 	uint32_t skip = (state->buffer_width - p1_c64_screen->width);
 	uint32_t *dst = BUFFER_PTR(state, 20 + (skip / 2), 76);
 	uint8_t *src = p1_c64_loading_run->data;
@@ -289,7 +289,7 @@ static void render_search_and_load_text(struct remake_state *state, uint32_t fra
 	}
 }
 
-static void render_type_run_command(struct remake_state *state, uint32_t frame) {
+static void render_type_run_command(struct platform_state *state, uint32_t frame) {
 	uint32_t skip = (state->buffer_width - p1_c64_screen->width);
 	uint32_t *dst = BUFFER_PTR(state, 20 + (skip / 2), 92 + 24);
 	uint8_t *src = p1_c64_loading_run->data + 32 * p1_c64_loading_run->width;
@@ -305,7 +305,7 @@ static void render_type_run_command(struct remake_state *state, uint32_t frame) 
 	}
 }
 
-static void finalize_animation_sequence(struct remake_state *state, uint32_t frame) {
+static void finalize_animation_sequence(struct platform_state *state, uint32_t frame) {
 	uint32_t skip = (state->buffer_width - p1_c64_screen->width);
 	uint32_t *dst = BUFFER_PTR(state, 20 + (skip / 2), 76);
 	uint8_t *src = p1_c64_loading_run->data;
@@ -333,7 +333,7 @@ static void finalize_animation_sequence(struct remake_state *state, uint32_t fra
 }
 
 // [=]===^=====================================================================================^===[=]
-static void decrunchEffect(struct remake_state *state) {
+static void decrunchEffect(struct platform_state *state) {
 	uint32_t *dest = state->buffer;
 	uint32_t temp_color_index = color_index++;
 	uint32_t temp_color = c64_colors[temp_color_index & 0xf];
@@ -369,7 +369,7 @@ static void decrunchEffect(struct remake_state *state) {
 }
 
 // [=]===^=====================================================================================^===[=]
-static void p1_scroller(struct remake_state *state) {
+static void p1_scroller(struct platform_state *state) {
 	static uint8_t *scroll_text_ptr = p1_scroll_text;
 	static uint32_t count = 96;
 
@@ -439,7 +439,7 @@ static void p1_scroller(struct remake_state *state) {
 	count++;
 }
 
-static uint32_t part_1_render(struct remake_state *state) {
+static uint32_t part_1_render(struct platform_state *state) {
 	static uint32_t decrunchTime = 256;
 	static float accumulator = 0.f;
 	static uint32_t cursorCounter = 0;

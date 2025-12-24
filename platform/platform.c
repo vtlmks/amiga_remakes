@@ -77,12 +77,12 @@ struct mkfw_state *window;
 #include "option_selector_1/option_window.c"
 
 static void remake_options(struct options *opt);
-static void remake_init(struct remake_state *state);
-static void remake_frame(struct remake_state *state);
-static void remake_shutdown(struct remake_state *state);
+static void remake_init(struct platform_state *state);
+static void remake_frame(struct platform_state *state);
+static void remake_shutdown(struct platform_state *state);
 
 static void framebuffer_callback(struct mkfw_state *window, int32_t width, int32_t height, float aspect_ratio) {
-	struct remake_state *state = (struct remake_state *)window->user_data;
+	struct platform_state *state = (struct platform_state *)window->user_data;
 
 	int32_t viewport_x = 0;
 	int32_t viewport_y = 0;
@@ -136,7 +136,7 @@ static void key_callback(struct mkfw_state *window, uint32_t key, uint32_t actio
 
 // [=]===^=[ mouse_move_callback ]=================================================================^===[=]
 static void mouse_move_callback(struct mkfw_state *window, int32_t x, int32_t y) {
-	struct remake_state *state = (struct remake_state *)window->user_data;
+	struct platform_state *state = (struct platform_state *)window->user_data;
 	state->mouse_dx += x;
 	state->mouse_dy += y;
 }
@@ -157,7 +157,7 @@ static DWORD WINAPI render_thread_func(LPVOID arg) {
 #else
 static void *render_thread_func(void *arg) {
 #endif
-	struct remake_state *state = (struct remake_state *)arg;
+	struct platform_state *state = (struct platform_state *)arg;
 	struct mkfw_state *window = state->window;
 
 	mkfw_attach_context(window);

@@ -36,7 +36,7 @@ static void remake_audio_callback(int16_t *data, size_t frames) {
 
 
 // [=]===^=[ remake_init ]============================================================^===[=]
-static void remake_init(struct remake_state *state) {
+static void remake_init(struct platform_state *state) {
 	change_resolution(state, BUFFER_WIDTH, BUFFER_HEIGHT);
 
 	// mkfw_set_window_title(remake_title);
@@ -56,12 +56,12 @@ static void remake_options(struct options *opt) {
 }
 
 // [=]===^=[ remake_frame ]============================================================^===[=]
-static void remake_frame(struct remake_state *state) {
+static void remake_frame(struct platform_state *state) {
 	// PROFILE_FUNCTION();
 }
 
 // [=]===^=[ remake_shutdown ]============================================================^===[=]
-static void remake_shutdown(struct remake_state *state) {
+static void remake_shutdown(struct platform_state *state) {
 	mkfw_audio_callback = 0;
 	// fc14play_Close();
 }

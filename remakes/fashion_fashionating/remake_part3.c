@@ -91,7 +91,7 @@ static struct point p3_bling_sprite_locations[] = {
 	{ 249,	169 },				// S on signature
 };
 
-static void initialize_stars(struct remake_state *state) {
+static void initialize_stars(struct platform_state *state) {
 	for(uint16_t i = 0; i < ARRAYSIZE(remake_stars); ++i) {
 		remake_stars[i].x = state->buffer_width + xor_generate_random(&rand_state) % (state->buffer_width + 30);
 
@@ -100,7 +100,7 @@ static void initialize_stars(struct remake_state *state) {
 	p3Init = 1;
 }
 
-static void render_copper_bars(struct remake_state *state) {
+static void render_copper_bars(struct platform_state *state) {
 	uint32_t *row = state->buffer;
 	uint32_t x, y;
 
@@ -126,7 +126,7 @@ static void render_copper_bars(struct remake_state *state) {
 	}
 }
 
-static uint32_t render_game_over_logo(struct remake_state *state, uint32_t frame) {
+static uint32_t render_game_over_logo(struct platform_state *state, uint32_t frame) {
 	static uint32_t first_line_of_logo_rendered = 0;
 	static uint32_t flood_fill = 1;
 	static uint32_t initialized = 0;
@@ -184,7 +184,7 @@ static uint32_t render_game_over_logo(struct remake_state *state, uint32_t frame
 	return !flood_fill;  // Return 1 when logo is fully rendered
 }
 
-static void update_and_render_scroller(struct remake_state *state) {
+static void update_and_render_scroller(struct platform_state *state) {
 	if(--p3_scroll_count == 0) {
 		p3_scroll_count = 8;
 		if(*p3_scroll_text_ptr == '@') {
@@ -227,7 +227,7 @@ static void update_and_render_scroller(struct remake_state *state) {
 	}
 }
 
-static void render_stars(struct remake_state *state) {
+static void render_stars(struct platform_state *state) {
 	for(uint32_t i = 0; i < ARRAYSIZE(remake_stars); ++i) {
 		remake_stars[i].x -= (i % 3) + 1;
 		if(remake_stars[i].x < 0) {
@@ -249,7 +249,7 @@ static void render_stars(struct remake_state *state) {
 	}
 }
 
-static void render_flirty_eyes(struct remake_state *state) {
+static void render_flirty_eyes(struct platform_state *state) {
 	// Flirty eyes animation - woman's eyes blink every 167 frames
 	static uint32_t local_frame_counter = 0;
 
@@ -281,7 +281,7 @@ static void render_flirty_eyes(struct remake_state *state) {
 	++local_frame_counter;
 }
 
-static void render_moving_eyes(struct remake_state *state) {
+static void render_moving_eyes(struct platform_state *state) {
 	// Moving eyes animation - man's eyes change position every 80 frames
 	static uint32_t local_frame_counter = 0;
 
@@ -300,7 +300,7 @@ static void render_moving_eyes(struct remake_state *state) {
 	}
 }
 
-static void render_bling_stars(struct remake_state *state) {
+static void render_bling_stars(struct platform_state *state) {
 	// Bling star animation - sparkles on the logo every 81 frames
 	static uint32_t local_frame_counter = 0;
 
@@ -339,7 +339,7 @@ static void render_bling_stars(struct remake_state *state) {
 	++local_frame_counter;
 }
 
-static void render_bob_scroller(struct remake_state *state) {
+static void render_bob_scroller(struct platform_state *state) {
 	// Bob scrolling text - horizontal scrolling text at bottom
 	static uint8_t p3_bob_buffer[((2 * 16) + 376) * 16];  // TODO: Fix hardcoded dimensions
 	uint8_t *src;
@@ -383,7 +383,7 @@ static void render_bob_scroller(struct remake_state *state) {
 	}
 }
 
-static uint32_t part_3_render(struct remake_state *state) {
+static uint32_t part_3_render(struct platform_state *state) {
 	if(!p3Init) {
 		initialize_stars(state);
 	}

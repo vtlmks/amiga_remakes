@@ -756,7 +756,7 @@ static uint8_t text[] = {
 
 uint32_t stepping = 0;
 uint32_t obj = 0;
-static uint8_t update(struct remake_state *state) {
+static uint8_t update(struct platform_state *state) {
 	uint32_t n_coords = objects[obj].count;
 	int16_t *object = objects[obj].vec_obj;
 	transform_and_project(object, vec_coords, n_coords, ax, ay, az);

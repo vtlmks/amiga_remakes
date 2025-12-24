@@ -85,7 +85,7 @@ static void part_4_init(void) {
 
 static uint32_t p4_frame = 0;
 
-static uint32_t part_4_render(struct remake_state *state) {
+static uint32_t part_4_render(struct platform_state *state) {
 	static struct {
 		uint32_t counter;
 		uint32_t scroll;

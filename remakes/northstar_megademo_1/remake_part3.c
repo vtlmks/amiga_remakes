@@ -41,7 +41,7 @@ uint32_t p3_bounce_sine[] = {
 	0x3d, 0x3c, 0x3b, 0x39, 0x37, 0x35, 0x32, 0x30, 0x2d, 0x2a, 0x27, 0x23, 0x1f, 0x1b, 0x16, 0x11,  0xc,  0x6,
 };
 
-static void p3_render_bouncing_logo(struct remake_state *state, uint32_t center_x, uint32_t center_y, uint32_t bounce_offset, uint32_t color) {
+static void p3_render_bouncing_logo(struct platform_state *state, uint32_t center_x, uint32_t center_y, uint32_t bounce_offset, uint32_t color) {
 	// PROFILE_FUNCTION();
 	uint8_t * restrict src = part3_logo_bounce_data->data;
 	uint32_t * restrict dst = BUFFER_PTR(state, center_x, center_y - bounce_offset);
@@ -89,7 +89,7 @@ static struct stripe stripes[] = {
 	{ 84, -1, palette_bright },
 };
 
-static void p3_render_big_bouncer(struct remake_state *state) {
+static void p3_render_big_bouncer(struct platform_state *state) {
 	// PROFILE_FUNCTION();
 
 	p3_src_offset_y += p3_direction;
@@ -119,7 +119,7 @@ static void p3_render_big_bouncer(struct remake_state *state) {
 	}
 }
 
-static uint32_t p3_update(struct remake_state *state)  {
+static uint32_t p3_update(struct platform_state *state)  {
 	// PROFILE_NAMED("part3 all");
 
 	p3_render_big_bouncer(state);

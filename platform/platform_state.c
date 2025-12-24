@@ -17,7 +17,7 @@ struct options {
 };
 struct options opt;
 
-struct remake_state {
+struct platform_state {
 	// Window reference
 	struct mkfw_state *window;
 
@@ -72,4 +72,4 @@ struct remake_state {
 
 };
 
-static struct remake_state platform_state;
+static struct platform_state platform_state;

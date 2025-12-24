@@ -73,7 +73,7 @@ static const uint8_t p2_scroll_text[] = {
 	"WELL, WHY NOT JUMP ON THE MOUSE ??????               (C) NORTH STAR&               ^"
 };
 
-static uint32_t logo_render(struct remake_state *state) {
+static uint32_t logo_render(struct platform_state *state) {
 	// PROFILE_FUNCTION();
 	// NOTE(peter): Update and scroll the northstar logo into place
 	uint32_t scroll_speed = 2;
@@ -111,7 +111,7 @@ static uint32_t part2_color_offset = 0;
 static uint32_t p2_logo_reveal_done = 0;
 static uint32_t p2_colors_done = 0;
 
-static void p2_texteffect(struct remake_state *state) {
+static void p2_texteffect(struct platform_state *state) {
 	// PROFILE_FUNCTION();
 	if(p2_logo_reveal_done & !p2_colors_done) {
 		if((state->frame_number & 0x3) == 0) {
@@ -146,7 +146,7 @@ static void p2_texteffect(struct remake_state *state) {
 }
 
 
-static void p2_render_char_clipped(struct remake_state *state, uint8_t *glyph_data, int32_t dest_x, int32_t dest_y) {
+static void p2_render_char_clipped(struct platform_state *state, uint8_t *glyph_data, int32_t dest_x, int32_t dest_y) {
 	// PROFILE_FUNCTION();
 
 	int glyph_size = 16;
@@ -233,7 +233,7 @@ static void p2_initialize_scroller(void) {
 }
 
 
-static void p2_init(struct remake_state *state) {
+static void p2_init(struct platform_state *state) {
 	p2_initialize_scroller();
 
 	for(uint32_t i = 0; i < NUM_STARS; ++i) {
@@ -249,7 +249,7 @@ static void p2_init(struct remake_state *state) {
 }
 
 
-void p2_bouncing_scroller(struct remake_state *state) {
+void p2_bouncing_scroller(struct platform_state *state) {
 	// PROFILE_FUNCTION();/
 
 	if(!p2_colors_done) return;
@@ -287,7 +287,7 @@ void p2_bouncing_scroller(struct remake_state *state) {
 	}
 }
 
-static void p2_starfield(struct remake_state *state) {
+static void p2_starfield(struct platform_state *state) {
 	uint32_t *dst = BUFFER_PTR(state, 0, 17);
 	uint32_t star_add = (state->frame_number & 0x1);
 	for(uint32_t i = 0; i < NUM_STARS; ++i) {
@@ -300,7 +300,7 @@ static void p2_starfield(struct remake_state *state) {
 	}
 }
 
-static void p2_render_logo(struct remake_state *state) {
+static void p2_render_logo(struct platform_state *state) {
 	// PROFILE_FUNCTION();
 	if(p2_logo_reveal_done) {
 		uint32_t logo_x_offset = (state->buffer_width - part2_ns_logo_data->width) >> 1;
@@ -310,7 +310,7 @@ static void p2_render_logo(struct remake_state *state) {
 	}
 }
 
-static uint32_t p2_update(struct remake_state *state) {
+static uint32_t p2_update(struct platform_state *state) {
 	// PROFILE_NAMED("part2 all");
 
 	p2_starfield(state);

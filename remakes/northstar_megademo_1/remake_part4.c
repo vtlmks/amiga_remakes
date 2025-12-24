@@ -158,7 +158,7 @@ static void p4_shutdown() {
 	scroller_remove(p4_scroll_8);
 }
 
-static void p4_render_scroll_buffer(struct remake_state *state, struct scroller_state *scr_state) {
+static void p4_render_scroll_buffer(struct platform_state *state, struct scroller_state *scr_state) {
 	// PROFILE_FUNCTION();
 	uint32_t *scroll_dest = BUFFER_PTR(state, 0, scr_state->dest_offset_y);
 	uint8_t *scroll_src = scr_state->buffer;
@@ -187,7 +187,7 @@ static void p4_render_scroll_buffer(struct remake_state *state, struct scroller_
 	}
 }
 
-static uint32_t p4_update(struct remake_state *state)  {
+static uint32_t p4_update(struct platform_state *state)  {
 	// PROFILE_NAMED("part4 all");
 
 // NOTE(peter): Background logo

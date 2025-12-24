@@ -156,7 +156,7 @@ static void p8_shutdown() {
 	scroller_remove(p8_scroll_4);
 }
 
-static void p8_render_scroll_buffer(struct remake_state *state, struct scroller_state *scr_state) {
+static void p8_render_scroll_buffer(struct platform_state *state, struct scroller_state *scr_state) {
 	// PROFILE_FUNCTION();
 	uint32_t *scroll_dest = BUFFER_PTR(state, 0, scr_state->dest_offset_y);
 	uint8_t *scroll_src = scr_state->buffer;
@@ -182,7 +182,7 @@ static void p8_render_scroll_buffer(struct remake_state *state, struct scroller_
 	}
 }
 
-static uint32_t p8_update(struct remake_state *state)  {
+static uint32_t p8_update(struct platform_state *state)  {
 	// PROFILE_NAMED("part8 all");
 
 	scroller(p8_scroll_1);

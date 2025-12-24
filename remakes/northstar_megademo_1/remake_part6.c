@@ -74,7 +74,7 @@ static void p6_shutdown() {
 }
 #define P6_OFFSET_BOTTOM (400 - 164)
 
-static void p6_bouncing_logo(struct remake_state *state) {
+static void p6_bouncing_logo(struct platform_state *state) {
 	// PROFILE_FUNCTION();
 
 	p6_offset += p6_offset_direction;
@@ -86,7 +86,7 @@ static void p6_bouncing_logo(struct remake_state *state) {
 	blit_clipped(state, part6_large_logo_data, offset_x, 18-p6_offset, dest_rect, 0);
 }
 
-static void p6_render_scroll_buffer(struct remake_state *state, struct scroller_state *dat) {
+static void p6_render_scroll_buffer(struct platform_state *state, struct scroller_state *dat) {
 	// PROFILE_FUNCTION();
 	uint32_t *scroll_dest = BUFFER_PTR(state, (state->buffer_width - 320) >> 1, dat->dest_offset_y);
 	uint8_t *scroll_src = dat->buffer;
@@ -100,7 +100,7 @@ static void p6_render_scroll_buffer(struct remake_state *state, struct scroller_
 	}
 }
 
-static uint32_t p6_update(struct remake_state *state)  {
+static uint32_t p6_update(struct platform_state *state)  {
 	// PROFILE_NAMED("part6 all");
 	p6_bouncing_logo(state);
 	scroller(p6_scroll);

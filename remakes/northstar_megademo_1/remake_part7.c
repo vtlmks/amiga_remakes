@@ -181,7 +181,7 @@ static void p7_shutdown() {
 	scroller_remove(p7_scroll);
 }
 
-static void p7_render_scroll_buffer(struct remake_state *state, struct scroller_state *scr_state) {
+static void p7_render_scroll_buffer(struct platform_state *state, struct scroller_state *scr_state) {
 	// PROFILE_FUNCTION();
 	uint32_t *scroll_dest = BUFFER_PTR(state, 0, scr_state->dest_offset_y);
 	uint8_t *scroll_src = scr_state->buffer;
@@ -214,7 +214,7 @@ static uint8_t p7_item_type = 0;
 static uint8_t p7_item_count = 0;
 static uint8_t p7_item_scroll_offset = 47;
 
-static void p7_bar_scrollers(struct remake_state *state) {
+static void p7_bar_scrollers(struct platform_state *state) {
 	// PROFILE_FUNCTION();
 // 20 objects before change
 	if(p7_item_scroll_offset++ == 47) {
@@ -254,7 +254,7 @@ static void p7_bar_scrollers(struct remake_state *state) {
 	}
 }
 
-static void p7_show_logos(struct remake_state *state) {
+static void p7_show_logos(struct platform_state *state) {
 	// PROFILE_FUNCTION();
 
 
@@ -284,7 +284,7 @@ static void p7_show_logos(struct remake_state *state) {
 	}
 }
 
-static void p7_render_stars(struct remake_state *state) {
+static void p7_render_stars(struct platform_state *state) {
 	uint32_t *dst = BUFFER_PTR(state, 0, 58);
 	uint32_t star_add = (state->frame_number & 0x1);
 	for(uint32_t i = 0; i < 188; ++i) {
@@ -297,7 +297,7 @@ static void p7_render_stars(struct remake_state *state) {
 	}
 }
 
-static uint32_t p7_update(struct remake_state *state)  {
+static uint32_t p7_update(struct platform_state *state)  {
 	// PROFILE_NAMED("part7 all");
 
 	if(mkfw_is_button_pressed(state->window, MOUSE_BUTTON_RIGHT)) {

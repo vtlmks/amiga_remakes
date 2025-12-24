@@ -323,7 +323,7 @@ static struct sprite sprites[4] = {
 };
 
 
-static void p5_sprite_bounce(struct remake_state *state) {
+static void p5_sprite_bounce(struct platform_state *state) {
 	// PROFILE_FUNCTION();
 
 	// NOTE(peter): forced nonsense fix because ugg data is no longer const (C is garbage)...
@@ -351,7 +351,7 @@ static void p5_sprite_bounce(struct remake_state *state) {
 
 }
 
-static void p5_render_logo(struct remake_state *state, struct ugg *image, int32_t offset_x, uint32_t offset_y) {
+static void p5_render_logo(struct platform_state *state, struct ugg *image, int32_t offset_x, uint32_t offset_y) {
 	// PROFILE_FUNCTION();
 
 	int32_t left_clip = 12;
@@ -402,7 +402,7 @@ struct animation_state {
 
 static struct animation_state ani = { .duration = 1, .color = 0xffffffff };
 
-static void p5_mid_screen_logos(struct remake_state *state) {
+static void p5_mid_screen_logos(struct platform_state *state) {
 	if(--ani.duration == 0) {
 		uint32_t exit;
 		do {
@@ -464,7 +464,7 @@ static void p5_mid_screen_logos(struct remake_state *state) {
 	p5_render_logo(state, p5_logos[ani.logoid].image, ani.pos, p5_logos[ani.logoid].y_offset);
 }
 
-static void p5_render_heads(struct remake_state *state) {
+static void p5_render_heads(struct platform_state *state) {
 	// PROFILE_FUNCTION();
 	int32_t half_head_w = p5_faces_data->width >> 1;
 	blit_full(state, p5_faces_data, -half_head_w, 206, 0);
@@ -472,7 +472,7 @@ static void p5_render_heads(struct remake_state *state) {
 }
 
 #define LOGO_Y_OFFSET 224
-static void p5_render_atom_logo(struct remake_state *state) {
+static void p5_render_atom_logo(struct platform_state *state) {
 	// PROFILE_FUNCTION();
 	uint32_t temp_offset = md1_p5_atom_logo_offset;
 	uint8_t * restrict logo_ptr = p5_atom_demo_ii_logo_data->data;
@@ -499,7 +499,7 @@ static void p5_render_atom_logo(struct remake_state *state) {
 	md1_p5_atom_logo_offset = (md1_p5_atom_logo_offset == sin_table_size - 1) ? 0 : md1_p5_atom_logo_offset + 1;
 }
 
-static void p5_render_copperbars(struct remake_state *state) {
+static void p5_render_copperbars(struct platform_state *state) {
 	// PROFILE_FUNCTION();
 
 	uint32_t * restrict copper_bars_dest = BUFFER_PTR(state, 0, 103);
@@ -515,7 +515,7 @@ static void p5_render_copperbars(struct remake_state *state) {
 	}
 }
 
-static void p5_render_small_scroller(struct remake_state *state) {
+static void p5_render_small_scroller(struct platform_state *state) {
 	// PROFILE_FUNCTION();
 	const uint8_t * restrict src = p5_scroller1->buffer;
 	uint32_t * restrict dst = BUFFER_PTR(state, (state->buffer_width - 336) / 2, 86);
@@ -541,7 +541,7 @@ static void p5_render_small_scroller(struct remake_state *state) {
 	}
 }
 
-static void p5_render_large_scroller(struct remake_state *state) {
+static void p5_render_large_scroller(struct platform_state *state) {
 	// PROFILE_FUNCTION();
 	uint8_t * restrict src = p5_scroller2->buffer;
 	uint32_t * restrict dst = BUFFER_PTR(state, (state->buffer_width - 336) / 2, 170);
@@ -567,7 +567,7 @@ static void p5_render_large_scroller(struct remake_state *state) {
 static uint32_t p5_warhammer_index = 0;
 
 __attribute__((hot, always_inline))
-static inline void p5_render_image_with_palette(struct remake_state *state, struct ugg *image, uint32_t *palette1, uint32_t *palette2, uint32_t start_row) {
+static inline void p5_render_image_with_palette(struct platform_state *state, struct ugg *image, uint32_t *palette1, uint32_t *palette2, uint32_t start_row) {
 	uint8_t *src = image->data;
 	uint32_t *dst = BUFFER_PTR(state, (state->buffer_width - image->width) >> 1, start_row);
 	uint32_t color_index = p5_warhammer_index;
@@ -593,14 +593,14 @@ static inline void p5_render_image_with_palette(struct remake_state *state, stru
 	}
 }
 
-static void p5_render_warhammer_40k(struct remake_state *state) {
+static void p5_render_warhammer_40k(struct platform_state *state) {
 	// PROFILE_FUNCTION();
 	p5_render_image_with_palette(state, p5_warhammer_logo_data, p5_warhammer_palette, 0, 14);
 	p5_render_image_with_palette(state, p5_rogue_40k_logo_data, p5_40k_palette, p5_rogue_palette, 41);
 	p5_warhammer_index = (p5_warhammer_index == 0) ? 29 : p5_warhammer_index - 1;
 }
 
-static uint32_t p5_update(struct remake_state *state)  {
+static uint32_t p5_update(struct platform_state *state)  {
 	// PROFILE_NAMED("part5 all");
 
 	if(mkfw_is_button_pressed(state->window, MOUSE_BUTTON_RIGHT)) {

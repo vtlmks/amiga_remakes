@@ -162,7 +162,7 @@ static size_t get_font_offset(struct scroller_state *scr_state, uint8_t char_ind
 }
 
 // [=]===^=[ remake_init ]============================================================^===[=]
-static void remake_init(struct remake_state *state) {
+static void remake_init(struct platform_state *state) {
 	change_resolution(state, BUFFER_WIDTH, BUFFER_HEIGHT);
 
 	xor_init_rng(&base_rand, 187481201);
@@ -188,7 +188,7 @@ static void remake_options(struct options *opt) {
 	opt->window_title = "Alpha Flight - Dirty Rotten Intro 1992-10\0";
 }
 
-static void af_render_scroll_buffer(struct remake_state *state, struct scroller_state *scr_state) {
+static void af_render_scroll_buffer(struct platform_state *state, struct scroller_state *scr_state) {
 	uint32_t *scroll_dest = BUFFER_PTR(state, 0, scr_state->dest_offset_y);
 	uint8_t *scroll_src = scr_state->buffer;
 
@@ -210,7 +210,7 @@ static void af_render_scroll_buffer(struct remake_state *state, struct scroller_
 	}
 }
 
-static void render_background(struct remake_state *state) {
+static void render_background(struct platform_state *state) {
 	uint32_t *dst = state->buffer;
 	// Top grey area (43 scanlines)
 	for(size_t i = 0; i < 43 * state->buffer_width; ++i) {
@@ -250,7 +250,7 @@ static void fade_star_color(void) {
 	}
 }
 
-static void render_stars(struct remake_state *state) {
+static void render_stars(struct platform_state *state) {
 	uint32_t *dst = BUFFER_PTR(state, 0, 45);	// Start below blue line
 	for(size_t i = 0; i < NUM_STARS; ++i) {
 		dst[stars[i]] = star_color;
@@ -261,7 +261,7 @@ static void render_stars(struct remake_state *state) {
 }
 
 // [=]===^=[ remake_frame ]============================================================^===[=]
-static void remake_frame(struct remake_state *state) {
+static void remake_frame(struct platform_state *state) {
 
 	scroller(scroll_state);
 	render_background(state);
@@ -292,6 +292,6 @@ static void remake_frame(struct remake_state *state) {
 }
 
 // [=]===^=[ remake_shutdown ]============================================================^===[=]
-static void remake_shutdown(struct remake_state *state) {
+static void remake_shutdown(struct platform_state *state) {
 	mkfw_audio_callback = 0;
 }

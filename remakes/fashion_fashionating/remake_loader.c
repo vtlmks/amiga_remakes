@@ -11,7 +11,7 @@ static uint32_t loader_logo_red_palette[] = {
 	0xcc6666ff,0xaa4444ff,0x993333ff,0x771111ff,0x661111ff,0x440000ff,0x330000ff,0x661111ff,
 };
 
-static uint32_t loader(struct remake_state *state) {
+static uint32_t loader(struct platform_state *state) {
 	static uint32_t loader_timer = 200;
 	static uint32_t counter = 0;
 	static uint32_t roller = 0;

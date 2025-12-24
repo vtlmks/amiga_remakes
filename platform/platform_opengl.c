@@ -18,7 +18,7 @@ INCBIN_SHADER_NOHEADER(phosphor_persistence_fragment,	"#version 330", "shaders/g
 INCBIN_SHADER_NOHEADER(passthrough_fragment,				"#version 330", "shaders/gl_passthrough_fragment.glsl");
 
 // [=]===^=[ setup_render_target ]================================================================^===[=]
-static void setup_render_targets(struct remake_state *state) {
+static void setup_render_targets(struct platform_state *state) {
 
 	// Ensure source texture exists (might not if framebuffer_callback called before change_resolution)
 	if(state->texture == 0 && state->buffer_width > 0 && state->buffer_height > 0) {
@@ -62,7 +62,7 @@ static void setup_render_targets(struct remake_state *state) {
 }
 
 // [=]===^=[ change_resolution ]=================================================================^===[=]
-static void change_resolution(struct remake_state *state, uint32_t new_width, uint32_t new_height) {
+static void change_resolution(struct platform_state *state, uint32_t new_width, uint32_t new_height) {
 	state->buffer_width = new_width;
 	state->buffer_height = new_height;
 
@@ -127,7 +127,7 @@ static GLuint compile_shader(GLenum shader_type, const char *shader_source) {
 }
 
 // [=]===^=[ opengl_setup ]================================================================^===[=]
-static void opengl_setup(struct remake_state *state) {
+static void opengl_setup(struct platform_state *state) {
 	gl_loader();
 	glEnable(GL_FRAMEBUFFER_SRGB);
 	glDisable(GL_DEPTH_TEST);
@@ -215,7 +215,7 @@ static void opengl_setup(struct remake_state *state) {
 
 // [=]===^=[ render_frame ]=================================================================^===[=]
 __attribute__((always_inline))
-static inline void render_frame(struct remake_state *state) {
+static inline void render_frame(struct platform_state *state) {
 	// Check if viewport changed and we need to recreate render targets
 	if(state->viewport_changed) {
 		setup_render_targets(state);

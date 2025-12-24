@@ -132,7 +132,7 @@ uint32_t bars_on_top_of_eachother[87];
 
 uint8_t scroll_buffer[(320+16) * 14];
 
-static void remake(struct remake_state *state) {
+static void remake(struct platform_state *state) {
 
 	memset(copper_background, 0, sizeof(copper_background));
 	memset(copper_behind_image, 0, sizeof(copper_behind_image));
@@ -317,20 +317,20 @@ static void remake_options(struct options *opt) {
 }
 
 // [=]===^=[ remake_init ]============================================================^===[=]
-static void remake_init(struct remake_state *state) {
+static void remake_init(struct platform_state *state) {
 	change_resolution(state, BUFFER_WIDTH, BUFFER_HEIGHT);
 	part1_sample.data = resample_audio((int8_t*)music, music_end - music_data, 400, &part1_sample.size);
 	mkfw_audio_callback = remake_audio_callback;
 }
 
 // [=]===^=[ remake_frame ]============================================================^===[=]
-static void remake_frame(struct remake_state *state) {
+static void remake_frame(struct platform_state *state) {
 	// PROFILE_FUNCTION();
 	remake(state);
 }
 
 // [=]===^=[ remake_shutdown ]============================================================^===[=]
-static void remake_shutdown(struct remake_state *state) {
+static void remake_shutdown(struct platform_state *state) {
 	free(part1_sample.data);
 	mkfw_audio_callback = 0;
 }
