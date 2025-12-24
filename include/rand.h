@@ -23,11 +23,19 @@ uint32_t xor_generate_random(struct rng_state *state);
 
 #ifdef RAND_IMPLEMENTATION
 
-void xor_init_rng(struct rng_state *state, uint32_t seed) {
-	state->x = seed;
-	state->y = seed ^ 362436069;
-	state->z = seed ^ 521288629;
-	state->w = seed ^ 88675123;
+static uint32_t splitmix32(uint32_t *x) {
+	uint32_t z = (*x += 0x9e3779b9);
+	z = (z ^ (z >> 16)) * 0x85ebca6b;
+	z = (z ^ (z >> 13)) * 0xc2b2ae35;
+	return z ^ (z >> 16);
+}
+
+void xor_init_rng(struct rng_state *s, uint32_t seed) {
+	uint32_t x = seed;
+	s->x = splitmix32(&x);
+	s->y = splitmix32(&x);
+	s->z = splitmix32(&x);
+	s->w = splitmix32(&x);
 }
 
 uint32_t xor_generate_random(struct rng_state *state) {
@@ -71,7 +79,7 @@ uint32_t mks_rand(uint32_t max) {
 	}
 	close(fd);
 #endif
-	return r % max;
+	return (uint64_t)r * max >> 32;
 }
 
 #endif
