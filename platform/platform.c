@@ -66,6 +66,7 @@ struct mkfw_state *window;
 
 #include "ugg.h"
 #include "clip_blit.h"
+#include "fade.h"
 #include "futurecomposer14.h"
 #include "generic_scroller.h"
 #include "micromod.h"

@@ -55,15 +55,8 @@ INCBIN_UGG(bob3b, "data/bob_3b.ugg");
 INCBIN_UGG(bob3c, "data/bob_3c.ugg");
 INCBIN_UGG(bob3d, "data/bob_3d.ugg");
 
-
-// #include <protracker2.c>
-
-// INCBIN(_2d6,	"data/2d6.mod");
-// static uint8_t *einstein_2d6_data	= (uint8_t*)_2d6_data;
-// static struct pt_state pt_einstein_2d6;
-
-// Cast the INCBIN data to usable struct pointers
-// static struct ugg *part1_small_font_data		= (struct ugg*)_part1_small_font_data;
+INCBIN_UGG(font, "data/font.ugg");
+INCBIN_UGG(logo, "data/warfalcons_logo.ugg");
 
 static const int16_t wf_sine_table[320] = {
 	0x0000, 0x0192, 0x0324, 0x04b5, 0x0645, 0x07d5, 0x0963, 0x0af0, 0x0c7b, 0x0e05, 0x0f8c, 0x1111, 0x1293, 0x1412, 0x158e, 0x1707,
@@ -93,40 +86,9 @@ static const int16_t wf_sine_table[320] = {
 };
 #define cosine_table (sine_table + 64)		// Cosine table (sine table shifted by 90 degrees)
 
-
-
-
-#if 0
-static void vector_rotate(int32_t * restrict x, int32_t * restrict y, int32_t * restrict z, uint32_t angle_x, uint32_t angle_y, uint32_t angle_z) {
-	int32_t sx = wf_sine_table[angle_x];
-	int32_t cx = cosine_table[angle_x];
-	int32_t sy = wf_sine_table[angle_y];
-	int32_t cy = cosine_table[angle_y];
-	int32_t sz = wf_sine_table[angle_z];
-	int32_t cz = cosine_table[angle_z];
-
-	int32_t tx, ty, tz;
-
-	ty = ((*y * cx - *z * sx) >> 14);	// Rotate around X-axis
-	tz = ((*y * sx + *z * cx) >> 14);
-	*y = ty;
-	*z = tz;
-
-	tx = ((*x * cy + *z * sy) >> 14);	// Rotate around Y-axis
-	tz = ((*z * cy - *x * sy) >> 14);
-	*x = tx;
-	*z = tz;
-
-	tx = ((*x * cz - *y * sz) >> 14);	// Rotate around Z-axis
-	ty = ((*x * sz + *y * cz) >> 14);
-	*x = tx;
-	*y = ty;
-}
-#endif
-
-uint32_t ax = 0;
-uint32_t ay = 0;
-uint32_t az = 0;
+uint32_t angle_x = 0;
+uint32_t angle_y = 0;
+uint32_t angle_z = 0;
 
 static int16_t vec_obj_0[] = {	// 20
 	0x001b,0xffdd,0xffdd,0x0023,
@@ -344,250 +306,12 @@ struct object objects[] = {
 	{ vec_obj_7, 27 },
 };
 
-
-#if 0
-ROM:00019738 vector_object_list:dc.l vec_obj_0       ; DATA XREF: sub_17A3E+12↑o
-ROM:00019738                                         ; sub_1802E+224↑o
-ROM:0001973C                 dc.l vec_obj_1
-ROM:00019740                 dc.l vec_obj_2
-ROM:00019744                 dc.l vec_obj_3
-ROM:00019748                 dc.l vec_obj_4
-ROM:0001974C                 dc.l vec_obj_5
-ROM:00019750                 dc.l vec_obj_6
-ROM:00019754                 dc.l vec_obj_7
-ROM:00019758                 dc.l vec_obj_8
-ROM:0001975C                 dc.l vec_obj_8
-ROM:00019760                 dc.l vec_obj_8
-ROM:00019764                 dc.l vec_obj_8
-ROM:00019768                 dc.l vec_obj_8
-ROM:0001976C                 dc.l vec_obj_8
-ROM:00019770                 dc.l vec_obj_8
-ROM:00019774                 dc.l vec_obj_8
-
-vec_obj_0:      dc.w 0x001B,0xFFDD,0xFFDD,0x0023
-                dc.w 0x001B,0x0023,0xFFDD,0x0023
-                dc.w 0x001B,0xFFDD,0xFFDD,0xFFDD
-                dc.w 0x001B,0x0023,0xFFDD,0xFFDD
-                dc.w 0x0028,0xFFDD,0x0023,0x0023
-                dc.w 0x0028,0x0023,0x0023,0x0023
-                dc.w 0x0028,0xFFDD,0x0023,0xFFDD
-                dc.w 0x0028,0x0023,0x0023,0xFFDD
-                dc.w 0x000E,0x0000,0x0023,0x0023
-                dc.w 0x000E,0x0000,0xFFDD,0x0023
-                dc.w 0x000E,0x0000,0xFFDD,0xFFDD
-                dc.w 0x000E,0xFFDD,0xFFDD,0x0000
-                dc.w 0x000E,0x0023,0xFFDD,0x0000
-                dc.w 0x000E,0xFFDD,0x0000,0x0023
-                dc.w 0x0001,0x0023,0x0000,0x0023
-                dc.w 0x0001,0xFFDD,0x0000,0xFFDD
-                dc.w 0x0001,0x0023,0x0000,0xFFDD
-                dc.w 0x0001,0x0000,0x0023,0xFFDD
-                dc.w 0x0001,0xFFDD,0x0023,0x0000
-                dc.w 0x0001,0x0023,0x0023,0x0000
-                dc.w 0x7FFF,0x7FFF,0x7FFF,0x7FFF
-
-vec_obj_2:      dc.w 0x000F,0xFFEC,0xFFEC,0x0014
-                dc.w 0x000F,0x0014,0xFFEC,0x0014
-                dc.w 0x0004,0x0000,0xFFEC,0x0014
-                dc.w 0x000F,0xFFEC,0xFFEC,0xFFEC
-                dc.w 0x000F,0x0014,0xFFEC,0xFFEC
-                dc.w 0x0004,0x0000,0xFFEC,0xFFEC
-                dc.w 0x0004,0xFFEC,0xFFEC,0x0000
-                dc.w 0x0004,0x0014,0xFFEC,0x0000
-                dc.w 0x001E,0xFFEC,0x0000,0x0014
-                dc.w 0x001E,0x0014,0x0000,0x0014
-                dc.w 0x001E,0xFFEC,0x0000,0xFFEC
-                dc.w 0x001E,0x0014,0x0000,0xFFEC
-                dc.w 0x000F,0xFFEC,0x0014,0x0014
-                dc.w 0x000F,0x0014,0x0014,0x0014
-                dc.w 0x0004,0x0000,0x0014,0x0014
-                dc.w 0x000F,0xFFEC,0x0014,0xFFEC
-                dc.w 0x000F,0x0014,0x0014,0xFFEC
-                dc.w 0x002B,0x0000,0x0014,0xFFEC
-                dc.w 0x002B,0xFFEC,0x0014,0x0000
-                dc.w 0x002B,0x0014,0x0014,0x0000
-                dc.w 0x7FFF,0x7FFF,0x7FFF,0x7FFF
-
-vec_obj_3:      dc.w 0x001A,0x0000,0x0000,0x0000
-                dc.w 0x0004,0xFFF0,0x0010,0xFFEE
-                dc.w 0x0004,0x0010,0x0010,0xFFEE
-                dc.w 0x0004,0xFFF0,0xFFF0,0xFFEE
-                dc.w 0x0004,0x0010,0xFFF0,0xFFEE
-                dc.w 0x0002,0x001D,0x0000,0xFFF8
-                dc.w 0x0003,0x002A,0x0000,0xFFF3
-                dc.w 0x0004,0x0035,0x0000,0xFFEE
-                dc.w 0x0005,0x003E,0x0000,0xFFEC
-                dc.w 0x0003,0xFFE5,0x0000,0x000B
-                dc.w 0x0004,0xFFDA,0x0000,0x0014
-                dc.w 0x0004,0xFFD6,0x0000,0x001E
-                dc.w 0x0005,0xFFD6,0x0000,0x0028
-                dc.w 0x0003,0xFFD6,0x0000,0x0035
-                dc.w 0x0006,0xFFCC,0x0000,0x0035
-                dc.w 0x7FFF,0x7FFF,0x7FFF,0x7FFF
-
-vec_obj_4:      dc.w 0x0000,0x0000,0x0000,0x0008
-                dc.w 0x0014,0xFFFC,0x0014,0x0006
-                dc.w 0x0014,0x0004,0x0014,0x0006
-                dc.w 0x0004,0x0000,0x0000,0xFFEA
-                dc.w 0x0005,0x0000,0x0000,0xFFDF
-                dc.w 0x0005,0xFFF6,0x0000,0xFFEA
-                dc.w 0x0005,0x000A,0x0000,0xFFEA
-                dc.w 0x0005,0xFFEC,0x0000,0xFFE4
-                dc.w 0x0005,0x0014,0x0000,0xFFE4
-                dc.w 0x0005,0xFFE6,0x0000,0xFFD8
-                dc.w 0x0005,0x001A,0x0000,0xFFD8
-                dc.w 0x0004,0x0000,0x0000,0xFFD3
-                dc.w 0x0005,0x0000,0x0000,0xFFCC
-                dc.w 0x0005,0xFFF6,0x0000,0xFFC8
-                dc.w 0x0005,0x000A,0x0000,0xFFC8
-                dc.w 0x0005,0xFFEC,0x0000,0xFFC2
-                dc.w 0x0005,0x0014,0x0000,0xFFC2
-                dc.w 0x0002,0xFFE2,0x0000,0xFFBA
-                dc.w 0x0002,0x001E,0x0000,0xFFBA
-                dc.w 0x7FFF,0x7FFF,0x7FFF,0x7FFF
-
-vec_obj_5:      dc.w 0x000F,0xFFEC,0xFFEC,0x0014
-                dc.w 0x000F,0x0014,0xFFEC,0x0014
-                dc.w 0x0004,0x0000,0xFFEC,0x0014
-                dc.w 0x000F,0xFFEC,0xFFEC,0xFFEC
-                dc.w 0x000F,0x0014,0xFFEC,0xFFEC
-                dc.w 0x0004,0x0000,0xFFEC,0xFFEC
-                dc.w 0x0004,0xFFEC,0xFFEC,0x0000
-                dc.w 0x0004,0x0014,0xFFEC,0x0000
-                dc.w 0x001E,0xFFEC,0x0000,0x0014
-                dc.w 0x001E,0x0014,0x0000,0x0014
-                dc.w 0x001E,0xFFEC,0x0000,0xFFEC
-                dc.w 0x001E,0x0014,0x0000,0xFFEC
-                dc.w 0x000F,0xFFEC,0x0014,0x0014
-                dc.w 0x000F,0x0014,0x0014,0x0014
-                dc.w 0x0004,0x0000,0x0014,0x0014
-                dc.w 0x000F,0xFFEC,0x0014,0xFFEC
-                dc.w 0x000F,0x0014,0x0014,0xFFEC
-                dc.w 0x002B,0x0000,0x0014,0xFFEC
-                dc.w 0x002B,0xFFEC,0x0014,0x0000
-                dc.w 0x002B,0x0014,0x0014,0x0000
-                dc.w 0x7FFF,0x7FFF,0x7FFF,0x7FFF
-
-vec_obj_6:      dc.w 0x000E,0xFFDD,0xFFDD,0x0023
-                dc.w 0x000E,0x0023,0xFFDD,0x0023
-                dc.w 0x0001,0xFFDD,0xFFDD,0xFFDD
-                dc.w 0x0001,0x0023,0xFFDD,0xFFDD
-                dc.w 0x0028,0xFFDD,0x0023,0x0023
-                dc.w 0x0028,0x0023,0x0023,0x0023
-                dc.w 0x0028,0xFFDD,0x0023,0xFFDD
-                dc.w 0x0028,0x0023,0x0023,0xFFDD
-                dc.w 0x000E,0x0000,0x0023,0x0023
-                dc.w 0x000E,0x0000,0xFFDD,0x0023
-                dc.w 0x000E,0x0000,0xFFDD,0xFFDD
-                dc.w 0x000E,0xFFDD,0xFFDD,0x0000
-                dc.w 0x000E,0x0023,0xFFDD,0x0000
-                dc.w 0x000E,0xFFDD,0x0000,0x0023
-                dc.w 0x001B,0x0023,0x0000,0x0023
-                dc.w 0x001B,0xFFDD,0x0000,0xFFDD
-                dc.w 0x001B,0x0023,0x0000,0xFFDD
-                dc.w 0x001B,0x0000,0x0023,0xFFDD
-                dc.w 0x001B,0xFFDD,0x0023,0x0000
-                dc.w 0x001B,0x0023,0x0023,0x0000
-                dc.w 0x7FFF,0x7FFF,0x7FFF,0x7FFF
-
-vec_obj_7:      dc.w 0x0002,0xFFDA,0xFFDA,0x0026
-                dc.w 0x000F,0x0000,0xFFDA,0x0026
-                dc.w 0x0002,0x0026,0xFFDA,0x0026
-                dc.w 0x000F,0xFFDA,0xFFDA,0x0000
-                dc.w 0x0002,0x0000,0xFFDA,0x0000
-                dc.w 0x000F,0x0026,0xFFDA,0x0000
-                dc.w 0x0002,0xFFDA,0xFFDA,0xFFDA
-                dc.w 0x000F,0x0000,0xFFDA,0xFFDA
-                dc.w 0x0002,0x0026,0xFFDA,0xFFDA
-                dc.w 0x000F,0xFFDA,0x0000,0x0026
-                dc.w 0x0002,0x0000,0x0000,0x0026
-                dc.w 0x000F,0x0026,0x0000,0x0026
-                dc.w 0x0002,0xFFDA,0x0000,0x0000
-                dc.w 0x000F,0x0000,0x0000,0x0000
-                dc.w 0x0002,0x0026,0x0000,0x0000
-                dc.w 0x000F,0xFFDA,0x0000,0xFFDA
-                dc.w 0x0002,0x0000,0x0000,0xFFDA
-                dc.w 0x000F,0x0026,0x0000,0xFFDA
-                dc.w 0x0002,0xFFDA,0x0026,0x0026
-                dc.w 0x000F,0x0000,0x0026,0x0026
-                dc.w 0x0002,0x0026,0x0026,0x0026
-                dc.w 0x000F,0xFFDA,0x0026,0x0000
-                dc.w 0x0002,0x0000,0x0026,0x0000
-                dc.w 0x000F,0x0026,0x0026,0x0000
-                dc.w 0x0002,0xFFDA,0x0026,0xFFDA
-                dc.w 0x000F,0x0000,0x0026,0xFFDA
-                dc.w 0x0002,0x0026,0x0026,0xFFDA
-                dc.w 0x7FFF,0x7FFF,0x7FFF,0x7FFF
-
-vec_obj_1:      dc.w 0x0010,0x0000,0x0000,0x0000
-                dc.w 0x0010,0x0000,0x000C,0x0000
-                dc.w 0x0010,0x0000,0x0018,0x0000
-                dc.w 0x0010,0x0000,0xFFF4,0x0000
-                dc.w 0x0010,0x0000,0xFFE8,0x0000
-                dc.w 0x0010,0x0018,0x0000,0x0000
-                dc.w 0x0010,0x0018,0x000C,0x0000
-                dc.w 0x0010,0x0018,0x0018,0x0000
-                dc.w 0x0010,0x0018,0xFFF4,0x0000
-                dc.w 0x0010,0x0018,0xFFE8,0x0000
-                dc.w 0x0010,0xFFE8,0x0000,0x0000
-                dc.w 0x0010,0xFFE8,0x000C,0x0000
-                dc.w 0x0010,0xFFE8,0x0018,0x0000
-                dc.w 0x0010,0xFFE8,0xFFF4,0x0000
-                dc.w 0x0010,0xFFE8,0xFFE8,0x0000
-                dc.w 0x0010,0x000C,0xFFE8,0x0000
-                dc.w 0x0010,0xFFF4,0xFFE8,0x0000
-                dc.w 0x0003,0x0030,0x0000,0x0000
-                dc.w 0x0003,0x0030,0x000C,0x0000
-                dc.w 0x0003,0x0030,0x0018,0x0000
-                dc.w 0x0003,0x0030,0xFFF4,0x0000
-                dc.w 0x0003,0x0030,0xFFF4,0x0000
-                dc.w 0x0003,0x003C,0x0000,0x0000
-                dc.w 0x0003,0x003C,0x0018,0x0000
-                dc.w 0x0003,0x0048,0x0000,0x0000
-                dc.w 0x0003,0x0048,0x0018,0x0000
-                dc.w 0x001D,0xFFC4,0xFFE8,0x0000
-                dc.w 0x001D,0xFFC4,0xFFF4,0x0000
-                dc.w 0x001D,0xFFC4,0x000C,0x0000
-                dc.w 0x001D,0xFFC4,0x0018,0x0000
-                dc.w 0x001D,0xFFDC,0x0018,0x0000
-                dc.w 0x001D,0xFFD0,0x0018,0x0000
-                dc.w 0x001D,0xFFB8,0x0018,0x0000
-                dc.w 0x001D,0xFFAC,0x0018,0x0000
-                dc.w 0x0003,0x0024,0x0018,0x0000
-                dc.w 0x7FFF,0x7FFF,0x7FFF,0x7FFF
-
-vec_obj_8:      dc.w 0x7FFF
-                dc.w 0x7FFF
-                dc.w 0x7FFF
-                dc.w 0x7FFF
-#endif
-
 struct vec_coord {
 	uint32_t object;
 	int32_t x;
 	int32_t y;
 	int32_t z;
 };
-
-// ROM:0001ADB8 word_1ADB8:     dc.w 0x46						; 0x00
-// ROM:0001ADBA                 dc.w 0xFFBE					; 0x02
-// ROM:0001ADBC                 dc.w 58						; 0x04
-// ROM:0001ADBE                 dc.w 63						; 0x06
-// ROM:0001ADC0                 dc.w 56						; 0x08
-// ROM:0001ADC2                 dc.w 65464					; 0x0a
-// ROM:0001ADC4                 dc.w 0xE6						; 0x0c
-// ROM:0001ADC6                 dc.w 0x12C					; 0x0e
-// ROM:0001ADC8                 dc.w 0xA0						; 0x10
-// ROM:0001ADCA                 dc.w 0xD8						; 0x12
-// ROM:0001ADCC                 dc.w 0xFF7C					; 0x14
-// ROM:0001ADCE                 dc.w 0x84						; 0x16
-// ROM:0001ADD0                 dc.w 0x49						; 0x18
-// ROM:0001ADD2                 dc.w 0							; 0x1a
-// ROM:0001ADD4                 dc.w 0							; 0x1c
-// ROM:0001ADD6                 dc.w 0							; 0x1e
-// ROM:0001ADD8                 dc.w 0							; 0x20
-// ROM:0001ADDA                 dc.w 0							; 0x22  vertice count
-// ROM:0001ADDC                 dc.w 0xF200					; 0x24
 
 static void transform_and_project(int16_t *vertices, struct vec_coord *output, int num_vertices, int32_t angle_x, int32_t angle_y, int32_t angle_z) {
 	int32_t tx;
@@ -657,20 +381,6 @@ void sort_vec_coord(struct vec_coord *arr, uint32_t count) {
 		arr[j + 1] = key;
 	}
 }
-
-static struct ugg *bobs[52];
-
-__attribute__((constructor))
-static void wf_bobs_init(void) {
-	struct ugg *initializers[] = {
-		bob01, bob02, bob03, bob04, bob05, bob06, bob07, bob08, bob09, bob0a, bob0b, bob0c, bob0d,
-		bob11, bob12, bob13, bob14, bob15, bob16, bob17, bob18, bob19, bob1a, bob1b, bob1c, bob1d,
-		bob21, bob22, bob23, bob24, bob25, bob26, bob27, bob28, bob29, bob2a, bob2b, bob2c, bob2d,
-		bob31, bob32, bob33, bob34, bob35, bob36, bob37, bob38, bob39, bob3a, bob3b, bob3c, bob3d
-	};
-	memcpy(bobs, initializers, sizeof(bobs));
-}
-
 
 
 static uint8_t text[] = {
@@ -748,84 +458,98 @@ static uint8_t text[] = {
 	"\0"
 };
 
+// render one text-line, 40 characters, one by one, wait 50 frames, render next, if the next textline start on 0, reset textpointer and wait until next frame with update.
 
+enum {
+	STATE_WRITING,      // Writing characters 0->40
+	STATE_HOLDING       // Waiting 50 frames
+};
 
-#define _GNU_SOURCE
-// #include <sched.h>
-#include <unistd.h>
+struct text_writer {
+	uint32_t state;
+	uint32_t char_count;
+	uint32_t text_index;
+	uint32_t frame_count;
+	uint8_t line_buffer[40];
+};
 
-uint32_t stepping = 0;
-uint32_t obj = 0;
-static uint8_t update(struct platform_state *state) {
+struct text_writer tw;
+
+static void text_writer_init(void) {
+	memset(tw.line_buffer, ' ', 40);
+}
+
+static void text_writer_update(void) {
+	switch(tw.state) {
+		case STATE_WRITING:
+			if(text[tw.text_index + tw.char_count] == 0) {
+				tw.text_index = 0;
+				return;
+			}
+
+			tw.line_buffer[tw.char_count] = text[tw.text_index + tw.char_count];
+			tw.char_count++;
+
+			if(tw.char_count >= 40) {
+				tw.char_count = 40;
+				tw.frame_count = 0;
+				tw.state = STATE_HOLDING;
+			}
+			break;
+
+		case STATE_HOLDING:
+			tw.frame_count++;
+			if(tw.frame_count >= 50) {
+				tw.char_count = 0;
+				tw.text_index += 40;
+				tw.frame_count = 0;
+				tw.state = STATE_WRITING;
+			}
+			break;
+	}
+}
+
+static void text_writer_render(struct platform_state *state) {
+	uint32_t *org_dst = BUFFER_PTR(state, CENTER_X(state, (40*8)), 245);
+	for(size_t i = 0; i < 40; ++i, org_dst += 8) {
+		uint32_t *dst = org_dst;
+		uint8_t c = tw.line_buffer[i] - ' ';
+		uint8_t *src = font->data + 8 * c;
+
+		for(size_t y = 0; y < font->height; ++y, dst += state->buffer_width, src += font->width) {
+			for(size_t x = 0; x < 8; ++x) {
+				dst[x] = font->palette[src[x]];
+			}
+		}
+	}
+}
+
+static uint32_t bob_palette[32];
+static uint32_t black_palette[32];
+static struct ugg *bobs[52];
+
+static uint32_t precalc_delays[8] = { 173, 408, 172, 116, 158, 172, 173, 271 };
+
+static uint32_t frame_count;
+static uint32_t object_index;
+
+static void render_vector_bobs(struct platform_state *state, uint32_t obj) {
 	uint32_t n_coords = objects[obj].count;
 	int16_t *object = objects[obj].vec_obj;
-	transform_and_project(object, vec_coords, n_coords, ax, ay, az);
+	transform_and_project(object, vec_coords, n_coords, angle_x, angle_y, angle_z);
 	sort_vec_coord(vec_coords, n_coords);
 
 	struct rect clip_area = { 0, 34, state->buffer_width, 204 };
 	for(uint32_t i = 0; i < n_coords; ++i) {
-		// PROFILE_NAMED("bob_vector");
 		uint8_t object = vec_coords[i].object;
 		uint32_t width_over_two = bobs[object]->width >> 1;
-		blit_clipped(state, bobs[object], vec_coords[i].x - width_over_two, (vec_coords[i].y - width_over_two), clip_area, 0);
-
-		// blit_8bit_to_32bit_lut_avx2_transparent_clipped(bobs[object], bobs[object]->palette, vec_coords[i].x - width_over_two, (vec_coords[i].y - width_over_two), clip_area);
+		blit_clipped(state, bobs[object], vec_coords[i].x - width_over_two, (vec_coords[i].y - width_over_two), clip_area, bob_palette);
 	}
 
-	if(!stepping) {
-		ax = (ax + 3) & 0xff;
-		ay = (ay + 2) & 0xff;
-		az = (az + 1) & 0xff;
-	} else {
-		if(mkfw_is_key_pressed(window, MKS_KEY_N)) {
-			ax = (ax + 3) & 0xff;
-			ay = (ay + 2) & 0xff;
-			az = (az + 1) & 0xff;
-		}
-	}
-
-	// if(mkfw_is_key_pressed(window, MKS_KEY_SPACE)) {
-	// 	cpu_set_t cpuset;
-	// 	int core_id = 1;
-
-	// 	pid_t bit = getpid();
-	// 	CPU_ZERO(&cpuset);
-	// 	CPU_SET(core_id, &cpuset);
-
-	// 	if(sched_setaffinity(0, sizeof(cpu_set_t), &cpuset) == -1) {
-	// 		perror("sched_setaffinity");
-	// 	}
-	// }
-
-	if(mkfw_is_key_pressed(window, MKS_KEY_1)) obj = 0;
-	if(mkfw_is_key_pressed(window, MKS_KEY_2)) obj = 1;
-	if(mkfw_is_key_pressed(window, MKS_KEY_3)) obj = 2;
-	if(mkfw_is_key_pressed(window, MKS_KEY_4)) obj = 3;
-	if(mkfw_is_key_pressed(window, MKS_KEY_5)) obj = 4;
-	if(mkfw_is_key_pressed(window, MKS_KEY_6)) obj = 5;
-	if(mkfw_is_key_pressed(window, MKS_KEY_7)) obj = 6;
-	if(mkfw_is_key_pressed(window, MKS_KEY_8)) obj = 7;
-
-
-	if(mkfw_is_key_pressed(window, MKS_KEY_M)) stepping = !stepping;
-
-	if(mkfw_is_key_pressed(window, MKS_KEY_A)) state->persistence_decay = 0.02f;
-	if(mkfw_is_key_pressed(window, MKS_KEY_B)) state->persistence_decay = 0.04f;
-	if(mkfw_is_key_pressed(window, MKS_KEY_C)) state->persistence_decay = 0.06f;
-	if(mkfw_is_key_pressed(window, MKS_KEY_D)) state->persistence_decay = 0.08f;
-	if(mkfw_is_key_pressed(window, MKS_KEY_E)) state->persistence_decay = 0.10f;
-	if(mkfw_is_key_pressed(window, MKS_KEY_F)) state->persistence_decay = 0.12f;
-	if(mkfw_is_key_pressed(window, MKS_KEY_G)) state->persistence_decay = 0.14f;
-	if(mkfw_is_key_pressed(window, MKS_KEY_H)) state->persistence_decay = 0.17f;
-	if(mkfw_is_key_pressed(window, MKS_KEY_I)) state->persistence_decay = 0.80f;
-
-	return 0;
+	angle_x = (angle_x + 3) & 0xff;
+	angle_y = (angle_y + 2) & 0xff;
+	angle_z = (angle_z + 1) & 0xff;
 }
-
-
-
-
-
 
 
 
