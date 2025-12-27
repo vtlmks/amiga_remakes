@@ -31,52 +31,52 @@ static uint32_t star_speeds[160] = {
 #define FONT_ROW_2 20480
 #define FONT_ROW_3 30720
 
-uint32_t font_coords[128] = {
-	['A'] = FONT_ROW_0 + 0,
-	['B'] = FONT_ROW_0 + 32,
-	['C'] = FONT_ROW_0 + 64,
-	['D'] = FONT_ROW_0 + 96,
-	['E'] = FONT_ROW_0 + 128,
-	['F'] = FONT_ROW_0 + 160,
-	['G'] = FONT_ROW_0 + 192,
-	['H'] = FONT_ROW_0 + 224,
-	['I'] = FONT_ROW_0 + 256,
-	['J'] = FONT_ROW_0 + 288,
+struct font_char_info font_char_infos[128] = {
+	['A'] = {.offset = FONT_ROW_0 + 0,   .width = 32},
+	['B'] = {.offset = FONT_ROW_0 + 32,  .width = 32},
+	['C'] = {.offset = FONT_ROW_0 + 64,  .width = 32},
+	['D'] = {.offset = FONT_ROW_0 + 96,  .width = 32},
+	['E'] = {.offset = FONT_ROW_0 + 128, .width = 32},
+	['F'] = {.offset = FONT_ROW_0 + 160, .width = 32},
+	['G'] = {.offset = FONT_ROW_0 + 192, .width = 32},
+	['H'] = {.offset = FONT_ROW_0 + 224, .width = 32},
+	['I'] = {.offset = FONT_ROW_0 + 256, .width = 32},
+	['J'] = {.offset = FONT_ROW_0 + 288, .width = 32},
 
-	['K'] = FONT_ROW_1 + 0,
-	['L'] = FONT_ROW_1 + 32,
-	['M'] = FONT_ROW_1 + 64,
-	['N'] = FONT_ROW_1 + 96,
-	['O'] = FONT_ROW_1 + 128,
-	['P'] = FONT_ROW_1 + 160,
-	['Q'] = FONT_ROW_1 + 192,
-	['R'] = FONT_ROW_1 + 224,
-	['S'] = FONT_ROW_1 + 256,
-	['T'] = FONT_ROW_1 + 288,
+	['K'] = {.offset = FONT_ROW_1 + 0,   .width = 32},
+	['L'] = {.offset = FONT_ROW_1 + 32,  .width = 32},
+	['M'] = {.offset = FONT_ROW_1 + 64,  .width = 32},
+	['N'] = {.offset = FONT_ROW_1 + 96,  .width = 32},
+	['O'] = {.offset = FONT_ROW_1 + 128, .width = 32},
+	['P'] = {.offset = FONT_ROW_1 + 160, .width = 32},
+	['Q'] = {.offset = FONT_ROW_1 + 192, .width = 32},
+	['R'] = {.offset = FONT_ROW_1 + 224, .width = 32},
+	['S'] = {.offset = FONT_ROW_1 + 256, .width = 32},
+	['T'] = {.offset = FONT_ROW_1 + 288, .width = 32},
 
-	['U'] = FONT_ROW_2 + 0,
-	['V'] = FONT_ROW_2 + 32,
-	['W'] = FONT_ROW_2 + 64,
-	['X'] = FONT_ROW_2 + 96,
-	['Y'] = FONT_ROW_2 + 128,
-	['Z'] = FONT_ROW_2 + 160,
-	['0'] = FONT_ROW_2 + 192,
-	['1'] = FONT_ROW_2 + 224,
-	['2'] = FONT_ROW_2 + 256,
-	['3'] = FONT_ROW_2 + 288,
+	['U'] = {.offset = FONT_ROW_2 + 0,   .width = 32},
+	['V'] = {.offset = FONT_ROW_2 + 32,  .width = 32},
+	['W'] = {.offset = FONT_ROW_2 + 64,  .width = 32},
+	['X'] = {.offset = FONT_ROW_2 + 96,  .width = 32},
+	['Y'] = {.offset = FONT_ROW_2 + 128, .width = 32},
+	['Z'] = {.offset = FONT_ROW_2 + 160, .width = 32},
+	['0'] = {.offset = FONT_ROW_2 + 192, .width = 32},
+	['1'] = {.offset = FONT_ROW_2 + 224, .width = 32},
+	['2'] = {.offset = FONT_ROW_2 + 256, .width = 32},
+	['3'] = {.offset = FONT_ROW_2 + 288, .width = 32},
 
-	['4'] = FONT_ROW_3 + 0,
-	['5'] = FONT_ROW_3 + 32,
-	['6'] = FONT_ROW_3 + 64,
-	['7'] = FONT_ROW_3 + 96,
-	['8'] = FONT_ROW_3 + 128,
-	['9'] = FONT_ROW_3 + 160,
-	[' '] = FONT_ROW_3 + 224,
-	['n'] = FONT_ROW_3 + 224,
-	['o'] = FONT_ROW_3 + 224,
-	['p'] = FONT_ROW_3 + 224,
-	['q'] = FONT_ROW_3 + 224,
-	['r'] = FONT_ROW_3 + 224,
+	['4'] = {.offset = FONT_ROW_3 + 0,   .width = 32},
+	['5'] = {.offset = FONT_ROW_3 + 32,  .width = 32},
+	['6'] = {.offset = FONT_ROW_3 + 64,  .width = 32},
+	['7'] = {.offset = FONT_ROW_3 + 96,  .width = 32},
+	['8'] = {.offset = FONT_ROW_3 + 128, .width = 32},
+	['9'] = {.offset = FONT_ROW_3 + 160, .width = 32},
+	[' '] = {.offset = FONT_ROW_3 + 224, .width = 32},
+	['n'] = {.offset = FONT_ROW_3 + 224, .width = 32},
+	['o'] = {.offset = FONT_ROW_3 + 224, .width = 32},
+	['p'] = {.offset = FONT_ROW_3 + 224, .width = 32},
+	['q'] = {.offset = FONT_ROW_3 + 224, .width = 32},
+	['r'] = {.offset = FONT_ROW_3 + 224, .width = 32},
 };
 
 static uint8_t scroll_text[] = {
@@ -151,14 +151,34 @@ static void remake_audio_callback(int16_t *data, size_t frames) {
 	}
 }
 
-static size_t get_font_offset(struct scroller_state *scr_state, uint8_t char_index) {
-	if(char_index == 'n') { scr_state->speed = 1; }
-	if(char_index == 'o') { scr_state->speed = 2; }
-	if(char_index == 'p') { scr_state->speed = 4; }
-	if(char_index == 'q') { scr_state->speed = 8; }
-	if(char_index == 'r') { scr_state->speed = 16; }
+static uint8_t af_process_char(struct scroller_state *scr_state, uint8_t char_index) {
+	if(char_index == 0) {		// Scrolltext end
+		scr_state->text_offset = 0;
+		return scr_state->text[scr_state->text_offset++];
+	}
 
-	return font_coords[char_index];
+	if(char_index == 'n') {
+		scr_state->speed = 1;
+		return ' ';
+	}
+	if(char_index == 'o') {
+		scr_state->speed = 2;
+		return ' ';
+	}
+	if(char_index == 'p') {
+		scr_state->speed = 4;
+		return ' ';
+	}
+	if(char_index == 'q') {
+		scr_state->speed = 8;
+		return ' ';
+	}
+	if(char_index == 'r') {
+		scr_state->speed = 16;
+		return ' ';
+	}
+
+	return char_index;
 }
 
 // [=]===^=[ remake_init ]============================================================^===[=]
@@ -175,7 +195,7 @@ static void remake_init(struct platform_state *state) {
 		color_buffer[pixel] = background_copper[(pixel / 8) % 58];
 	}
 
-	scroll_state = scroller_new(32, 32, 152, 1, scroll_text, alpha_flight_font, 0, get_font_offset);
+	scroll_state = scroller_new(32, 32, 152, 1, scroll_text, alpha_flight_font, font_char_infos, af_process_char);
 
 	micromod_initialize(&chipsong_song, (int8_t*)chipsong_data, 48000);
 

@@ -435,14 +435,12 @@ static void initialize_star_sprites(void) {
 	}
 }
 
-static size_t vf_horizontal_offset(struct scroller_state *scr, uint8_t c) {
-	return (c - ' ') * scr->char_width * 2;
-}
-
 // [=]===^=[ audio ]=================================================================^===[=]
 static void remake_audio_callback(int16_t *data, size_t frames) {
 	fc14_get_audio(&remake_song, data, frames);
 }
+
+static struct font_char_info vf_font_char_infos[96];
 
 static void remake_init(struct platform_state *state) {
 	change_resolution(state, BUFFER_WIDTH, BUFFER_HEIGHT);
@@ -452,7 +450,13 @@ static void remake_init(struct platform_state *state) {
 	mkfw_audio_callback = remake_audio_callback;
 	mkfw_set_mouse_sensitivity(state->window, 0.067);
 	initialize_star_sprites();
-	vf_scroller = scroller_new(8, 6, 199, 2, scroll_text, font, 0, vf_horizontal_offset);
+
+	for(int i = 32; i < 96; i++) {
+		vf_font_char_infos[i].offset = (i - ' ') * 16;
+		vf_font_char_infos[i].width = 8;
+	}
+
+	vf_scroller = scroller_new(8, 6, 199, 2, scroll_text, font, vf_font_char_infos, 0);
 
 	text_lines[0].dst_buffer = BUFFER_PTR(state, TEXT_START_X, 127);
 	text_lines[1].dst_buffer = BUFFER_PTR(state, TEXT_START_X, 136);
@@ -469,7 +473,6 @@ static void remake_options(struct options *opt) {
 	opt->release_title = "Fire and Brimstone ++";
 	opt->window_title = "Fraxion and Vision Factory - Fire and Brimstone ++ / 1990-06";
 }
-
 
 // [=]===^=[ text rendering ]========================================================^===[=]
 __attribute__((always_inline))

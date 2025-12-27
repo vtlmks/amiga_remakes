@@ -5,9 +5,14 @@
 #define SCROLL_BUFFER_WIDTH 512U // Fixed buffer width for wrapping
 #define SCROLL_BUFFER_MASK 511U
 
+struct font_char_info {
+	uint32_t offset;  // Absolute pixel offset in bitmap
+	uint16_t width;   // Character width in pixels
+};
+
 struct scroller_state {
+	struct font_char_info *char_info;			// Optional character info array (offset and width per char)
 	uint8_t (*process_char)(struct scroller_state *scr_state, uint8_t scroll_character); // Callback for custom behavior
-	size_t (*get_font_offset)(struct scroller_state *scr_state, uint8_t char_index); // Callback for font offset calculation
 	uint8_t *buffer;								// Pointer to the scroll buffer
 	struct ugg *font;								// Font pointer
 	uint8_t *text;									// Scroll text
@@ -22,7 +27,7 @@ struct scroller_state {
 	uint32_t char_height;						// Height of each character
 };
 
-static struct scroller_state *scroller_new(uint32_t char_width, uint32_t char_height, uint32_t offset_y, uint32_t speed, uint8_t *text, struct ugg *font, uint8_t (*process_char)(struct scroller_state *, uint8_t), size_t (*get_font_offset)(struct scroller_state *, uint8_t));
+static struct scroller_state *scroller_new(uint32_t char_width, uint32_t char_height, uint32_t offset_y, uint32_t speed, uint8_t *text, struct ugg *font, struct font_char_info *char_info, uint8_t (*process_char)(struct scroller_state *, uint8_t));
 static void scroller(struct scroller_state *scr_state);
 
 // TODO(peter): Add #ifdef GENERIC_SCROLLER_IMPLEMENTATION
@@ -43,7 +48,7 @@ static size_t horizontal_offset(struct scroller_state *scr, uint8_t c) {
 	return (c - ' ') * scr->char_width;
 }
 
-static struct scroller_state *scroller_new(uint32_t char_width, uint32_t char_height, uint32_t offset_y, uint32_t speed, uint8_t *text, struct ugg *font, uint8_t (*process_char)(struct scroller_state *, uint8_t), size_t (*get_font_offset)(struct scroller_state *, uint8_t)) {
+static struct scroller_state *scroller_new(uint32_t char_width, uint32_t char_height, uint32_t offset_y, uint32_t speed, uint8_t *text, struct ugg *font, struct font_char_info *char_info, uint8_t (*process_char)(struct scroller_state *, uint8_t)) {
 	struct scroller_state *scr_state = calloc(1, sizeof(struct scroller_state));
 	scr_state->char_width = char_width;
 	scr_state->next_render_offset_override = char_width;	// The default width
@@ -53,8 +58,8 @@ static struct scroller_state *scroller_new(uint32_t char_width, uint32_t char_he
 	scr_state->font = font;
 	scr_state->text = text;
 	scr_state->dest_offset_y = offset_y;
+	scr_state->char_info = char_info;
 	scr_state->process_char = process_char ? process_char : default_process_char;
-	scr_state->get_font_offset = get_font_offset ? get_font_offset : vertical_offset;
 	return scr_state;
 }
 
@@ -72,20 +77,27 @@ static void scroller(struct scroller_state * restrict scr_state) {
 	while(scr_state->char_render_offset >= scr_state->char_next_render_offset) {
 		uint8_t char_index = scr_state->process_char(scr_state, scr_state->text[scr_state->text_offset++]);
 
-		size_t font_offset = scr_state->get_font_offset(scr_state, char_index);
+		size_t font_offset = vertical_offset(scr_state, char_index);
+		uint32_t char_width = scr_state->char_width;
+
+		if(scr_state->char_info) {
+			font_offset = scr_state->char_info[char_index].offset;
+			char_width = scr_state->char_info[char_index].width;
+		}
+
 		uint8_t *font_src = scr_state->font->data + font_offset;
 
 		uint8_t *dst = scr_state->buffer;
 		size_t dst_offset = scr_state->char_next_render_offset;
 		for(size_t i = 0; i < scr_state->char_height; ++i) {
-			for(size_t j = 0; j < scr_state->char_width; ++j) {
+			for(size_t j = 0; j < char_width; ++j) {
 				dst[(dst_offset + j) & SCROLL_BUFFER_MASK] = font_src[j];
 			}
 			font_src += scr_state->font->width;
 			dst += SCROLL_BUFFER_WIDTH;
 		}
 		scr_state->char_next_render_offset += scr_state->next_render_offset_override;
-		scr_state->next_render_offset_override = scr_state->char_width;
+		scr_state->next_render_offset_override = char_width;
 	}
 	scr_state->char_render_offset += scr_state->speed;
 }

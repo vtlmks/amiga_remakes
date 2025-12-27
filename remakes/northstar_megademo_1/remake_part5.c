@@ -285,8 +285,8 @@ static uint8_t p5_process_char(struct scroller_state *scr_state, uint8_t scroll_
 }
 
 static void p5_init() {
-	p5_scroller1 = scroller_new(16, 16,  78, 1, (uint8_t*)p5_scrolltext1_data, part1_small_font_data, p5_process_char, 0);
-	p5_scroller2 = scroller_new(32, 32, 170, 2, (uint8_t*)p5_scrolltext2_data, p5_large_font_data, p5_process_char, 0);
+	p5_scroller1 = scroller_new(16, 16,  78, 1, (uint8_t*)p5_scrolltext1_data, part1_small_font_data, 0, p5_process_char);
+	p5_scroller2 = scroller_new(32, 32, 170, 2, (uint8_t*)p5_scrolltext2_data, p5_large_font_data, 0, p5_process_char);
 }
 
 static void p5_shutdown() {

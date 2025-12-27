@@ -174,7 +174,7 @@ static void p7_init() {
 	for(uint32_t i = 0; i < 188; ++i) {
 		md1_p7_stars[i] = xor_generate_random(&base_rand) & 0x7ff;
 	}
-	p7_scroll = scroller_new(48, 48, 8, 1, p7_scroll_text, part7_scroll_font_data, p7_scroll_callback, 0);
+	p7_scroll = scroller_new(48, 48, 8, 1, p7_scroll_text, part7_scroll_font_data, 0, p7_scroll_callback);
 }
 
 static void p7_shutdown() {

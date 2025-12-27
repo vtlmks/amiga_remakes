@@ -66,7 +66,7 @@ static uint8_t p6_process_char(struct scroller_state *scr_state, uint8_t scroll_
 }
 
 static void p6_init() {
-	p6_scroll = scroller_new(32, 32, 183, 4, p6_scroll_text, part6_scroll_font_data, p6_process_char, 0);
+	p6_scroll = scroller_new(32, 32, 183, 4, p6_scroll_text, part6_scroll_font_data, 0, p6_process_char);
 }
 
 static void p6_shutdown() {

@@ -143,10 +143,10 @@ static uint8_t p8_process_char(struct scroller_state *scr_state, uint8_t scroll_
 
 
 static void p8_init() {
-	p8_scroll_1 = scroller_new(16, 16,  54, 2, p8_scroll_text_1, part1_small_font_data, p8_process_char, 0);
-	p8_scroll_2 = scroller_new(16, 16,  86, 1, p8_scroll_text_2, part1_small_font_data, p8_process_char, 0);
-	p8_scroll_3 = scroller_new(16, 16, 182, 1, p8_scroll_text_3, part1_small_font_data, p8_process_char, 0);
-	p8_scroll_4 = scroller_new(16, 16, 214, 2, p8_scroll_text_4, part1_small_font_data, p8_process_char, 0);
+	p8_scroll_1 = scroller_new(16, 16,  54, 2, p8_scroll_text_1, part1_small_font_data, 0, p8_process_char);
+	p8_scroll_2 = scroller_new(16, 16,  86, 1, p8_scroll_text_2, part1_small_font_data, 0, p8_process_char);
+	p8_scroll_3 = scroller_new(16, 16, 182, 1, p8_scroll_text_3, part1_small_font_data, 0, p8_process_char);
+	p8_scroll_4 = scroller_new(16, 16, 214, 2, p8_scroll_text_4, part1_small_font_data, 0, p8_process_char);
 }
 
 static void p8_shutdown() {
