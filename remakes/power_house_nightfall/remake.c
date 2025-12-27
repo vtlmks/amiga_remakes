@@ -238,7 +238,7 @@ static int32_t y_offset;	// NOTE(peter): y-offset for the logo 'reveal' function
 
 static void render_logo(struct platform_state *state) {
 	struct rect full_rect = { 0, 0, state->buffer_width, (0x2d-36) + powerhouse_logo->height };
-	blit_clipped(state, powerhouse_logo, (state->buffer_width - powerhouse_logo->width) / 2, (0x2d-36) + y_offset, full_rect, 0);
+	blit_full_src(state, powerhouse_logo, (state->buffer_width - powerhouse_logo->width) / 2, (0x2d-36) + y_offset, full_rect, 0);
 	y_offset = (y_offset > 0) ? y_offset - 1 : 0;
 }
 

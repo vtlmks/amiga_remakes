@@ -19,7 +19,6 @@ struct scroller_state {
 	uint32_t dest_offset_y;						// Offset on screen
 	uint32_t char_render_offset;				// Offset from start of buffer
 	uint32_t char_next_render_offset;		// Next time we render a character to buffer
-	uint32_t next_render_offset_override;	// IF we need to override the width of the current character.
 	uint32_t text_offset;						// Offset in scrolltext
 	uint32_t pause_timer;						// If not 0, it will count down to zero
 	uint32_t speed;								// The speed of the scroller
@@ -51,7 +50,6 @@ static size_t horizontal_offset(struct scroller_state *scr, uint8_t c) {
 static struct scroller_state *scroller_new(uint32_t char_width, uint32_t char_height, uint32_t offset_y, uint32_t speed, uint8_t *text, struct ugg *font, struct font_char_info *char_info, uint8_t (*process_char)(struct scroller_state *, uint8_t)) {
 	struct scroller_state *scr_state = calloc(1, sizeof(struct scroller_state));
 	scr_state->char_width = char_width;
-	scr_state->next_render_offset_override = char_width;	// The default width
 	scr_state->char_height = char_height;
 	scr_state->buffer = calloc(1, SCROLL_BUFFER_WIDTH * char_height);
 	scr_state->speed = speed;
@@ -96,8 +94,7 @@ static void scroller(struct scroller_state * restrict scr_state) {
 			font_src += scr_state->font->width;
 			dst += SCROLL_BUFFER_WIDTH;
 		}
-		scr_state->char_next_render_offset += scr_state->next_render_offset_override;
-		scr_state->next_render_offset_override = char_width;
+		scr_state->char_next_render_offset += char_width;
 	}
 	scr_state->char_render_offset += scr_state->speed;
 }

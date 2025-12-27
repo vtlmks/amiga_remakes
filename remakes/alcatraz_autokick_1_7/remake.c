@@ -446,7 +446,7 @@ static void remake_frame(struct platform_state *state) {
 	render_stars(state);
 
 	for(size_t i = 0; i < 6; ++i) {
-		blit_clipped(state, bob, bobs[i].x, bobs[i].y, alcatraz_screen, 0);
+		blit_full_src(state, bob, bobs[i].x, bobs[i].y, alcatraz_screen, 0);
 		bobs[i].x += (int32_t)sprite_anim[bobs[i].offset++];
 		bobs[i].y += (int32_t)sprite_anim[bobs[i].offset++];
 

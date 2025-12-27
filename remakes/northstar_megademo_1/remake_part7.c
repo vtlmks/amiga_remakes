@@ -158,10 +158,10 @@ static uint8_t p7_scroll_callback(struct scroller_state *scr_state, uint8_t scro
 			scroll_character = scr_state->text[scr_state->text_offset++];
 		} break;
 
-		case ' ':						// fallthrough
-		case 'I': {
-			scr_state->next_render_offset_override = 18;
-		} break;
+		// case ' ':						// fallthrough
+		// case 'I': {
+		// 	scr_state->next_render_offset_override = 18;
+		// } break;
 		case '^': {						// Scrolltext end
 			scr_state->text_offset = 0;
 			scroll_character = scr_state->text[scr_state->text_offset++];
@@ -170,11 +170,26 @@ static uint8_t p7_scroll_callback(struct scroller_state *scr_state, uint8_t scro
 	return scroll_character;
 }
 
+static struct font_char_info font_chars[128];
+
 static void p7_init() {
 	for(uint32_t i = 0; i < 188; ++i) {
 		md1_p7_stars[i] = xor_generate_random(&base_rand) & 0x7ff;
 	}
-	p7_scroll = scroller_new(48, 48, 8, 1, p7_scroll_text, part7_scroll_font_data, 0, p7_scroll_callback);
+
+	#define CHAR_48_SIZE (48 * 48)  // 48 pixels wide * 48 pixels tall = 2304 bytes per char
+	for(uint8_t c = 0x20; c <= 0x7F; c++) {
+		uint32_t index = c - 0x20;  // 0x20 is space, first character in the font
+		font_chars[c].offset = index * CHAR_48_SIZE;
+		font_chars[c].width = 48;
+	}
+
+	// Override width for space and 'I'
+	font_chars[' '].width = 18;
+	font_chars['I'].width = 18;
+	#undef CHAR_48_SIZE
+
+	p7_scroll = scroller_new(48, 48, 8, 1, p7_scroll_text, part7_scroll_font_data, font_chars, p7_scroll_callback);
 }
 
 static void p7_shutdown() {

@@ -289,7 +289,7 @@ static void remake_frame(struct platform_state *state) {
 
 	switch(af_remake_state) {
 		case STATE_WAIT_LOGO: {
-			blit_clipped(state, alpha_flight_logo, CENTER_X(state, alpha_flight_logo->width), logo_y, clip_rect, 0);
+			blit_full_src(state, alpha_flight_logo, CENTER_X(state, alpha_flight_logo->width), logo_y, clip_rect, 0);
 			if(state->frame_number & 1) {
 				logo_y = (logo_y == LOGO_Y_POS) ? LOGO_Y_POS : logo_y - 1;
 			}
