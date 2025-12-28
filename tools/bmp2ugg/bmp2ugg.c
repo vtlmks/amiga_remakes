@@ -149,9 +149,32 @@ static void *convert_file(void *arg) {
 	// If preview flag is enabled, print a preview (only applicable for a single file)
 	if(task->preview_flag) {
 		uint8_t *src = output;
+		// ASCII characters ordered from darkest (most coverage) to lightest (least coverage)
+		const char *intensity_map = " .:-=+*#%@";
+		uint32_t map_len = strlen(intensity_map);
+
+		// Build lookup table from color index to intensity character
+		char color_to_char[256];
+		size_t num_colors = header->n_colors ? header->n_colors : (1 << header->bits);
+		uint8_t *palette_data = filedata + sizeof(struct bmp_header);
+		for(uint32_t i = 0; i < num_colors; i++) {
+			// Get RGB values for this palette entry (stored as BGRA)
+			uint8_t b = palette_data[i * 4 + 0];
+			uint8_t g = palette_data[i * 4 + 1];
+			uint8_t r = palette_data[i * 4 + 2];
+
+			// Calculate perceived brightness (weighted for human perception)
+			// Using standard luminance formula: 0.299*R + 0.587*G + 0.114*B
+			uint32_t intensity = (299 * r + 587 * g + 114 * b) / 1000;
+
+			// Map intensity (0-255) to character index
+			uint32_t char_idx = (intensity * (map_len - 1)) / 255;
+			color_to_char[i] = intensity_map[char_idx];
+		}
+
 		for(uint32_t y = 0; y < header->height; y++) {
 			for(uint32_t x = 0; x < header->width; x++) {
-				printf("%c", " abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrst"[*src]);
+				printf("%c", color_to_char[*src]);
 				src++;
 			}
 			printf("\n");
