@@ -309,6 +309,34 @@ static LRESULT CALLBACK Win32WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPA
 			map_vk_to_scancode(state, wParam, lParam, 0);
 		} break;
 
+		case WM_CHAR: {
+			// Character input for text editing
+			if(wParam >= 32 && wParam < 0x10000) {  // Printable characters only
+				if(state->char_callback) {
+					state->char_callback(state, (uint32_t)wParam);
+				}
+			}
+		} break;
+
+		case WM_MOUSEWHEEL: {
+			short delta = GET_WHEEL_DELTA_WPARAM(wParam);
+			if(state->scroll_callback) {
+				state->scroll_callback(state, 0.0, (double)delta / (double)WHEEL_DELTA);
+			}
+		} break;
+
+		case WM_MOUSEHWHEEL: {
+			short delta = GET_WHEEL_DELTA_WPARAM(wParam);
+			if(state->scroll_callback) {
+				state->scroll_callback(state, (double)delta / (double)WHEEL_DELTA, 0.0);
+			}
+		} break;
+
+		case WM_MOUSEMOVE: {
+			state->mouse_x = GET_X_LPARAM(lParam);
+			state->mouse_y = GET_Y_LPARAM(lParam);
+		} break;
+
 		case WM_LBUTTONDOWN: {
 			state->mouse_buttons[MOUSE_BUTTON_LEFT] = 1;
 			if(state->mouse_button_callback) {

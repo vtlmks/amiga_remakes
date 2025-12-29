@@ -84,6 +84,7 @@ typedef unsigned long long GLsizeiptr;
 #define GL_ELEMENT_ARRAY_BUFFER_BINDING 0x8895
 #define GL_CURRENT_PROGRAM 0x8b8d
 #define GL_TEXTURE_BINDING_2D 0x8069
+#define GL_SCISSOR_BOX 0x0c10
 #define GL_LINEAR_MIPMAP_LINEAR 0x2703
 #define GL_SRGB_ALPHA 0x8c43
 #define GL_UNPACK_ROW_LENGTH 0x0cf2
@@ -194,6 +195,7 @@ void glPopAttrib(void);
 	X(glPixelStorei, void, GLenum pname, GLint param) \
 	X(glGetVertexAttribiv, void, GLuint index, GLenum pname, GLint *params) \
 	X(glFinish, void)	\
+	X(glIsEnabled, GLboolean, GLenum cap) \
 	X(glGenFramebuffers, void, GLsizei n, GLuint *framebuffers) \
    X(glBindFramebuffer, void, GLenum target, GLuint framebuffer) \
 	X(glCheckFramebufferStatus, GLenum, GLenum target) \

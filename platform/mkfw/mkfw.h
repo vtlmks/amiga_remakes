@@ -14,6 +14,8 @@ struct mkfw_state;
 
 /* Callback function pointers */
 typedef void (*key_callback_t)(struct mkfw_state *state, uint32_t key, uint32_t action, uint32_t modifier_bits);
+typedef void (*char_callback_t)(struct mkfw_state *state, uint32_t codepoint);
+typedef void (*scroll_callback_t)(struct mkfw_state *state, double xoffset, double yoffset);
 typedef void (*mouse_move_delta_callback_t)(struct mkfw_state *state, int32_t x, int32_t y);
 typedef void (*mouse_button_callback_t)(struct mkfw_state *state, uint8_t button, int action);
 typedef void (*framebuffer_callback_t)(struct mkfw_state *state, int32_t width, int32_t height, float aspect_ratio);
@@ -27,10 +29,14 @@ struct mkfw_state {
 	uint8_t prev_modifier_state[MKS_MODIFIER_LAST];
 	uint8_t mouse_buttons[3];
 	uint8_t previous_mouse_buttons[3];
+	int32_t mouse_x;
+	int32_t mouse_y;
 	uint8_t is_fullscreen;
 
 	// Callbacks
 	key_callback_t key_callback;
+	char_callback_t char_callback;
+	scroll_callback_t scroll_callback;
 	mouse_move_delta_callback_t mouse_move_delta_callback;
 	mouse_button_callback_t mouse_button_callback;
 	framebuffer_callback_t framebuffer_callback;
@@ -75,9 +81,16 @@ static inline void mkfw_update_mouse_state(struct mkfw_state *state) { memcpy(st
 static inline void mkfw_set_user_data(struct mkfw_state *state, void *user_data) { state->user_data = user_data; }
 static inline void *mkfw_get_user_data(struct mkfw_state *state) { return state->user_data; }
 static inline void mkfw_set_key_callback(struct mkfw_state *state, key_callback_t callback) { state->key_callback = callback; }
+static inline void mkfw_set_char_callback(struct mkfw_state *state, char_callback_t callback) { state->char_callback = callback; }
+static inline void mkfw_set_scroll_callback(struct mkfw_state *state, scroll_callback_t callback) { state->scroll_callback = callback; }
 static inline void mkfw_set_mouse_move_delta_callback(struct mkfw_state *state, mouse_move_delta_callback_t callback) { state->mouse_move_delta_callback = callback; }
 static inline void mkfw_set_mouse_button_callback(struct mkfw_state *state, mouse_button_callback_t callback) { state->mouse_button_callback = callback; }
 static inline void mkfw_set_framebuffer_size_callback(struct mkfw_state *state, framebuffer_callback_t callback) { state->framebuffer_callback = callback; }
 static inline int mkfw_is_key_pressed(struct mkfw_state *state, uint8_t key) { return state->keyboard_state[key] && !state->prev_keyboard_state[key]; }
 static inline int mkfw_was_key_released(struct mkfw_state *state, uint8_t key) { return !state->keyboard_state[key] && state->prev_keyboard_state[key]; }
 static inline uint8_t mkfw_is_button_pressed(struct mkfw_state *state, uint8_t button) { return (state->mouse_buttons[button] & !state->previous_mouse_buttons[button]); }
+
+/* UI subsystem - optional */
+#ifdef MKFW_UI
+#include "mkfw_ui.c"
+#endif

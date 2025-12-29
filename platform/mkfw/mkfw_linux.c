@@ -571,6 +571,18 @@ static void mkfw_pump_messages(struct mkfw_state *state) {
 
 			case KeyPress: {
 				map_x11_keysym(state, XLookupKeysym(&event.xkey, 0), 1);
+
+				// Generate character input for text editing
+				char buf[32];
+				KeySym keysym;
+				int len = XLookupString(&event.xkey, buf, sizeof(buf), &keysym, 0);
+				if(len > 0 && state->char_callback) {
+					for(int i = 0; i < len; i++) {
+						if((unsigned char)buf[i] >= 32) {  // Printable characters only
+							state->char_callback(state, (uint32_t)(unsigned char)buf[i]);
+						}
+					}
+				}
 			} break;
 
 			case KeyRelease: {
@@ -579,7 +591,17 @@ static void mkfw_pump_messages(struct mkfw_state *state) {
 
 			case ButtonPress: {
 				uint8_t button = event.xbutton.button - 1;
-				if(button < 3) {
+
+				// Handle scroll wheel (buttons 4 and 5)
+				if(button == 3) {  // Scroll up (button 4 in X11, button-1 = 3)
+					if(state->scroll_callback) {
+						state->scroll_callback(state, 0.0, 1.0);
+					}
+				} else if(button == 4) {  // Scroll down (button 5 in X11, button-1 = 4)
+					if(state->scroll_callback) {
+						state->scroll_callback(state, 0.0, -1.0);
+					}
+				} else if(button < 3) {
 					state->mouse_buttons[button] = 1;
 					if(state->mouse_button_callback) {
 						state->mouse_button_callback(state, button, MKS_PRESSED);
@@ -604,6 +626,10 @@ static void mkfw_pump_messages(struct mkfw_state *state) {
 
 					PLATFORM(state)->last_mouse_x = event.xmotion.x;
 					PLATFORM(state)->last_mouse_y = event.xmotion.y;
+
+					// Update absolute mouse position
+					state->mouse_x = event.xmotion.x;
+					state->mouse_y = event.xmotion.y;
 
 					if(state->mouse_move_delta_callback) {
 						// state->mouse_move_delta_callback(delta_x, delta_y);
