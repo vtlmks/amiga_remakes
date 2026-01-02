@@ -578,8 +578,11 @@ static void mkfw_pump_messages(struct mkfw_state *state) {
 				int len = XLookupString(&event.xkey, buf, sizeof(buf), &keysym, 0);
 				if(len > 0 && state->char_callback) {
 					for(int i = 0; i < len; i++) {
-						if((unsigned char)buf[i] >= 32) {  // Printable characters only
-							state->char_callback(state, (uint32_t)(unsigned char)buf[i]);
+						unsigned char c = (unsigned char)buf[i];
+						// Allow backspace (8) and printable characters (32-126)
+						// Block other control characters (tab, delete, etc.)
+						if(c == 8 || (c >= 32 && c <= 126)) {
+							state->char_callback(state, (uint32_t)c);
 						}
 					}
 				}

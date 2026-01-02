@@ -34,8 +34,6 @@ struct win32_mkfw_state {
 	int32_t saved_style_ex;
 
 	uint8_t mouse_constrained;
-	int32_t last_mouse_x;
-	int32_t last_mouse_y;
 	double last_mouse_dx;
 	double last_mouse_dy;
 	double accumulated_dx;
@@ -311,7 +309,9 @@ static LRESULT CALLBACK Win32WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPA
 
 		case WM_CHAR: {
 			// Character input for text editing
-			if(wParam >= 32 && wParam < 0x10000) {  // Printable characters only
+			// Allow backspace (8) and printable characters (32-126)
+			// Block other control characters (tab, delete, etc.)
+			if((wParam == 8) || (wParam >= 32 && wParam <= 126)) {
 				if(state->char_callback) {
 					state->char_callback(state, (uint32_t)wParam);
 				}
