@@ -9,6 +9,15 @@
 __declspec(dllexport) unsigned long NvOptimusEnablement = 0x00000001;
 __declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
 
+// WGL constants for context creation
+#define WGL_CONTEXT_MAJOR_VERSION_ARB           0x2091
+#define WGL_CONTEXT_MINOR_VERSION_ARB           0x2092
+#define WGL_CONTEXT_FLAGS_ARB                   0x2094
+#define WGL_CONTEXT_PROFILE_MASK_ARB            0x9126
+#define WGL_CONTEXT_CORE_PROFILE_BIT_ARB        0x00000001
+#define WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB 0x00000002
+#define WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB  0x00000002
+
 // WGL function pointer for creating modern contexts
 typedef HGLRC (WINAPI *PFNWGLCREATECONTEXTATTRIBSARBPROC)(HDC hDC, HGLRC hShareContext, const int *attribList);
 static PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB;
@@ -434,51 +443,6 @@ static void mkfw_attach_context(struct mkfw_state *state) {
 	wglMakeCurrent(PLATFORM(state)->hdc, PLATFORM(state)->hglrc);
 }
 
-/* Minimal function to create a WGL context */
-static void create_opengl_context(struct mkfw_state *state, int major, int minor) {
-	PIXELFORMATDESCRIPTOR pfd = {0};
-	pfd.nSize      = sizeof(pfd);
-	pfd.nVersion   = 1;
-	pfd.dwFlags    = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
-	pfd.iPixelType = PFD_TYPE_RGBA;
-	pfd.cColorBits = 24;
-	pfd.cAlphaBits = 8;
-	pfd.cDepthBits = 24;
-	pfd.cStencilBits = 8;
-	pfd.iLayerType = PFD_MAIN_PLANE;
-
-	int pf = ChoosePixelFormat(PLATFORM(state)->hdc, &pfd);
-	SetPixelFormat(PLATFORM(state)->hdc, pf, &pfd);
-
-	HGLRC temp_ctx = wglCreateContext(PLATFORM(state)->hdc);
-	wglMakeCurrent(PLATFORM(state)->hdc, temp_ctx);
-
-	wglCreateContextAttribsARB = (PFNWGLCREATECONTEXTATTRIBSARBPROC)(void *)wglGetProcAddress("wglCreateContextAttribsARB");
-	if(!wglCreateContextAttribsARB) {
-		PLATFORM(state)->hglrc = temp_ctx;
-		return;
-	}
-
-	/* Attempt modern context */
-	int attribs[] = {
-		0x2091, major,
-		0x2092, minor,
-		0x9126, 0x00000001,
-		0
-	};
-
-	HGLRC modern_ctx = wglCreateContextAttribsARB(PLATFORM(state)->hdc, 0, attribs);
-	if(modern_ctx) {
-		wglMakeCurrent(0, 0);
-		wglDeleteContext(temp_ctx);
-		wglMakeCurrent(PLATFORM(state)->hdc, modern_ctx);
-		PLATFORM(state)->hglrc = modern_ctx;
-
-	} else {
-		PLATFORM(state)->hglrc = temp_ctx;
-	}
-}
-
 /* Register for raw input if desired */
 static void mkfw_enable_raw_mouse(struct mkfw_state *state, int32_t enable) {
 	RAWINPUTDEVICE rid;
@@ -524,7 +488,7 @@ static struct mkfw_state *mkfw_init(int32_t width, int32_t height) {
 	RegisterClass(&wc);
 
 	DWORD style = WS_OVERLAPPEDWINDOW;
-	RECT rect = {0, 0, width, height};
+	RECT rect = { 0, 0, width, height };
 	AdjustWindowRect(&rect, style, FALSE);
 
 	PLATFORM(state)->hwnd = CreateWindowEx(0, wc.lpszClassName, "OpenGL Example", style, CW_USEDEFAULT, CW_USEDEFAULT, rect.right - rect.left, rect.bottom - rect.top, 0, 0, PLATFORM(state)->hinstance, state);
@@ -534,7 +498,47 @@ static struct mkfw_state *mkfw_init(int32_t width, int32_t height) {
 	SetWindowPos(PLATFORM(state)->hwnd, 0, 0, 0, 0, 0, SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER);
 
 	PLATFORM(state)->hdc = GetDC(PLATFORM(state)->hwnd);
-	create_opengl_context(state, 3, 1);
+
+	// Create OpenGL context
+	PIXELFORMATDESCRIPTOR pfd = {0};
+	pfd.nSize      = sizeof(pfd);
+	pfd.nVersion   = 1;
+	pfd.dwFlags    = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
+	pfd.iPixelType = PFD_TYPE_RGBA;
+	pfd.cColorBits = 24;
+	pfd.cAlphaBits = 8;
+	pfd.cDepthBits = 24;
+	pfd.cStencilBits = 8;
+	pfd.iLayerType = PFD_MAIN_PLANE;
+
+	int pf = ChoosePixelFormat(PLATFORM(state)->hdc, &pfd);
+	SetPixelFormat(PLATFORM(state)->hdc, pf, &pfd);
+
+	HGLRC temp_ctx = wglCreateContext(PLATFORM(state)->hdc);
+	wglMakeCurrent(PLATFORM(state)->hdc, temp_ctx);
+
+	wglCreateContextAttribsARB = (PFNWGLCREATECONTEXTATTRIBSARBPROC)(void *)wglGetProcAddress("wglCreateContextAttribsARB");
+	if(!wglCreateContextAttribsARB) {
+		PLATFORM(state)->hglrc = temp_ctx;
+	} else {
+		int ctx_attribs[] = {
+			WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
+			WGL_CONTEXT_MINOR_VERSION_ARB, 1,
+			WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB,
+			0
+		};
+
+		HGLRC modern_ctx = wglCreateContextAttribsARB(PLATFORM(state)->hdc, 0, ctx_attribs);
+		if(modern_ctx) {
+			wglMakeCurrent(0, 0);
+			wglDeleteContext(temp_ctx);
+			wglMakeCurrent(PLATFORM(state)->hdc, modern_ctx);
+			PLATFORM(state)->hglrc = modern_ctx;
+
+		} else {
+			PLATFORM(state)->hglrc = temp_ctx;
+		}
+	}
 
 	/* Cache original style/rect for fullscreen toggling */
 	PLATFORM(state)->saved_style = style;
@@ -584,8 +588,8 @@ static void mkfw_constrain_mouse(struct mkfw_state *state, int32_t constrain) {
 	if(constrain) {
 		RECT rect;
 		GetClientRect(PLATFORM(state)->hwnd, &rect);
-		POINT ul = {rect.left, rect.top};
-		POINT lr = {rect.right, rect.bottom};
+		POINT ul = { rect.left, rect.top };
+		POINT lr = { rect.right, rect.bottom };
 		ClientToScreen(PLATFORM(state)->hwnd, &ul);
 		ClientToScreen(PLATFORM(state)->hwnd, &lr);
 		rect.left   = ul.x;
@@ -747,7 +751,7 @@ static uint64_t mkfw_gettime(struct mkfw_state *state) {
 	return (now.QuadPart * 1000000000ULL) / PLATFORM(state)->performance_frequency.QuadPart;
 }
 
-void mkfw_sleep(uint64_t nanoseconds) {
+static void mkfw_sleep(uint64_t nanoseconds) {
 	HANDLE timer;
 	LARGE_INTEGER ft;
 
