@@ -195,13 +195,13 @@ static void opengl_setup(struct platform_state *state) {
 	glGenBuffers(1, &state->vbo);
 	glGenBuffers(1, &state->ebo);
 	glBindVertexArray(state->vao);
-	const float vertices[] = {
+	float vertices[] = {
 		-1.0f, -1.0f, 0.0f, 0.0f,
 		 1.0f, -1.0f, 1.0f, 0.0f,
 		 1.0f,  1.0f, 1.0f, 1.0f,
 		-1.0f,  1.0f, 0.0f, 1.0f
 	};
-	static const unsigned int indices[] = { 0, 1, 2, 2, 3, 0 };
+	unsigned int indices[] = { 0, 1, 2, 2, 3, 0 };
 	glBindBuffer(GL_ARRAY_BUFFER, state->vbo);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, state->ebo);
@@ -267,12 +267,6 @@ static inline void render_frame(struct platform_state *state) {
 		glUniform4f(state->uniform_tone, state->tone_data[0], state->tone_data[1], state->tone_data[2], state->tone_data[3]);
 		glUniform1i(state->uniform_sampler_location, 0);
 
-		glBindVertexArray(state->vao);
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-
-		glBindVertexArray(0);
-		glUseProgram(0);
-
 	} else {
 		// ========== Simple passthrough: CRT emulation is OFF ==========
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -280,17 +274,17 @@ static inline void render_frame(struct platform_state *state) {
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		// Simple passthrough - just display the source texture with nearest neighbor (sharp pixels)
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, source_texture);
 
 		glUseProgram(state->passthrough_program);
 		glUniform1i(state->passthrough_uniform_source, 0);
 
-		glBindVertexArray(state->vao);
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-
-		glBindVertexArray(0);
-		glUseProgram(0);
 	}
+
+	glBindVertexArray(state->vao);
+	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+	glBindVertexArray(0);
+	glUseProgram(0);
 }
