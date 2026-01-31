@@ -78,7 +78,8 @@ LINUX_LIBS="-lasound -lXi -lX11 -lGL -lm -ldl -pthread "
 WINDOWS_CFLAGS="-ffunction-sections -D__USE_MINGW_ANSI_STDIO=0 "
 WINDOWS_LDFLAGS="$LDFLAGS "
 WINDOWS_INCLUDE=""
-WINDOWS_LIBS="-lwinmm -lole32 -lmmdevapi -lavrt -lgdi32 -lopengl32 -luuid -mwindows "
+WINDOWS_LIBS="-lwinmm -lole32 -lmmdevapi -lavrt -lgdi32 -lopengl32 -luuid "
+WINDOWS_LIBS+="-mwindows "
 
 # Determine build type-specific flags
 BUILD_TYPE=$1

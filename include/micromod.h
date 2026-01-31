@@ -46,6 +46,10 @@ struct micromod_state {
 	uint8_t note_triggered[4];     /* Per-channel: 1 if note was triggered this tick, 0 otherwise */
 	uint8_t triggered_sample[4];   /* Per-channel: Sample/instrument number that was triggered (1-31) */
 	uint8_t sample_triggered[32];  /* Per-sample: 1 if this sample was triggered on any channel this tick */
+
+	/* Instrument trigger tracking (fires when instrument number is present, like original Amiga players) */
+	uint8_t instrument_triggered[4];       /* Per-channel: 1 if instrument was specified this tick */
+	uint8_t triggered_instrument_volume[4]; /* Per-channel: the sample's default volume (0-64) */
 };
 
 static const char *MICROMOD_VERSION = "Micromod Protracker replay 20180625 (c)mumart@gmail.com";
@@ -176,6 +180,10 @@ static void micromod_trigger(struct micromod_state *m, struct micromod_channel *
 		channel->volume = m->instruments[ ins ].volume;
 		if(m->instruments[ ins ].loop_length > 0 && channel->instrument > 0)
 			channel->instrument = ins;
+
+		/* Mark instrument as triggered (fires when instrument number is present) */
+		m->instrument_triggered[ channel->id ] = 1;
+		m->triggered_instrument_volume[ channel->id ] = m->instruments[ ins ].volume;
 	}
 	if(channel->note.effect == 0x09) {
 		channel->sample_offset = (channel->note.param & 0xFF) << 8;
@@ -599,6 +607,8 @@ static int32_t micromod_initialize(struct micromod_state *m, int8_t *data, int32
 	for(inst_idx = 0; inst_idx < 4; inst_idx++) {
 		m->note_triggered[inst_idx] = 0;
 		m->triggered_sample[inst_idx] = 0;
+		m->instrument_triggered[inst_idx] = 0;
+		m->triggered_instrument_volume[inst_idx] = 0;
 	}
 	for(inst_idx = 0; inst_idx < 32; inst_idx++) {
 		m->sample_triggered[inst_idx] = 0;
@@ -662,6 +672,8 @@ static void micromod_clear_triggers(struct micromod_state *m) {
 	for(i = 0; i < 4; i++) {
 		m->note_triggered[i] = 0;
 		m->triggered_sample[i] = 0;
+		m->instrument_triggered[i] = 0;
+		m->triggered_instrument_volume[i] = 0;
 	}
 	for(i = 0; i < 32; i++) {
 		m->sample_triggered[i] = 0;

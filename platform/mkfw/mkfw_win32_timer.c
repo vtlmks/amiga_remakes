@@ -11,8 +11,9 @@
 
 struct mkfw_timer_handle {
 	uint64_t interval_ns;
+	uint64_t interval_qpc;
 	uint64_t qpc_frequency;
-	uint64_t next_deadline;
+	uint64_t next_deadline_qpc;
 	uint64_t spin_threshold_100ns;
 	uint32_t running;
 
@@ -31,14 +32,15 @@ typedef NTSTATUS (__stdcall *mkfw_NtDelayExecution_t)(BOOLEAN Alertable, PLARGE_
 static mkfw_NtDelayExecution_t mkfw_pNtDelayExecution;
 static uint64_t mkfw_cached_qpc_frequency = 0;
 
-static inline uint64_t mkfw_qpc_now_ns(uint64_t freq) {
+static inline uint64_t mkfw_qpc_now(void) {
 	LARGE_INTEGER qpc;
 	QueryPerformanceCounter(&qpc);
+	return (uint64_t)qpc.QuadPart;
+}
 
-	uint64_t q = (uint64_t)qpc.QuadPart;
-	uint64_t s = q / freq;
-	uint64_t r = q % freq;
-
+static inline uint64_t mkfw_qpc_to_ns(uint64_t qpc_ticks, uint64_t freq) {
+	uint64_t s = qpc_ticks / freq;
+	uint64_t r = qpc_ticks % freq;
 	return s * 1000000000ULL + (r * 1000000000ULL + (freq >> 1)) / freq;
 }
 
@@ -80,29 +82,34 @@ static DWORD WINAPI mkfw_timer_thread_func(LPVOID arg) {
 #ifdef MKFW_TIMER_DEBUG
 		int64_t remaining_after_sleep_ns = -1;
 #endif
-		uint64_t now = mkfw_qpc_now_ns(t->qpc_frequency);
+		uint64_t now_qpc = mkfw_qpc_now();
 
-		if(now < t->next_deadline) {
-			uint64_t diff = t->next_deadline - now;
-			if(diff > MKFW_SPIN_THRESHOLD_NS) {
-				uint64_t sleep_ns = diff - MKFW_SPIN_THRESHOLD_NS;
+		if(now_qpc < t->next_deadline_qpc) {
+			uint64_t diff_qpc = t->next_deadline_qpc - now_qpc;
+			uint64_t diff_ns = mkfw_qpc_to_ns(diff_qpc, t->qpc_frequency);
+
+			if(diff_ns > MKFW_SPIN_THRESHOLD_NS) {
+				uint64_t sleep_ns = diff_ns - MKFW_SPIN_THRESHOLD_NS;
 				mkfw_timer_sleep(sleep_ns / 100);
 #ifdef MKFW_TIMER_DEBUG
-				now = mkfw_qpc_now_ns(t->qpc_frequency);
-				remaining_after_sleep_ns = (int64_t)(t->next_deadline - now);
+				now_qpc = mkfw_qpc_now();
+				remaining_after_sleep_ns = (int64_t)mkfw_qpc_to_ns(t->next_deadline_qpc - now_qpc, t->qpc_frequency);
 #endif
 			}
-			while(mkfw_qpc_now_ns(t->qpc_frequency) < t->next_deadline) {
+			while(mkfw_qpc_now() < t->next_deadline_qpc) {
 				_mm_pause();
 			}
 		}
 
-		now = mkfw_qpc_now_ns(t->qpc_frequency);
+		now_qpc = mkfw_qpc_now();
 		SetEvent(t->event);
 
 #ifdef MKFW_TIMER_DEBUG
+		uint64_t now_ns = mkfw_qpc_to_ns(now_qpc, t->qpc_frequency);
+		uint64_t deadline_ns = mkfw_qpc_to_ns(t->next_deadline_qpc, t->qpc_frequency);
+
 		if(t->last_wait_start_ns > 0) {
-			int64_t overshoot_ns = (int64_t)(now - t->next_deadline);
+			int64_t overshoot_ns = (int64_t)(now_ns - deadline_ns);
 			if(overshoot_ns < 0) overshoot_ns = 0;
 
 			if(remaining_after_sleep_ns >= 0) {
@@ -111,10 +118,10 @@ static DWORD WINAPI mkfw_timer_thread_func(LPVOID arg) {
 				DEBUG_PRINT("[DEBUG] No sleep. Overshoot: %lld ns\n", overshoot_ns);
 			}
 		}
-		t->last_wait_start_ns = now;
+		t->last_wait_start_ns = now_ns;
 #endif
 
-		t->next_deadline += t->interval_ns;
+		t->next_deadline_qpc += t->interval_qpc;
 	}
 
 	return 0;
@@ -143,8 +150,9 @@ static struct mkfw_timer_handle *mkfw_timer_new(uint64_t interval_ns) {
 
 	t->qpc_frequency = mkfw_cached_qpc_frequency;
 	t->interval_ns = interval_ns;
+	t->interval_qpc = (interval_ns * t->qpc_frequency + 500000000ULL) / 1000000000ULL;
 	t->spin_threshold_100ns = MKFW_SPIN_THRESHOLD_NS / 100;
-	t->next_deadline = mkfw_qpc_now_ns(t->qpc_frequency) + interval_ns;
+	t->next_deadline_qpc = mkfw_qpc_now() + t->interval_qpc;
 	t->running = 1;
 	t->mmcss_handle = 0;
 
