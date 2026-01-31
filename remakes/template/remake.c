@@ -20,15 +20,15 @@ static void remake_audio_callback(int16_t *data, size_t frames) {
 	// NOTE(peter): Enable for 75% mix if the player doesn't have that functionality!
 #if 0
 	for(size_t i = 0; i < frames; i++) {
-			int32_t old_left = (int32_t)data[i * 2];
-			int32_t old_right = (int32_t)data[i * 2 + 1];
+		int32_t old_left = (int32_t)data[i * 2];
+		int32_t old_right = (int32_t)data[i * 2 + 1];
 
-			int32_t mixed_left = old_left + (old_right * 3) / 4;
-			int32_t mixed_right = old_right + (old_left * 3) / 4;
+		int32_t mixed_left = old_left + (old_right * 3) / 4;
+		int32_t mixed_right = old_right + (old_left * 3) / 4;
 
-			// Shift right by 1 to prevent clipping and scale down
-			data[i * 2] = (int16_t)(mixed_left >> 1);
-			data[i * 2 + 1] = (int16_t)(mixed_right >> 1);
+		// Shift right by 1 to prevent clipping and scale down
+		data[i * 2] = (int16_t)(mixed_left >> 1);
+		data[i * 2 + 1] = (int16_t)(mixed_right >> 1);
 	}
 #endif
 }
@@ -54,8 +54,21 @@ static void remake_options(struct options *opt) {
 	opt->window_title = "remake - remake 1985-01\0";
 }
 
+INCBIN_UGG(fullscreen, "test.ugg");
+
 // [=]===^=[ remake_frame ]============================================================^===[=]
 static void remake_frame(struct platform_state *state) {
+
+	uint32_t *dst = BUFFER_PTR(state, 0, 0);
+	uint8_t *src = fullscreen->data;
+	for(size_t y = 0; y < BUFFER_HEIGHT; ++y) {
+		for(size_t x = 0; x < BUFFER_WIDTH; ++x) {
+			dst[x] = fullscreen->palette[src[x]];
+		}
+		dst += BUFFER_WIDTH;
+		src += fullscreen->width;
+	}
+
 }
 
 // [=]===^=[ remake_shutdown ]============================================================^===[=]
