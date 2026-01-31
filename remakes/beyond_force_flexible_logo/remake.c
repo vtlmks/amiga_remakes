@@ -1,0 +1,504 @@
+// Copyright (c) 2025 Peter Fors
+// SPDX-License-Identifier: MIT
+
+// [=]===^=[ base setup ]============================================================^===[=]
+
+#define BUFFER_WIDTH  (346 << 0)
+#define BUFFER_HEIGHT (270 << 0)
+
+#include "platform.c"
+
+// [=]===^=[ remake stuff below ]============================================================^===[=]
+
+static uint32_t x_base;
+static uint32_t x_base_mod;
+static uint32_t y_base;
+static uint32_t y_base_mod;
+
+static uint32_t bob_sine_table[167] = {
+	0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+	0x0, 0x0, 0x0, 0x0, 0x1, 0x1, 0x2, 0x2, 0x3,
+	0x3, 0x4, 0x4, 0x5, 0x6, 0x6, 0x7, 0x8, 0x9,
+	0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 0x10, 0x11, 0x12,
+	0x13, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1b, 0x1c, 0x1d,
+	0x1f, 0x20, 0x21, 0x23, 0x24, 0x25, 0x26, 0x28, 0x29,
+	0x2a, 0x2c, 0x2d, 0x2e, 0x2f, 0x30, 0x32, 0x33, 0x34,
+	0x35, 0x36, 0x37, 0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d,
+	0x3e, 0x3f, 0x3f, 0x40, 0x41, 0x41, 0x42, 0x42, 0x43,
+	0x43, 0x44, 0x44, 0x45, 0x45, 0x45, 0x45, 0x45, 0x45,
+	0x45, 0x45, 0x45, 0x45, 0x45, 0x45, 0x45, 0x44, 0x44,
+	0x43, 0x43, 0x42, 0x42, 0x41, 0x41, 0x40, 0x3f, 0x3f,
+	0x3e, 0x3d, 0x3c, 0x3b, 0x3a, 0x39, 0x38, 0x37, 0x36,
+	0x35, 0x34, 0x33, 0x32, 0x30, 0x2f, 0x2e, 0x2d, 0x2c,
+	0x2a, 0x29, 0x28, 0x26, 0x25, 0x23, 0x21, 0x20, 0x1f,
+	0x1d, 0x1c, 0x1b, 0x19, 0x18, 0x17, 0x16, 0x15, 0x13,
+	0x12, 0x11, 0x10, 0xf, 0xe, 0xd, 0xc, 0xb, 0xa,
+	0x9, 0x8, 0x7, 0x6, 0x6, 0x5, 0x4, 0x4, 0x3,
+	0x3, 0x2, 0x2, 0x1, 0x1,
+};
+
+
+static uint16_t logo_vertical_sine[320] = {
+	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0200, 0x0200, 0x0400,
+	0x0400, 0x0600, 0x0600, 0x0800, 0x0a00, 0x0c00, 0x0e00, 0x1000, 0x1200,
+	0x1400, 0x1600, 0x1800, 0x1a00, 0x1e00, 0x2000, 0x2200, 0x2600, 0x2800,
+	0x2c00, 0x2e00, 0x3200, 0x3400, 0x3800, 0x3a00, 0x3e00, 0x4200, 0x4400,
+	0x4800, 0x4c00, 0x5000, 0x5200, 0x5600, 0x5a00, 0x5c00, 0x6000, 0x6400,
+	0x6800, 0x6a00, 0x6e00, 0x7200, 0x7400, 0x7800, 0x7a00, 0x7e00, 0x8000,
+	0x8400, 0x8600, 0x8a00, 0x8c00, 0x8e00, 0x9200, 0x9600, 0x9800, 0x9a00,
+	0x9c00, 0x9e00, 0xa000, 0xa200, 0xa400, 0xa600, 0xa600, 0xa800, 0xa800,
+	0xaa00, 0xaa00, 0xac00, 0xac00, 0xac00, 0xac00, 0xac00, 0xac00, 0xac00,
+	0xac00, 0xac00, 0xac00, 0xac00, 0xac00, 0xaa00, 0xaa00, 0xa800, 0xa800,
+	0xa600, 0xa600, 0xa400, 0xa200, 0xa000, 0x9e00, 0x9c00, 0x9a00, 0x9800,
+	0x9600, 0x9200, 0x8e00, 0x8c00, 0x8a00, 0x8600, 0x8400, 0x8000, 0x7e00,
+	0x7a00, 0x7800, 0x7400, 0x7200, 0x6e00, 0x6a00, 0x6800, 0x6400, 0x6000,
+	0x5c00, 0x5a00, 0x5600, 0x5200, 0x5000, 0x4c00, 0x4800, 0x4400, 0x4200,
+	0x3e00, 0x3a00, 0x3800, 0x3400, 0x3200, 0x2e00, 0x2c00, 0x2800, 0x2600,
+	0x2200, 0x2000, 0x1e00, 0x1a00, 0x1800, 0x1600, 0x1400, 0x1200, 0x1000,
+	0x0e00, 0x0c00, 0x0a00, 0x0800, 0x0600, 0x0600, 0x0400, 0x0400, 0x0200,
+	0x0200, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
+	0x0000, 0x0000, 0x0000, 0x0000, 0x0200, 0x0200, 0x0400, 0x0400, 0x0600,
+	0x0600, 0x0800, 0x0a00, 0x0c00, 0x0e00, 0x1000, 0x1200, 0x1400, 0x1600,
+	0x1800, 0x1a00, 0x1e00, 0x2000, 0x2200, 0x2600, 0x2800, 0x2c00, 0x2e00,
+	0x3200, 0x3400, 0x3800, 0x3a00, 0x3e00, 0x4200, 0x4400, 0x4800, 0x4c00,
+	0x5000, 0x5200, 0x5600, 0x5a00, 0x5c00, 0x6000, 0x6400, 0x6800, 0x6a00,
+	0x6e00, 0x7200, 0x7400, 0x7800, 0x7a00, 0x7e00, 0x8000, 0x8400, 0x8600,
+	0x8a00, 0x8c00, 0x8e00, 0x9200, 0x9600, 0x9800, 0x9a00, 0x9c00, 0x9e00,
+	0xa000, 0xa200, 0xa400, 0xa600, 0xa600, 0xa800, 0xa800, 0xaa00, 0xaa00,
+	0xac00, 0xac00, 0xac00, 0xac00, 0xac00, 0xac00, 0xac00, 0xac00, 0xac00,
+	0xac00, 0xac00, 0xac00, 0xaa00, 0xaa00, 0xa800, 0xa800, 0xa600, 0xa600,
+	0xa400, 0xa200, 0xa000, 0x9e00, 0x9c00, 0x9a00, 0x9800, 0x9600, 0x9200,
+	0x8e00, 0x8c00, 0x8a00, 0x8600, 0x8400, 0x8000, 0x7e00, 0x7a00, 0x7800,
+	0x7400, 0x7200, 0x6e00, 0x6a00, 0x6800, 0x6400, 0x6000, 0x5c00, 0x5a00,
+	0x5600, 0x5200, 0x5000, 0x4c00, 0x4800, 0x4400, 0x4200, 0x3e00, 0x3a00,
+	0x3800, 0x3400, 0x3200, 0x2e00, 0x2c00, 0x2800, 0x2600, 0x2200, 0x2000,
+	0x1e00, 0x1a00, 0x1800, 0x1600, 0x1400, 0x1200, 0x1000, 0x0e00, 0x0c00,
+	0x0a00, 0x0800, 0x0600, 0x0600, 0x0400, 0x0400, 0x0200, 0x0200, 0x0000,
+	0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
+};
+
+static uint8_t logo_horizontal_sine[320] = {
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x02,
+	0x02, 0x03, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09,
+	0x0a, 0x0b, 0x0c, 0x0d, 0x0f, 0x10, 0x11, 0x13, 0x14,
+	0x16, 0x17, 0x19, 0x1a, 0x1c, 0x1d, 0x1f, 0x21, 0x22,
+	0x24, 0x26, 0x28, 0x29, 0x2b, 0x2d, 0x2e, 0x30, 0x32,
+	0x34, 0x35, 0x37, 0x39, 0x3a, 0x3c, 0x3d, 0x3f, 0x40,
+	0x42, 0x43, 0x45, 0x46, 0x47, 0x49, 0x4b, 0x4c, 0x4d,
+	0x4e, 0x4f, 0x50, 0x51, 0x52, 0x53, 0x53, 0x54, 0x54,
+	0x55, 0x55, 0x56, 0x56, 0x56, 0x56, 0x56, 0x56, 0x56,
+	0x56, 0x56, 0x56, 0x56, 0x56, 0x55, 0x55, 0x54, 0x54,
+	0x53, 0x53, 0x52, 0x51, 0x50, 0x4f, 0x4e, 0x4d, 0x4c,
+	0x4b, 0x49, 0x47, 0x46, 0x45, 0x43, 0x42, 0x40, 0x3f,
+	0x3d, 0x3c, 0x3a, 0x39, 0x37, 0x35, 0x34, 0x32, 0x30,
+	0x2e, 0x2d, 0x2b, 0x29, 0x28, 0x26, 0x24, 0x22, 0x21,
+	0x1f, 0x1d, 0x1c, 0x1a, 0x19, 0x17, 0x16, 0x14, 0x13,
+	0x11, 0x10, 0x0f, 0x0d, 0x0c, 0x0b, 0x0a, 0x09, 0x08,
+	0x07, 0x06, 0x05, 0x04, 0x03, 0x03, 0x02, 0x02, 0x01,
+	0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x02,
+	0x02, 0x03, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09,
+	0x0a, 0x0b, 0x0c, 0x0d, 0x0f, 0x10, 0x11, 0x13, 0x14,
+	0x16, 0x17, 0x19, 0x1a, 0x1c, 0x1d, 0x1f, 0x21, 0x22,
+	0x24, 0x26, 0x28, 0x29, 0x2b, 0x2d, 0x2e, 0x30, 0x32,
+	0x34, 0x35, 0x37, 0x39, 0x3a, 0x3c, 0x3d, 0x3f, 0x40,
+	0x42, 0x43, 0x45, 0x46, 0x47, 0x49, 0x4b, 0x4c, 0x4d,
+	0x4e, 0x4f, 0x50, 0x51, 0x52, 0x53, 0x53, 0x54, 0x54,
+	0x55, 0x55, 0x56, 0x56, 0x56, 0x56, 0x56, 0x56, 0x56,
+	0x56, 0x56, 0x56, 0x56, 0x56, 0x55, 0x55, 0x54, 0x54,
+	0x53, 0x53, 0x52, 0x51, 0x50, 0x4f, 0x4e, 0x4d, 0x4c,
+	0x4b, 0x49, 0x47, 0x46, 0x45, 0x43, 0x42, 0x40, 0x3f,
+	0x3d, 0x3c, 0x3a, 0x39, 0x37, 0x35, 0x34, 0x32, 0x30,
+	0x2e, 0x2d, 0x2b, 0x29, 0x28, 0x26, 0x24, 0x22, 0x21,
+	0x1f, 0x1d, 0x1c, 0x1a, 0x19, 0x17, 0x16, 0x14, 0x13,
+	0x11, 0x10, 0x0f, 0x0d, 0x0c, 0x0b, 0x0a, 0x09, 0x08,
+	0x07, 0x06, 0x05, 0x04, 0x03, 0x03, 0x02, 0x02, 0x01,
+	0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+};
+
+static uint32_t logo_vertical_sine_buffer[125*117];	// logo is 125wide; 31high + highest peak = 86
+static uint32_t flexible_logo_vertical_sine_offset;
+static uint32_t flexible_logo_horizontal_sine_offset;
+
+static uint32_t copper_background_colors[270] = {
+	0xffff00ff, 0xffff00ff, 0xffff00ff, 0xffff00ff, 0xffff00ff, 0xffff00ff, 0xffff00ff, 0xffee00ff,
+	0xffdd00ff, 0xffcc00ff, 0xffbb00ff, 0xffaa00ff, 0xff9900ff, 0xff8800ff, 0xff7700ff, 0xff6600ff,
+	0xff5500ff, 0xff4400ff, 0xff3300ff, 0xff2200ff, 0xff1100ff, 0xff0000ff, 0xee0000ff, 0xdd0000ff,
+	0xcc0000ff, 0xbb0000ff, 0xaa0000ff, 0x990000ff, 0x880000ff, 0x770000ff, 0x660000ff, 0x550000ff,
+	0x440000ff, 0x330000ff, 0x220000ff, 0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff,
+	0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff,
+	0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff,
+	0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff,
+	0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff,
+	0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff,
+	0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff,
+	0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff,
+	0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff,
+	0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff,
+	0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff,
+	0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff,
+	0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff,
+	0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff,
+	0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff, 0x110000ff, 0x000011ff, 0x000022ff, 0x000033ff,
+	0x000044ff, 0x000055ff, 0x000066ff, 0x000077ff, 0x000088ff, 0x000088ff, 0x000088ff, 0x000088ff,
+	0x000088ff, 0x000088ff, 0x000088ff, 0x000088ff, 0x000088ff, 0x000088ff, 0x000088ff, 0x000088ff,
+	0x000088ff, 0x000088ff, 0x000088ff, 0x000088ff, 0x000088ff, 0x000088ff, 0x000088ff, 0x000088ff,
+	0x000088ff, 0x000088ff, 0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff,
+	0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff,
+	0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff,
+	0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff,
+	0x000055ff, 0x000066ff, 0x000077ff, 0x000066ff, 0x000055ff, 0x000000ff, 0x000000ff, 0x000000ff,
+	0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff,
+	0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff,
+	0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff, 0x110000ff, 0x220000ff, 0x330000ff,
+	0x440000ff, 0x550000ff, 0x660000ff, 0x770000ff, 0x880000ff, 0x990000ff, 0xaa0000ff, 0xbb0000ff,
+	0xcc0000ff, 0xdd0000ff, 0xee0000ff, 0xff0000ff, 0xff1100ff, 0xff2200ff, 0xff3300ff, 0xff4400ff,
+	0xff5500ff, 0xff6600ff, 0xff7700ff, 0xff8800ff, 0xff9900ff, 0xffaa00ff, 0xffbb00ff, 0xffcc00ff,
+	0xffdd00ff, 0xffee00ff, 0xffff00ff, 0xffff00ff, 0xffff00ff, 0xffff00ff,
+};
+
+static uint32_t eq_row_colors[33][3] = {
+	{ 0x000011ff, 0x000022ff, 0x000033ff },
+	{ 0x000022ff, 0x000033ff, 0x000044ff },
+	{ 0x000033ff, 0x000044ff, 0x000055ff },
+	{ 0x000044ff, 0x000055ff, 0x000066ff },
+	{ 0x000055ff, 0x000066ff, 0x000077ff },
+	{ 0x000066ff, 0x000077ff, 0x000088ff },
+	{ 0x000077ff, 0x000088ff, 0x000099ff },
+	{ 0x000088ff, 0x000099ff, 0x0000aaff },
+	{ 0x000099ff, 0x0000aaff, 0x0000bbff },
+	{ 0x0000aaff, 0x0000bbff, 0x0000ccff },
+	{ 0x0000bbff, 0x0000ccff, 0x0000ddff },
+	{ 0x0000ccff, 0x0000ddff, 0x0000eeff },
+	{ 0x0000ddff, 0x0000eeff, 0x0000ffff },
+	{ 0x0000eeff, 0x0000ffff, 0x0011ffff },
+	{ 0x0000ffff, 0x0011ffff, 0x0022ffff },
+	{ 0x0011ffff, 0x0022ffff, 0x0033ffff },
+	{ 0x0022ffff, 0x0033ffff, 0x0044ffff },
+	{ 0x0033ffff, 0x0044ffff, 0x0055ffff },
+	{ 0x0044ffff, 0x0055ffff, 0x0066ffff },
+	{ 0x0055ffff, 0x0066ffff, 0x0077ffff },
+	{ 0x0066ffff, 0x0077ffff, 0x0088ffff },
+	{ 0x0077ffff, 0x0088ffff, 0x0099ffff },
+	{ 0x0088ffff, 0x0099ffff, 0x00aaffff },
+	{ 0x0099ffff, 0x00aaffff, 0x00bbffff },
+	{ 0x00aaffff, 0x00bbffff, 0x00ccffff },
+	{ 0x00bbffff, 0x00ccffff, 0x00ddffff },
+	{ 0x00ccffff, 0x00ddffff, 0x00eeffff },
+	{ 0x00ddffff, 0x00eeffff, 0x00ffffff },
+	{ 0x00eeffff, 0x00ffffff, 0x11ffffff },
+	{ 0x00ffffff, 0x11ffffff, 0x22ffffff },
+	{ 0x11ffffff, 0x22ffffff, 0x33ffffff },
+	{ 0x22ffffff, 0x33ffffff, 0x44ffffff },
+};
+
+static uint32_t eq_heights[4];
+static uint8_t eq_row_data[] = { 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2 };
+
+INCBIN_BYTES(music, "data/slowmotion.mod");
+INCBIN_UGG(bob, "data/bob.ugg");
+INCBIN_UGG(logo, "data/logo.ugg");
+INCBIN_UGG(font, "data/font.ugg");
+
+static struct micromod_state module;
+
+// [=]===^=[ render_bobs ]============================================================^===[=]
+static void render_bobs(struct platform_state *state) {
+	uint32_t x_base_temp			= x_base;
+	uint32_t x_base_mod_temp	= x_base_mod;
+	uint32_t y_base_temp			= y_base;
+	uint32_t y_base_mod_temp	= y_base_mod;
+
+	size_t center_x = (BUFFER_WIDTH - (0x45*2) - 16) >> 1;	// 0x45 = sine-max
+
+	for(size_t i = 0; i < 33; ++i) {
+
+		uint32_t x = center_x + bob_sine_table[x_base_temp] + bob_sine_table[x_base_mod_temp];
+		uint32_t y = 56 + bob_sine_table[y_base_temp] + bob_sine_table[y_base_mod_temp];
+
+		blit_full(state, bob, x, y, 0);
+
+		x_base_temp			= (x_base_temp			+ 15) % 167;
+		x_base_mod_temp	= (x_base_mod_temp	+ 5) % 167;
+		y_base_temp			= (y_base_temp			+ 15) % 167;
+		y_base_mod_temp	= (y_base_mod_temp	+ 5) % 167;
+	}
+
+	x_base		= (x_base		+ 2) % 167;
+	x_base_mod	= (x_base_mod	+ 1) % 167;
+	y_base		= (y_base		+ 1) % 167;
+	y_base_mod	= (y_base_mod	+ 3) % 167;
+}
+
+// [=]===^=[ render_background_copper ]============================================================^===[=]
+static void render_background_copper(struct platform_state *state) {
+	uint32_t *dst = BUFFER_PTR(state, 0, 0);
+
+	for(size_t i = 0; i < ARRAYSIZE(copper_background_colors); ++i) {
+		uint32_t color = copper_background_colors[i];
+		for(size_t x = 0; x < BUFFER_WIDTH; ++x) {
+			*dst++ = color;
+		}
+	}
+}
+
+// [=]===^=[ render_equalizers ]============================================================^===[=]
+static void render_equalizers(struct platform_state *state) {
+	// Compact triggers like the original - triggered volumes fill from slot 0
+	size_t slot = 0;
+	for(size_t i = 0; i < 4; ++i) {
+		if(module.instrument_triggered[i]) {
+			eq_heights[slot++] = module.triggered_instrument_volume[i] >> 1;
+		}
+	}
+	micromod_clear_triggers(&module);
+
+	size_t center = (BUFFER_WIDTH - 208) >> 1;
+
+	for(size_t i = 0; i < 4; ++i) {
+		uint32_t h = eq_heights[i];
+		for(size_t y = 0; y < h; ++y) {
+			uint32_t *dst = BUFFER_PTR(state, center + i * 64, 206 - y);
+			uint8_t *src = eq_row_data;
+			uint32_t *colors = eq_row_colors[y];
+			for(size_t x = 0; x < 16; ++x) {
+				dst[x] = colors[*src++];
+			}
+		}
+		eq_heights[i] -= 1;
+		if(eq_heights[i] > 64) {
+			eq_heights[i] = 0;
+		}
+	}
+}
+
+// [=]===^=[ render_flexible_logo ]============================================================^===[=]
+static void render_flexible_logo(struct platform_state *state) {
+	memset(logo_vertical_sine_buffer, 0, sizeof(logo_vertical_sine_buffer));
+	size_t logo_width = logo->width;
+	for(size_t i = 0; i < logo_width; ++i) {
+		uint32_t *dst = logo_vertical_sine_buffer + ((logo_vertical_sine[flexible_logo_vertical_sine_offset + i] >> 9) * logo_width) + i;
+		for(size_t y = 0; y < logo->height; ++y) {
+			uint32_t color = logo->data[y*logo->width + i];
+			dst[(y * logo_width)] = logo->palette[color];
+		}
+	}
+	flexible_logo_vertical_sine_offset = (flexible_logo_vertical_sine_offset + 1) % 160;
+
+	uint32_t offset_temp = flexible_logo_horizontal_sine_offset;
+	uint32_t *src = logo_vertical_sine_buffer;
+
+	uint32_t center = (BUFFER_WIDTH - logo->width - 86) >> 1;
+
+	for(size_t y = 0; y < 117; ++y) {
+		uint32_t *dst = BUFFER_PTR(state, (center+logo_horizontal_sine[offset_temp]), 7+y);
+		for(size_t x = 0; x < logo->width; ++x) {
+			uint32_t color = src[x];
+			if(color == 0) continue;
+			dst[x] = color;
+		}
+		offset_temp = ((offset_temp - 1) > 159) ? 159 : offset_temp - 1;
+		src += logo->width;
+	}
+	flexible_logo_horizontal_sine_offset = ((flexible_logo_horizontal_sine_offset - 1) > 159) ? 159 : flexible_logo_horizontal_sine_offset - 1;
+}
+
+
+// [=]===^=[ audio_callback ]============================================================^===[=]
+static void remake_audio_callback(int16_t *data, size_t frames) {
+	micromod_get_audio(&module, (short*)data, frames);
+
+	for(size_t i = 0; i < frames; i++) {
+		int32_t old_left = (int32_t)data[i * 2];
+		int32_t old_right = (int32_t)data[i * 2 + 1];
+
+		int32_t mixed_left = old_left + (old_right * 3) / 4;
+		int32_t mixed_right = old_right + (old_left * 3) / 4;
+
+		data[i * 2] = (int16_t)(mixed_left >> 1);
+		data[i * 2 + 1] = (int16_t)(mixed_right >> 1);
+	}
+}
+
+#define FONT_ROW_0 0
+#define FONT_ROW_1 10240
+#define FONT_ROW_2 20480
+#define FONT_ROW_3 30720
+#define FONT_ROW_4 40960
+
+struct font_char_info font_char_infos[128] = {
+	['A'] = {.offset = FONT_ROW_0 + 0,   .width = 32},
+	['B'] = {.offset = FONT_ROW_0 + 32,  .width = 32},
+	['C'] = {.offset = FONT_ROW_0 + 64,  .width = 32},
+	['D'] = {.offset = FONT_ROW_0 + 96,  .width = 32},
+	['E'] = {.offset = FONT_ROW_0 + 128, .width = 32},
+	['F'] = {.offset = FONT_ROW_0 + 160, .width = 32},
+	['G'] = {.offset = FONT_ROW_0 + 192, .width = 32},
+	['H'] = {.offset = FONT_ROW_0 + 224, .width = 32},
+	['I'] = {.offset = FONT_ROW_0 + 256, .width = 32},
+	['J'] = {.offset = FONT_ROW_0 + 288, .width = 32},
+
+	['K'] = {.offset = FONT_ROW_1 + 0,   .width = 32},
+	['L'] = {.offset = FONT_ROW_1 + 32,  .width = 32},
+	['M'] = {.offset = FONT_ROW_1 + 64,  .width = 32},
+	['N'] = {.offset = FONT_ROW_1 + 96,  .width = 32},
+	['O'] = {.offset = FONT_ROW_1 + 128, .width = 32},
+	['P'] = {.offset = FONT_ROW_1 + 160, .width = 32},
+	['Q'] = {.offset = FONT_ROW_1 + 192, .width = 32},
+	['R'] = {.offset = FONT_ROW_1 + 224, .width = 32},
+	['S'] = {.offset = FONT_ROW_1 + 256, .width = 32},
+	['T'] = {.offset = FONT_ROW_1 + 288, .width = 32},
+
+	['U'] = {.offset = FONT_ROW_2 + 0,   .width = 32},
+	['V'] = {.offset = FONT_ROW_2 + 32,  .width = 32},
+	['W'] = {.offset = FONT_ROW_2 + 64,  .width = 32},
+	['X'] = {.offset = FONT_ROW_2 + 96,  .width = 32},
+	['Y'] = {.offset = FONT_ROW_2 + 128, .width = 32},
+	['Z'] = {.offset = FONT_ROW_2 + 160, .width = 32},
+	[' '] = {.offset = FONT_ROW_2 + 192, .width = 32},
+	['!'] = {.offset = FONT_ROW_2 + 224, .width = 32},
+	['['] = {.offset = FONT_ROW_2 + 256, .width = 32},
+	[']'] = {.offset = FONT_ROW_2 + 288, .width = 32},
+
+	['0'] = {.offset = FONT_ROW_3 + 0,   .width = 32},
+	['1'] = {.offset = FONT_ROW_3 + 32,  .width = 32},
+	['2'] = {.offset = FONT_ROW_3 + 64,  .width = 32},
+	['3'] = {.offset = FONT_ROW_3 + 96,  .width = 32},
+	['4'] = {.offset = FONT_ROW_3 + 128, .width = 32},
+	['5'] = {.offset = FONT_ROW_3 + 160, .width = 32},
+	['6'] = {.offset = FONT_ROW_3 + 192, .width = 32},
+	['7'] = {.offset = FONT_ROW_3 + 224, .width = 32},
+	['8'] = {.offset = FONT_ROW_3 + 256, .width = 32},
+	['9'] = {.offset = FONT_ROW_3 + 288, .width = 32},
+
+	[':'] = {.offset = FONT_ROW_4 + 0,   .width = 32},
+	['+'] = {.offset = FONT_ROW_4 + 32,  .width = 32},
+	[','] = {.offset = FONT_ROW_4 + 64,  .width = 32},
+	['-'] = {.offset = FONT_ROW_4 + 96,  .width = 32},
+	['.'] = {.offset = FONT_ROW_4 + 128, .width = 32},
+	['/'] = {.offset = FONT_ROW_4 + 160, .width = 32},
+	['='] = {.offset = FONT_ROW_4 + 192, .width = 32},
+	['?'] = {.offset = FONT_ROW_4 + 224, .width = 32},
+	['\''] = {.offset = FONT_ROW_4 + 256, .width = 32},
+	// ['...'] = {.offset = FONT_ROW_4 + 288, .width = 32}, // boss of beyond force
+};
+
+static uint8_t scrolltext[] = {
+	"             BEYOND FORCE IS BACK TO PRESENT YOU ANOTHER DEMO C"
+	"ODED BY BOSS WITH A NICE MUSIC FROM JOGI!!  THIS LITTLE DEMO IS"
+	" CALLED :     FLEXIBLE LOGO DEMO          LAMERS CAN SEND THEIR"
+	" DISKS TO :          HAZOR/BEYOND FORCE          TOMMI LAHTONEN"
+	"          PELLILA         31600 JOKIOINEN          FINLAND     "
+	"     OR CALL : 358 - 16 - 83351    IF YOU WANT TO CHAT WITH OUR"
+	" MASCOT (KAURAJATTI) THEN CALL : 358 - 37 - 63198/JAKE, CALL AF"
+	"TER 9.00 PM ....   64 GUYS ARE ALSO WELCOME TO CONTACT HAZOR..."
+	"  HAZOR HAS GONE AND JOGI IS HERE.ITS PARTY AND VITTU! JAKE IS "
+	"AGAIN PUSSYING TO ME.JAKE VEDA NENAAS NIIN TULEE IRTOPISTEITA.H"
+	"UOMAA ETTA HAZOR OLI TASSA HETKI SITTEN.    SATEILY EI OLE VIEL"
+	"A YHTAAN VAHENTYNYT. YEAH IT IS JAKE HERE!!! I CAN SAY THAT SEK"
+	"A EDITOR IS LAME I AM TODAY IN QUITE GOOD CONDITION. YESTERDAY "
+	"I WAS WEEEERY DRUNKED... BUT WHO CARES... I AM GOING TO LEAVE N"
+	"OW SO GOOD BYE!!!SO THE MASTER ARSEHOLE LEFT AND IT IS TIME TO "
+	"LET ME,TRASHER BULLSHIT SOMETHING.KILL HAZOR IF YOU SEE HE,HE H"
+	"AS AIDS,PLAGUE,SYFILIS,MALARIA,SPITAL AND SOMETHING ELSE     TR"
+	"ASHER FELL INTO TRASHCAN AND JOGI IS AGAIN PRODUCING MEGAFARTS "
+	"FOR HAZOR.OUR PARTYVIDEO IS FINISHED,AND WE LAUGHED IT MADLY EV"
+	"EN WITHOUT SOUND,YOU KNOW WHAT HAZOR LOOKS.HE WOULD ACT SUCCESS"
+	"ING MAIN ROLE OF A COMEDY MOVIE WITHOUT DOING ANYTHING DURING E"
+	"NTIRE FILM...NO WONDER,THAT THERE IS BURNED HOLE ON HAZORS MONI"
+	"TOR SCREEN..MIKSI HAZOR OSAA KYMMENSORMI JARJESTELMAN?        O"
+	"N PAREMPI KOPELOIDA NAISIA KYMMENELLA,KUIN YHDELLA SORMELLA,TAI"
+	" HAZORIN NAPPAIMISTO SUMENEE RATKAISEVASTI KAYTOSSA!!!        H"
+	"AZOR IS HERE TO SAY THE LAST WORDS IN THIS DEMO   MUNAT KIULUUU"
+	"N JA HYVIN MENEE ,,,,           "
+};
+
+static struct scroller_state *bf_scroller;
+
+static uint8_t scroller_reflection_sine_data[] = {
+	0x5, 0x5, 0x5, 0x6, 0x6, 0x7, 0x8, 0x9, 0xa, 0xa, 0xb, 0xb, 0xb, 0xa, 0xa, 0x9, 0x8, 0x7, 0x6, 0x6,
+};
+static uint32_t scroller_reflection_sine_data_offset;
+static uint32_t font_palette2[] = {	0x00000000, 0xbb8800ff, 0x996600ff, 0x774400ff };
+
+static void bf_render_scroll_buffer(struct platform_state *state, struct scroller_state *scr_state, uint32_t *palette) {
+	uint32_t *scroll_dest = BUFFER_PTR(state, 0, scr_state->dest_offset_y);
+	uint8_t *scroll_src = scr_state->buffer;
+
+	size_t base_src_index = (scr_state->char_render_offset - 370) & (SCROLL_BUFFER_WIDTH - 1);
+	for(size_t i = 0; i < scr_state->char_height; ++i) {
+		for(size_t j = 0; j < state->buffer_width; ++j) {
+			size_t src_index = (base_src_index + j) & (SCROLL_BUFFER_WIDTH - 1);
+			uint8_t color_index = scroll_src[src_index];
+			palette[0] = scroll_dest[j];
+			scroll_dest[j] = palette[color_index];
+		}
+		scroll_dest += state->buffer_width;
+		scroll_src += SCROLL_BUFFER_WIDTH;
+	}
+
+	// Render reflection: upside down, every other line, with horizontal sine displacement
+	uint32_t *refl_dest = BUFFER_PTR(state, 0, scr_state->dest_offset_y + scr_state->char_height);
+	uint8_t *refl_src = scr_state->buffer + (scr_state->char_height - 1) * SCROLL_BUFFER_WIDTH;
+	uint32_t refl_sine_offset = scroller_reflection_sine_data_offset;
+
+	for(size_t i = 0; i < scr_state->char_height; i += 2) {
+		int32_t x_disp = (int32_t)scroller_reflection_sine_data[refl_sine_offset % ARRAYSIZE(scroller_reflection_sine_data)] - 8;
+		for(size_t j = 0; j < state->buffer_width; ++j) {
+			int32_t dest_x = (int32_t)j + x_disp;
+			if(dest_x < 0 || dest_x >= (int32_t)state->buffer_width) continue;
+			size_t src_index = (base_src_index + j) & (SCROLL_BUFFER_WIDTH - 1);
+			uint8_t color_index = refl_src[src_index];
+			font_palette2[0] = refl_dest[dest_x];
+			refl_dest[dest_x] = font_palette2[color_index];
+		}
+		refl_dest += state->buffer_width;
+		refl_src -= 2 * SCROLL_BUFFER_WIDTH;
+		++refl_sine_offset;
+	}
+	if((state->frame_number % 3) == 0) {
+		scroller_reflection_sine_data_offset = (scroller_reflection_sine_data_offset + 1) % ARRAYSIZE(scroller_reflection_sine_data);
+	}
+}
+
+// [=]===^=[ remake_init ]============================================================^===[=]
+static void remake_init(struct platform_state *state) {
+	change_resolution(state, BUFFER_WIDTH, BUFFER_HEIGHT);
+
+	bf_scroller = scroller_new(32, 32, 126, 4, scrolltext, font, font_char_infos, 0);
+
+	micromod_initialize(&module, (signed char*)music, 48000);
+	mkfw_audio_callback = remake_audio_callback;
+}
+
+// [=]===^=[ remake_options ]============================================================^===[=]
+static void remake_options(struct options *opt) {
+	opt->release_group = "Beyond Force";
+	opt->release_title = "Flexible Logo";
+	opt->window_title = "Beyond Force - Flexible Logo 1990\0";
+}
+
+// [=]===^=[ remake_frame ]============================================================^===[=]
+static void remake_frame(struct platform_state *state) {
+
+	render_background_copper(state);
+	render_flexible_logo(state);
+//	render_scroller(state);
+	scroller(bf_scroller);
+	bf_render_scroll_buffer(state, bf_scroller, font->palette);
+
+	render_equalizers(state);
+	render_bobs(state);
+
+}
+
+// [=]===^=[ remake_shutdown ]============================================================^===[=]
+static void remake_shutdown(struct platform_state *state) {
+	mkfw_audio_callback = 0;
+	scroller_remove(bf_scroller);
+}
+
+
+
+
+
