@@ -10,3 +10,5 @@ todo_remakes.txt
 tools/bin/bmp2ugg
 ui_example
 build_ui.sh
+remakes/digitech_twin_moons/
+remakes/phenomena_silly_scroller/
