@@ -21,45 +21,26 @@ struct clip_info {
 
 __attribute__((always_inline))
 static inline struct clip_info calculate_clip(struct platform_state *state, struct ugg *src, struct rect src_rect, int32_t dst_x, int32_t dst_y, struct rect dst_clip) {
-	struct clip_info info = {0};
+	struct clip_info info = { 0 };
 
-	// Clamp source rect to actual image bounds
-	int32_t src_x1 = max(src_rect.x, 0);
-	int32_t src_y1 = max(src_rect.y, 0);
-	int32_t src_x2 = min(src_rect.x + src_rect.w, (int32_t)src->width);
-	int32_t src_y2 = min(src_rect.y + src_rect.h, (int32_t)src->height);
+	// Where the source image origin maps in destination space
+	int32_t img_dx = dst_x - src_rect.x;
+	int32_t img_dy = dst_y - src_rect.y;
 
-	if(src_x1 >= src_x2 || src_y1 >= src_y2) {
-		return info;
-	}
-
-	// Calculate destination bounds based on source rect
-	int32_t dst_x1 = dst_x + (src_x1 - src_rect.x);
-	int32_t dst_y1 = dst_y + (src_y1 - src_rect.y);
-	int32_t dst_x2 = dst_x1 + (src_x2 - src_x1);
-	int32_t dst_y2 = dst_y1 + (src_y2 - src_y1);
-
-	// Clip against destination clip rect
-	int32_t x1 = max(dst_x1, dst_clip.x);
-	int32_t y1 = max(dst_y1, dst_clip.y);
-	int32_t x2 = min(dst_x2, dst_clip.x + dst_clip.w);
-	int32_t y2 = min(dst_y2, dst_clip.y + dst_clip.h);
+	// 3-way intersection: source rect, image bounds, and dest clip (all in dest space)
+	int32_t x1 = max(max(dst_x, img_dx), dst_clip.x);
+	int32_t y1 = max(max(dst_y, img_dy), dst_clip.y);
+	int32_t x2 = min(min(dst_x + src_rect.w, img_dx + (int32_t)src->width), dst_clip.x + dst_clip.w);
+	int32_t y2 = min(min(dst_y + src_rect.h, img_dy + (int32_t)src->height), dst_clip.y + dst_clip.h);
 
 	if(x1 >= x2 || y1 >= y2) {
 		return info;
 	}
 
-	// Calculate blit dimensions
 	info.width = x2 - x1;
 	info.height = y2 - y1;
-
-	// Calculate source and destination pointers
-	int32_t src_offset_x = src_x1 + (x1 - dst_x1);
-	int32_t src_offset_y = src_y1 + (y1 - dst_y1);
-	info.src = src->data + src_offset_y * (int32_t)src->width + src_offset_x;
+	info.src = src->data + (y1 - img_dy) * (int32_t)src->width + (x1 - img_dx);
 	info.dst = state->buffer + y1 * state->buffer_width + x1;
-
-	// Calculate strides
 	info.src_stride = src->width;
 	info.dst_stride = state->buffer_width;
 	info.visible = 1;
@@ -78,11 +59,6 @@ __attribute__((always_inline))
 static inline struct clip_info calculate_clip_rect(struct platform_state *state, struct ugg *src, int32_t dst_x, int32_t dst_y, struct rect clip_rect) {
 	struct rect src_rect = { 0, 0, src->width, src->height };
 	return calculate_clip(state, src, src_rect, dst_x, dst_y, clip_rect);
-}
-
-__attribute__((always_inline))
-static inline struct clip_info calculate_clip_src_dst(struct platform_state *state, struct ugg *src, struct rect src_rect, int32_t dst_x, int32_t dst_y, struct rect dst_clip) {
-	return calculate_clip(state, src, src_rect, dst_x, dst_y, dst_clip);
 }
 
 __attribute__((always_inline))
