@@ -51,9 +51,15 @@ struct platform_state {
 	GLuint uniform_brightness;
 	GLuint uniform_tone;
 	GLuint uniform_sampler_location;
+	GLuint uniform_use_mask_texture;
+	GLuint uniform_mask_sampler;
 
 	// Passthrough Shader Uniforms
 	GLuint passthrough_uniform_source;
+
+	// Phosphor mask texture
+	GLuint mask_texture;
+	uint8_t crt_mask_type;	// 0 = computed (original), 1 = texture
 
 	// Phosphor persistence
 	float persistence_decay;

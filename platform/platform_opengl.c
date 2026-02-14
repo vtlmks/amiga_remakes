@@ -125,6 +125,31 @@ static void platform_change_resolution(struct platform_state *state, uint32_t ne
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
+// [=]===^=[ opengl_create_phosphor_mask_texture ]=====================================================^===[=]
+static GLuint opengl_create_phosphor_mask_texture(float dark) {
+	// 6x1 shadow mask pattern: RR GG BB (2 pixels per color channel)
+	// Uses linear RGB values (not sRGB) since these are multiplicative factors
+	uint8_t d = (uint8_t)(dark * 255.0f);
+	uint8_t pixels[6 * 3] = {
+		255, d,   d,	// R
+		255, d,   d,	// R
+		d,   255, d,	// G
+		d,   255, d,	// G
+		d,   d,   255,	// B
+		d,   d,   255,	// B
+	};
+
+	GLuint tex;
+	glGenTextures(1, &tex);
+	glBindTexture(GL_TEXTURE_2D, tex);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, 6, 1, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	return tex;
+}
+
 // [=]===^=[ opengl_setup ]================================================================^===[=]
 static void opengl_setup(struct platform_state *state) {
 	opengl_function_loader();
@@ -152,6 +177,11 @@ static void opengl_setup(struct platform_state *state) {
 	state->uniform_brightness = glGetUniformLocation(state->shader_program, "brightness");
 	state->uniform_tone = glGetUniformLocation(state->shader_program, "tone_data");
 	state->uniform_sampler_location = glGetUniformLocation(state->shader_program, "iChannel0");
+	state->uniform_use_mask_texture = glGetUniformLocation(state->shader_program, "use_mask_texture");
+	state->uniform_mask_sampler = glGetUniformLocation(state->shader_program, "mask_sampler");
+
+	// Create phosphor mask texture
+	state->mask_texture = opengl_create_phosphor_mask_texture(INPUT_MASK);
 
 	glUseProgram(state->passthrough_program);
 	state->passthrough_uniform_source = glGetUniformLocation(state->passthrough_program, "source");
@@ -225,11 +255,15 @@ static inline void opengl_render_frame(struct platform_state *state) {
 		glUseProgram(state->shader_program);
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, state->persistence_output_texture);
+		glActiveTexture(GL_TEXTURE2);
+		glBindTexture(GL_TEXTURE_2D, state->mask_texture);
 		glUniform2f(state->uniform_src_image_size, (float)state->buffer_width, (float)state->buffer_height);
 		glUniform2f(state->uniform_resolution, (float)state->viewport.w, (float)state->viewport.h);
 		glUniform1f(state->uniform_brightness, state->brightness);
 		glUniform4f(state->uniform_tone, state->tone_data[0], state->tone_data[1], state->tone_data[2], state->tone_data[3]);
 		glUniform1i(state->uniform_sampler_location, 0);
+		glUniform1i(state->uniform_mask_sampler, 2);
+		glUniform1i(state->uniform_use_mask_texture, state->crt_mask_type);
 
 	} else {
 		// ========== Simple passthrough: CRT emulation is OFF ==========

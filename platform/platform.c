@@ -136,7 +136,6 @@ static MKFW_THREAD_FUNC(render_thread_func, arg) {
 
 		remake_frame(state);
 
-
 		mkfw_update_input_state(window);
 		state->frame_number++;
 		opengl_render_frame(state);
@@ -153,6 +152,7 @@ static MKFW_THREAD_FUNC(render_thread_func, arg) {
 int main(int argc, char **argv) {
 	mkfw_set_error_callback(error_callback);
 	platform_state.toggle_crt_emulation = 1;
+	platform_state.crt_mask_type = 1;
 
 	mkfw_audio_initialize();
 	mkfw_timer_init();

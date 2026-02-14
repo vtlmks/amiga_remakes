@@ -6,6 +6,8 @@ uniform vec2 src_image_size;
 uniform float brightness;
 uniform vec4 tone_data;
 uniform sampler2D iChannel0;
+uniform int use_mask_texture;
+uniform sampler2D mask_sampler;
 
 //==============================================================
 //                    FETCH FUNCTION
@@ -91,8 +93,8 @@ vec3 CrtsFilter(vec2 ipos, vec2 inputSizeDivOutputSize, vec2 halfInputSize, vec2
 	// Snap to center of first scanline
 	float y0 = floor(pos.y - 0.5) + 0.5;
 
-	// Snap to center of one of four pixels
-	float x0 = floor(pos.x - 1.5) + 0.5;
+	// Small horizontal bias to avoid nearest-neighbor stepping at non-integer scale ratios
+	float x0 = floor(pos.x + 0.25 - 1.5) + 0.5;
 	// Initial UV position
 	vec2 p = vec2(x0 * rcpInputSize.x, y0 * rcpInputSize.y);
 	// Fetch 4 nearest texels from 2 nearest scanlines
@@ -137,7 +139,13 @@ vec3 CrtsFilter(vec2 ipos, vec2 inputSizeDivOutputSize, vec2 halfInputSize, vec2
 	vec3 color = (colA0 * pix0 + colA1 * pix1 + colA2 * pix2 + colA3 * pix3) * scanA + (colB0 * pix0 + colB1 * pix1 + colB2 * pix2 + colB3 * pix3) * scanB;
 
 	// Apply phosphor mask
-	color *= CrtsMask(ipos, mask);
+	if(use_mask_texture > 0) {
+		float mask_u = (ipos.x + ipos.y * 3.0 + 0.5) / 6.0;
+		color *= texture(mask_sampler, vec2(mask_u, 0.5)).rgb;
+
+	} else {
+		color *= CrtsMask(ipos, mask);
+	}
 
 	// Tonal control, start by protecting from /0
 	float peak = max(1.0 / (256.0 * 65536.0), max(color.r, max(color.g, color.b)));
@@ -173,12 +181,10 @@ vec3 CrtsFilter(vec2 ipos, vec2 inputSizeDivOutputSize, vec2 halfInputSize, vec2
 //                         MAIN
 //==============================================================
 void main() {
-	// Add half_pixel offset to reduce aliasing from warp
-	vec2 half_pixel = 0.5 / src_image_size;
-	vec2 fragCoord = vec2(frag_texture_coord.x, 1.0 - frag_texture_coord.y) + half_pixel;
+	vec2 fragCoord = vec2(frag_texture_coord.x, 1.0 - frag_texture_coord.y);
 
 	outcolor.rgb = CrtsFilter(
-		fragCoord.xy * resolution + vec2(0.5),
+		fragCoord.xy * resolution,
 		src_image_size / resolution,
 		src_image_size * vec2(0.5),
 		1.0 / src_image_size,

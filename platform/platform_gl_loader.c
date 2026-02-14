@@ -53,8 +53,10 @@ typedef unsigned long long GLsizeiptr;
 
 // --- Pixel formats ---
 #define GL_RED          0x1903
+#define GL_RGB          0x1907
 #define GL_ALPHA        0x1906
 #define GL_RGBA         0x1908
+#define GL_RGB8         0x8051
 #define GL_RGBA8        0x8058
 #define GL_SRGB8_ALPHA8 0x8c43
 #define GL_SRGB_ALPHA   0x8c43
@@ -73,6 +75,7 @@ typedef unsigned long long GLsizeiptr;
 #define GL_NEAREST              0x2600
 #define GL_LINEAR               0x2601
 #define GL_LINEAR_MIPMAP_LINEAR 0x2703
+#define GL_REPEAT               0x2901
 #define GL_CLAMP_TO_EDGE        0x812f
 #define GL_CLAMP_TO_BORDER      0x812D
 #define GL_TEXTURE_ENV          0x2300
@@ -292,7 +295,6 @@ static void *glXGetProcAddress(const GLubyte *procName) {
 	}
 #endif
 
-__attribute__((cold, noinline, section(".init_section")))
 static void opengl_function_loader() {
 	GL_FUNCTIONS(GetOpenGLFunction);
 }
