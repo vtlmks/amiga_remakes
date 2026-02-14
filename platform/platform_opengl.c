@@ -128,21 +128,18 @@ static void platform_change_resolution(struct platform_state *state, uint32_t ne
 // [=]===^=[ opengl_setup ]================================================================^===[=]
 static void opengl_setup(struct platform_state *state) {
 	opengl_function_loader();
-	glEnable(GL_FRAMEBUFFER_SRGB);
-	glDisable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_FRAMEBUFFER_SRGB);
 	glDisable(GL_CULL_FACE);
+	glDisable(GL_DEPTH_TEST);
 
-	// --- Shader Programs ---
 	state->shader_program = opengl_link_program(vertex_shader_data, fragment_shader_data);
 	state->persistence_program = opengl_link_program(vertex_shader_data, phosphor_persistence_fragment_data);
 	state->passthrough_program = opengl_link_program(vertex_shader_data, passthrough_fragment_data);
 
-	// Initialize phosphor persistence parameter
 	state->persistence_decay = 0.15f;
 
-	// Initialize CRTS shader parameters
 	state->contrast = 1.0f;
 	state->saturation = 0.0f;
 	state->brightness = 1.3f;
@@ -163,6 +160,7 @@ static void opengl_setup(struct platform_state *state) {
 	glGenBuffers(1, &state->vbo);
 	glGenBuffers(1, &state->ebo);
 	glBindVertexArray(state->vao);
+
 	float vertices[] = {
 		-1.0f, -1.0f, 0.0f, 0.0f,
 		 1.0f, -1.0f, 1.0f, 0.0f,
@@ -170,6 +168,7 @@ static void opengl_setup(struct platform_state *state) {
 		-1.0f,  1.0f, 0.0f, 1.0f
 	};
 	unsigned int indices[] = { 0, 1, 2, 2, 3, 0 };
+
 	glBindBuffer(GL_ARRAY_BUFFER, state->vbo);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, state->ebo);
