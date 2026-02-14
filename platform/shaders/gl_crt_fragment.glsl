@@ -183,7 +183,7 @@ vec3 CrtsFilter(vec2 ipos, vec2 inputSizeDivOutputSize, vec2 halfInputSize, vec2
 void main() {
 	vec2 fragCoord = vec2(frag_texture_coord.x, 1.0 - frag_texture_coord.y);
 
-	outcolor.rgb = CrtsFilter(
+	vec3 crt_color = CrtsFilter(
 		fragCoord.xy * resolution,
 		src_image_size / resolution,
 		src_image_size * vec2(0.5),
@@ -197,5 +197,7 @@ void main() {
 		INPUT_MASK,
 		tone_data
 	) * brightness;
+
+	outcolor.rgb = crt_color;
 	outcolor.a = 1.0;
 }

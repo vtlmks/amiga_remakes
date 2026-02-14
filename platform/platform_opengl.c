@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: MIT
 
 /*
- * This is a 2-pass shader
+ * 2-pass rendering pipeline:
  *
- * 1. Phosphor persistence at source resolution (346x270)
- * 2. CRT shader with phosphor masks and scanlines at viewport resolution
+ * 1. Phosphor persistence at source resolution
+ * 2. CRT shader at viewport resolution
  *
  */
 
@@ -92,6 +92,7 @@ static void opengl_setup_render_targets(struct platform_state *state) {
 		}
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
+
 }
 
 // [=]===^=[ platform_change_resolution ]=================================================================^===[=]
@@ -123,6 +124,8 @@ static void platform_change_resolution(struct platform_state *state, uint32_t ne
 
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	state->viewport_changed = 1;
 }
 
 // [=]===^=[ opengl_create_phosphor_mask_texture ]=====================================================^===[=]
@@ -246,7 +249,7 @@ static inline void opengl_render_frame(struct platform_state *state) {
 	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, state->buffer_width, state->buffer_height);
 
 	if(state->toggle_crt_emulation) {
-		// ========== PASS 2: CRT Shader directly to screen ==========
+		// ========== PASS 2: CRT Shader to screen ==========
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		glViewport(state->viewport.x, state->viewport.y, state->viewport.w, state->viewport.h);
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
