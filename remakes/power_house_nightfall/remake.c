@@ -145,7 +145,7 @@ static uint8_t scrolltext[] = {
 	"                          \0"
 };
 
-static struct scroller_state *scroll;
+static struct scroller_state scroll;
 
 static void render_scroll_buffer(struct platform_state *state, struct scroller_state *scr_state) {
 	uint32_t *scroll_dest = BUFFER_PTR(state, 0, scr_state->dest_offset_y);
@@ -324,15 +324,15 @@ static void render_trees(struct platform_state *state) {
 	}
 }
 
-static void remake_options(struct options *opt) {
-	opt->release_group = "POWER HOUSE";
-	opt->release_title = "NIGHTFALL";
-	opt->window_title = "Power House - Nightfall - 1991";
+static void remake_options(struct platform_state *state) {
+	state->release_group = "POWER HOUSE";
+	state->release_title = "NIGHTFALL";
+	state->window_title = "Power House - Nightfall - 1991";
 }
 
 // [=]===^=[ remake_init ]============================================================^===[=]
 static void remake_init(struct platform_state *state) {
-	change_resolution(state, BUFFER_WIDTH, BUFFER_HEIGHT);
+	platform_change_resolution(state, BUFFER_WIDTH, BUFFER_HEIGHT);
 
 	// int mod_size = _2d6_end - _2d6_data;
 	// micromod_initialise(&ctx, (signed char*)_2d6_data, 48000);
@@ -342,7 +342,8 @@ static void remake_init(struct platform_state *state) {
 
 	initialize_stars();
 	powerhouse_logo->height -= 9;
-	scroll = scroller_new(8, 8,  0x76 - 36, 2, scrolltext, powerhouse_font, 0, 0);
+	scroll = (struct scroller_state){ .char_width = 8, .char_height = 8, .dest_offset_y = 0x76 - 36, .speed = 2, .text = scrolltext, .font = powerhouse_font };
+	scroller_new(&scroll);
 	y_offset = powerhouse_logo->height;
 
 	mkfw_audio_callback = remake_audio_callback;
@@ -350,18 +351,20 @@ static void remake_init(struct platform_state *state) {
 
 // [=]===^=[ remake_frame ]============================================================^===[=]
 static void remake_frame(struct platform_state *state) {
+	platform_clear_buffer(state);
+
 	render_logo(state);
 	render_stars(state);
 	render_copperbar(state);
 	render_trees(state);
-	scroller(scroll);
-	render_scroll_buffer(state, scroll);
+	scroller_update(state, &scroll);
+	render_scroll_buffer(state, &scroll);
 }
 
 // [=]===^=[ remake_shutdown ]============================================================^===[=]
 static void remake_shutdown(struct platform_state *state) {
 	mkfw_audio_callback = 0;
-	scroller_remove(scroll);
+	scroller_remove(&scroll);
 	fc14_shutdown(&remake_song);
 }
 

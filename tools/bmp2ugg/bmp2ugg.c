@@ -82,86 +82,29 @@ static void *convert_file(void *arg) {
 		return 0;
 	}
 
-	// Process BMP header
-	struct bmp_header *header = (struct bmp_header *)filedata;
-	if(header->type != bmp_magic) {
-		printf("File %s is not a valid BMP file.\n", task->input_file);
+	// Decode BMP
+	struct bmp_image img;
+	if(bmp_decode(filedata, filesize, &img)) {
+		printf("Failed to decode BMP file: %s\n", task->input_file);
 		free(filedata);
 		free(task);
 		return 0;
-	}
-
-	size_t output_image_size = header->width * header->height;
-	uint8_t *output = malloc(output_image_size);
-	if(output == 0) {
-		printf("Failed to allocate memory for output image: %s\n", task->input_file);
-		free(filedata);
-		free(task);
-		return 0;
-	}
-
-	// Process pixel data based on bit depth
-	switch(header->bits) {
-		case 1: {
-			bmp_read_pixels_1(header, filedata, output);
-		} break;
-
-		case 4: {
-			if(header->compression == 2) {
-				bmp_read_pixels_rle4(header, filedata, output);
-			} else {
-				bmp_read_pixels_4(header, filedata, output);
-			}
-		} break;
-
-		case 8: {
-			if(header->compression == 1) {
-				bmp_read_pixels_rle8(header, filedata, output);
-			} else {
-				bmp_read_pixels_8(header, filedata, output);
-			}
-		} break;
-
-		default: {
-			printf("WARN: Not a supported bit depth in file %s!\n", task->input_file);
-			free(output);
-			free(filedata);
-			free(task);
-			return 0;
-		} break;
-	}
-
-	// Flip image if needed
-	if(header->height > 0) {
-		uint32_t row_size = header->width;
-		uint32_t half_height = header->height / 2;
-		for(uint32_t y = 0; y < half_height; y++) {
-			uint8_t *row1 = output + y * row_size;
-			uint8_t *row2 = output + (header->height - 1 - y) * row_size;
-			for(uint32_t x = 0; x < header->width; x++) {
-				uint8_t temp_pixel = row1[x];
-				row1[x] = row2[x];
-				row2[x] = temp_pixel;
-			}
-		}
 	}
 
 	// If preview flag is enabled, print a preview (only applicable for a single file)
 	if(task->preview_flag) {
-		uint8_t *src = output;
+		uint8_t *src = img.pixels;
 		// ASCII characters ordered from darkest (most coverage) to lightest (least coverage)
 		const char *intensity_map = " .:-=+*#%@";
 		uint32_t map_len = strlen(intensity_map);
 
 		// Build lookup table from color index to intensity character
 		char color_to_char[256];
-		size_t num_colors = header->n_colors ? header->n_colors : (1 << header->bits);
-		uint8_t *palette_data = filedata + sizeof(struct bmp_header);
-		for(uint32_t i = 0; i < num_colors; i++) {
+		for(uint32_t i = 0; i < img.num_colors; i++) {
 			// Get RGB values for this palette entry (stored as BGRA)
-			uint8_t b = palette_data[i * 4 + 0];
-			uint8_t g = palette_data[i * 4 + 1];
-			uint8_t r = palette_data[i * 4 + 2];
+			uint8_t b = img.palette[i * 4 + 0];
+			uint8_t g = img.palette[i * 4 + 1];
+			uint8_t r = img.palette[i * 4 + 2];
 
 			// Calculate perceived brightness (weighted for human perception)
 			// Using standard luminance formula: 0.299*R + 0.587*G + 0.114*B
@@ -172,8 +115,8 @@ static void *convert_file(void *arg) {
 			color_to_char[i] = intensity_map[char_idx];
 		}
 
-		for(uint32_t y = 0; y < header->height; y++) {
-			for(uint32_t x = 0; x < header->width; x++) {
+		for(uint32_t y = 0; y < (uint32_t)img.height; y++) {
+			for(uint32_t x = 0; x < (uint32_t)img.width; x++) {
 				printf("%c", color_to_char[*src]);
 				src++;
 			}
@@ -252,19 +195,18 @@ static void *convert_file(void *arg) {
 	FILE *out_file = fopen(out_path, "wb");
 	if(out_file == 0) {
 		printf("Failed to open output file: %s\n", out_path);
-		free(output);
+		free(img.pixels);
 		free(filedata);
 		free(task);
 		return 0;
 	}
 
 	struct ugg ugg_data = {0};
-	ugg_data.width = header->width;
-	ugg_data.height = header->height;
+	ugg_data.width = img.width;
+	ugg_data.height = img.height;
 
-	size_t num_colors = header->n_colors ? header->n_colors : (1 << header->bits);
-	uint8_t *color_data = filedata + sizeof(struct bmp_header);
-	for(size_t i = 0; i < num_colors; i++) {
+	uint8_t *color_data = img.palette;
+	for(size_t i = 0; i < img.num_colors; i++) {
 		uint8_t b = *color_data++;
 		uint8_t g = *color_data++;
 		uint8_t r = *color_data++;
@@ -273,12 +215,13 @@ static void *convert_file(void *arg) {
 		ugg_data.palette[i] = (r << 24) | (g << 16) | (b << 8) | a;
 	}
 
+	size_t output_image_size = img.width * img.height;
 	fwrite(&ugg_data, sizeof(ugg_data), 1, out_file);
-	fwrite(output, sizeof(uint8_t), output_image_size, out_file);
+	fwrite(img.pixels, sizeof(uint8_t), output_image_size, out_file);
 	fclose(out_file);
 
 	// Clean up allocated memory
-	free(output);
+	free(img.pixels);
 	free(filedata);
 	free(task);
 	return 0;
@@ -296,22 +239,26 @@ int main(int argc, char **argv)
 	// Parse options
 	while((opt = getopt(argc, argv, "o:pr:a:")) != -1) {
 		switch(opt) {
-		case 'o': {
-			out_dir = optarg;
-		} break;
-		case 'p': {
-			preview_flag = true;
-		} break;
-		case 'r': {
-			remove_chars = atoi(optarg);
-		} break;
-		case 'a': {
-			append_chars = atoi(optarg);
-		} break;
-		default: {
-			print_usage(argv);
-			return 0;
-		} break;
+			case 'o': {
+				out_dir = optarg;
+			} break;
+
+			case 'p': {
+				preview_flag = true;
+			} break;
+
+			case 'r': {
+				remove_chars = atoi(optarg);
+			} break;
+
+			case 'a': {
+				append_chars = atoi(optarg);
+			} break;
+
+			default: {
+				print_usage(argv);
+				return 0;
+			} break;
 		}
 	}
 

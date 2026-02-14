@@ -53,7 +53,7 @@ static uint8_t p6_scroll_text[] = {
 	"               ^"
 };
 
-static struct scroller_state *p6_scroll;
+static struct scroller_state p6_scroll;
 static uint32_t p6_offset;
 static int32_t p6_offset_direction;
 
@@ -66,11 +66,12 @@ static uint8_t p6_process_char(struct scroller_state *scr_state, uint8_t scroll_
 }
 
 static void p6_init() {
-	p6_scroll = scroller_new(32, 32, 183, 4, p6_scroll_text, part6_scroll_font_data, 0, p6_process_char);
+	p6_scroll = (struct scroller_state){ .char_width = 32, .char_height = 32, .dest_offset_y = 183, .speed = 4, .text = p6_scroll_text, .font = part6_scroll_font_data, .process_char = p6_process_char };
+	scroller_new(&p6_scroll);
 }
 
 static void p6_shutdown() {
-	scroller_remove(p6_scroll);
+	scroller_remove(&p6_scroll);
 }
 #define P6_OFFSET_BOTTOM (400 - 164)
 
@@ -101,8 +102,8 @@ static void p6_render_scroll_buffer(struct platform_state *state, struct scrolle
 static uint32_t p6_update(struct platform_state *state)  {
 	// PROFILE_NAMED("part6 all");
 	p6_bouncing_logo(state);
-	scroller(p6_scroll);
-	p6_render_scroll_buffer(state, p6_scroll);
+	scroller_update(state, &p6_scroll);
+	p6_render_scroll_buffer(state, &p6_scroll);
 
 	return mkfw_is_button_pressed(state->window, MOUSE_BUTTON_LEFT);
 }

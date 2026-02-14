@@ -57,8 +57,8 @@ static uint16_t star_shift_pattern = 0x8000;
 static uint16_t star_bitmap_accumulator = 0x8000;
 static uint8_t star_pattern_timer = 120;
 
-static struct scroller_state *scroller1;
-static struct scroller_state *scroller2;
+static struct scroller_state scroller1;
+static struct scroller_state scroller2;
 
 static struct rect alcatraz_screen = { 13 , 7, 320, 270-13 };
 static struct bob_pos bobs[6];
@@ -292,27 +292,10 @@ static void remake_audio_callback(int16_t *data, size_t frames) {
 	}
 }
 
-static void remake_options(struct options *opt) {
-	opt->release_group = "Alcatraz";
-	opt->release_title = "Autokick 1.7";
-	opt->window_title = "Alcatraz - Autokick 1.7 - 1988-09\0";
-}
-
-static void af_render_scroll_buffer(struct platform_state *state, struct scroller_state *scr_state, uint32_t *palette) {
-	uint32_t *scroll_dest = BUFFER_PTR(state, 0, scr_state->dest_offset_y);
-	uint8_t *scroll_src = scr_state->buffer;
-
-	size_t base_src_index = (scr_state->char_render_offset - 370) & (SCROLL_BUFFER_WIDTH - 1);
-	for(size_t i = 0; i < scr_state->char_height; ++i) {
-		for(size_t j = 0; j < state->buffer_width; ++j) {
-			size_t src_index = (base_src_index + j) & (SCROLL_BUFFER_WIDTH - 1);
-			uint8_t color_index = scroll_src[src_index];
-			palette[0] = scroll_dest[j];
-			scroll_dest[j] = palette[color_index];
-		}
-		scroll_dest += state->buffer_width;
-		scroll_src += SCROLL_BUFFER_WIDTH;
-	}
+static void remake_options(struct platform_state *state) {
+	state->release_group = "Alcatraz";
+	state->release_title = "Autokick 1.7";
+	state->window_title = "Alcatraz - Autokick 1.7 - 1988-09\0";
 }
 
 static void render_logo(struct platform_state *state) {
@@ -422,7 +405,7 @@ static void render_stars(struct platform_state *state) {
 
 // [=]===^=[ remake_init ]============================================================^===[=]
 static void remake_init(struct platform_state *state) {
-	change_resolution(state, BUFFER_WIDTH, BUFFER_HEIGHT);
+	platform_change_resolution(state, BUFFER_WIDTH, BUFFER_HEIGHT);
 
 	init_stars();
 	for(size_t i = 0; i < 6; ++i) {
@@ -431,8 +414,29 @@ static void remake_init(struct platform_state *state) {
 		bobs[i].offset = i * 10;
 	}
 
-	scroller1 = scroller_new(32, 32, 209, 4, scroll_text1, font, font_char_infos, 0);
-	scroller2 = scroller_new(32, 32, 233, 2, scroll_text2, font, font_char_infos, 0);
+	scroller1 = (struct scroller_state) {
+		.char_width = 32,
+		.char_height = 32,
+		.dest_offset_y = 209,
+		.speed = 4,
+		.text = scroll_text1,
+		.font = font,
+		.char_info = font_char_infos,
+		.palette = font->palette,
+	};
+	scroller2 = (struct scroller_state) {
+		.char_width = 32,
+		.char_height = 32,
+		.dest_offset_y = 233,
+		.speed = 2,
+		.text = scroll_text2,
+		.font = font,
+		.char_info = font_char_infos,
+		.palette = darker_font_palette,
+	};
+
+	scroller_new(&scroller1);
+	scroller_new(&scroller2);
 
 	micromod_initialize(&metalwar_song, (int8_t*)metalwar, 48000);
 	mkfw_audio_callback = remake_audio_callback;
@@ -440,6 +444,7 @@ static void remake_init(struct platform_state *state) {
 
 // [=]===^=[ remake_frame ]============================================================^===[=]
 static void remake_frame(struct platform_state *state) {
+	platform_clear_buffer(state);
 
 	update_stars();
 	update_star_pattern();
@@ -459,11 +464,8 @@ static void remake_frame(struct platform_state *state) {
 
 	render_logo(state);
 
-	scroller(scroller1);
-	scroller(scroller2);
-	af_render_scroll_buffer(state, scroller2, darker_font_palette);
-	af_render_scroll_buffer(state, scroller1, font->palette);
-
+	scroller_update(state, &scroller2);
+	scroller_update(state, &scroller1);
 }
 
 // [=]===^=[ remake_shutdown ]============================================================^===[=]

@@ -282,7 +282,7 @@ static struct rng_state vf_rand_state;
 static struct rect remake_clip = { (346 - 320) >> 1 , 0, 320, 270 };
 static struct star_layer layers[4];
 static struct point stars[19+16+13+12];
-static struct scroller_state *vf_scroller;
+static struct scroller_state vf_scroller;
 static int16_t dst_rotated_xy[37250];
 
 static uint8_t mouse_locked;
@@ -443,7 +443,7 @@ static void remake_audio_callback(int16_t *data, size_t frames) {
 static struct font_char_info vf_font_char_infos[96];
 
 static void remake_init(struct platform_state *state) {
-	change_resolution(state, BUFFER_WIDTH, BUFFER_HEIGHT);
+	platform_change_resolution(state, BUFFER_WIDTH, BUFFER_HEIGHT);
 	xor_init_rng(&vf_rand_state, 0x34872d9);
 	precalc_rotated_vertices();
 	fc14_initialize(&remake_song, waterproof_data, INCBIN_SIZE(waterproof), 48000);
@@ -456,7 +456,8 @@ static void remake_init(struct platform_state *state) {
 		vf_font_char_infos[i].width = 8;
 	}
 
-	vf_scroller = scroller_new(8, 6, 199, 2, scroll_text, font, vf_font_char_infos, 0);
+	vf_scroller = (struct scroller_state){ .char_width = 8, .char_height = 6, .dest_offset_y = 199, .speed = 2, .text = scroll_text, .font = font, .char_info = vf_font_char_infos };
+	scroller_new(&vf_scroller);
 
 	text_lines[0].dst_buffer = BUFFER_PTR(state, TEXT_START_X, 127);
 	text_lines[1].dst_buffer = BUFFER_PTR(state, TEXT_START_X, 136);
@@ -468,10 +469,10 @@ static void remake_init(struct platform_state *state) {
 	text_lines[7].dst_buffer = BUFFER_PTR(state, TEXT_START_X, 190);
 }
 
-static void remake_options(struct options *opt) {
-	opt->release_group = "Fraxion and Vision Factory";
-	opt->release_title = "Fire and Brimstone ++";
-	opt->window_title = "Fraxion and Vision Factory - Fire and Brimstone ++ / 1990-06";
+static void remake_options(struct platform_state *state) {
+	state->release_group = "Fraxion and Vision Factory";
+	state->release_title = "Fire and Brimstone ++";
+	state->window_title = "Fraxion and Vision Factory - Fire and Brimstone ++ / 1990-06";
 }
 
 // [=]===^=[ text rendering ]========================================================^===[=]
@@ -599,6 +600,7 @@ static void vf_render_scroll_buffer(struct platform_state *state, struct scrolle
 
 // [=]===^=[ main frame logic ]======================================================^===[=]
 static void remake_frame(struct platform_state *state) {
+	platform_clear_buffer(state);
 
 /*
   The screen is 320 pixels wide
@@ -692,8 +694,8 @@ static void remake_frame(struct platform_state *state) {
 				text_lines[i].colors = (i == selected_line) ? color_selected : color_muted;
 			}
 
-			vf_render_scroll_buffer(state, vf_scroller);
-			scroller(vf_scroller);
+			vf_render_scroll_buffer(state, &vf_scroller);
+			scroller_update(state, &vf_scroller);
 		} break;
 	}
 
@@ -706,158 +708,3 @@ static void remake_shutdown(struct platform_state *state) {
 	mkfw_audio_callback = 0;
 	fc14_shutdown(&remake_song);
 }
-
-
-// [=]===^=[ reference data ]========================================================^===[=]
-/* COPPER LIST
-vital@claybabble:.../remakes/vision_factory_fire_and_brimstone/statefiles(master#%)[1]$ /work/current/copper_ripper/copper_ripper Saved\ State\ 1.bin 0x5091a
-Loaded file 'Saved State 1.bin' (size: 0x80000 bytes)
-Parsing copperlist at offset 0x5091a
-
-     REG $120 -> VALUE 0x0007
-     REG $122 -> VALUE 0x6000
-     REG $124 -> VALUE 0x0007
-     REG $126 -> VALUE 0x6380
-     REG $128 -> VALUE 0x0007
-     REG $12a -> VALUE 0x6700
-     REG $12c -> VALUE 0x0007
-     REG $12e -> VALUE 0x6a80
-     REG $130 -> VALUE 0x0007
-     REG $132 -> VALUE 0x6e00
-     REG $134 -> VALUE 0x0007
-     REG $136 -> VALUE 0x7180
-     REG $138 -> VALUE 0x0007
-     REG $13a -> VALUE 0x7500
-     REG $13c -> VALUE 0x0007
-     REG $13e -> VALUE 0x7880
-     COLOR16 -> RGB 0x000 at scanline 0
-     COLOR17 -> RGB 0xff0 at scanline 0
-     COLOR18 -> RGB 0xed0 at scanline 0
-     COLOR19 -> RGB 0xdb1 at scanline 0
-     COLOR20 -> RGB 0xca1 at scanline 0
-     COLOR21 -> RGB 0xc81 at scanline 0
-     COLOR22 -> RGB 0xb71 at scanline 0
-     COLOR23 -> RGB 0xa61 at scanline 0
-     COLOR24 -> RGB 0x952 at scanline 0
-     COLOR25 -> RGB 0x842 at scanline 0
-     COLOR26 -> RGB 0x742 at scanline 0
-     COLOR27 -> RGB 0x632 at scanline 0
-     COLOR28 -> RGB 0x621 at scanline 0
-     COLOR29 -> RGB 0x521 at scanline 0
-     COLOR30 -> RGB 0x411 at scanline 0
-     COLOR31 -> RGB 0x311 at scanline 0
-     REG $08e -> VALUE 0x2c81
-     REG $090 -> VALUE 0xf4c1
-     REG $092 -> VALUE 0x0038
-     REG $094 -> VALUE 0x00d0
-     REG $108 -> VALUE 0x0028
-     REG $10a -> VALUE 0x0000
-     REG $102 -> VALUE 0x0000
-     REG $104 -> VALUE 0x0012
-     REG $09a -> VALUE 0xe000
-     REG $09c -> VALUE 0xa000
-     BPL1PTH -> 0x0007 (full: $00070000) at scanline 0
-     BPL1PTL -> 0x8000 (full: $00078000) at scanline 0
-     BPL3PTH -> 0x0007 (full: $00070000) at scanline 0
-     BPL3PTL -> 0x8028 (full: $00078028) at scanline 0
-     BPL2PTH -> 0x0005 (full: $00050000) at scanline 0
-     BPL2PTL -> 0x2b08 (full: $00052b08) at scanline 0
-     REG $100 -> VALUE 0x3600
-     COLOR9 -> RGB 0xfff at scanline 0
-     COLOR1 -> RGB 0xcaf at scanline 0
-     COLOR2 -> RGB 0x86a at scanline 0
-     COLOR3 -> RGB 0x315 at scanline 0
-WAIT 0x20
-     COLOR0 -> RGB 0x000 at scanline 32
-WAIT 0x2b
-     COLOR0 -> RGB 0x00f at scanline 43
-WAIT 0x2c
-     COLOR0 -> RGB 0x000 at scanline 44
-WAIT 0x39
-     REG $10a -> VALUE 0xffd8
-WAIT 0x64
-     COLOR1 -> RGB 0xfac at scanline 100
-     COLOR2 -> RGB 0xa68 at scanline 100
-     COLOR3 -> RGB 0x513 at scanline 100
-WAIT 0xa0
-     REG $104 -> VALUE 0x0000
-     REG $108 -> VALUE 0x0004
-     REG $102 -> VALUE 0x0000
-     COLOR0 -> RGB 0x000 at scanline 160
-     COLOR1 -> RGB 0xa6a at scanline 160
-WAIT 0xa1
-     COLOR0 -> RGB 0x000 at scanline 161
-WAIT 0xa4
-     REG $100 -> VALUE 0x1200
-     BPL1PTH -> 0x0007 (full: $00078000) at scanline 164
-     BPL1PTL -> 0x3000 (full: $00073000) at scanline 164
-WAIT 0xa4
-     COLOR1 -> RGB 0x388 at scanline 164
-     COLOR1 -> RGB 0x5dd at scanline 165
-     COLOR1 -> RGB 0xfff at scanline 166
-     COLOR1 -> RGB 0xfff at scanline 167
-     COLOR1 -> RGB 0x5dd at scanline 168
-     COLOR1 -> RGB 0x388 at scanline 169
-
-WAIT 0xad
-     COLOR1 -> RGB 0x83f at scanline 173
-     COLOR1 -> RGB 0xa9f at scanline 174
-     COLOR1 -> RGB 0xfff at scanline 175
-     COLOR1 -> RGB 0xfff at scanline 176
-     COLOR1 -> RGB 0xa9f at scanline 177
-     COLOR1 -> RGB 0x83f at scanline 178
-
-WAIT 0xb8
-     COLOR1 -> RGB 0x77b at scanline 184
-     COLOR1 -> RGB 0xaad at scanline 185
-
-WAIT 0xbf
-     COLOR1 -> RGB 0x333 at scanline 191
-     COLOR1 -> RGB 0x777 at scanline 192
-     COLOR1 -> RGB 0xbbb at scanline 193
-     COLOR1 -> RGB 0xbbb at scanline 194
-     COLOR1 -> RGB 0x777 at scanline 195
-     COLOR1 -> RGB 0x333 at scanline 196
-
-WAIT 0xc8
-     COLOR1 -> RGB 0x333 at scanline 200
-     COLOR1 -> RGB 0x777 at scanline 201
-     COLOR1 -> RGB 0xbbb at scanline 202
-     COLOR1 -> RGB 0xbbb at scanline 203
-     COLOR1 -> RGB 0x777 at scanline 204
-     COLOR1 -> RGB 0x333 at scanline 205
-
-WAIT 0xd1
-     COLOR1 -> RGB 0x333 at scanline 209
-     COLOR1 -> RGB 0x777 at scanline 210
-     COLOR1 -> RGB 0xbbb at scanline 211
-     COLOR1 -> RGB 0xbbb at scanline 212
-     COLOR1 -> RGB 0x777 at scanline 213
-     COLOR1 -> RGB 0x333 at scanline 214
-
-WAIT 0xda
-     COLOR1 -> RGB 0x55f at scanline 218
-     COLOR1 -> RGB 0xabf at scanline 219
-     COLOR1 -> RGB 0xfff at scanline 220
-     COLOR1 -> RGB 0xfff at scanline 221
-     COLOR1 -> RGB 0xabf at scanline 222
-     COLOR1 -> RGB 0x55f at scanline 223
-WAIT 0xe5
-     COLOR1 -> RGB 0xaad at scanline 229
-     COLOR1 -> RGB 0x77b at scanline 230
-
-WAIT 0xec
-     COLOR1 -> RGB 0xf5f at scanline 236
-     COLOR1 -> RGB 0xfbf at scanline 237
-     COLOR1 -> RGB 0xfff at scanline 238
-     COLOR1 -> RGB 0xfff at scanline 239
-     COLOR1 -> RGB 0xfbf at scanline 240
-     COLOR1 -> RGB 0xf5f at scanline 241
-
-WAIT 0xf5
-     COLOR0 -> RGB 0x00f at scanline 245
-WAIT 0xf6
-     COLOR0 -> RGB 0x000 at scanline 246
-COPPER_END
-
-*/

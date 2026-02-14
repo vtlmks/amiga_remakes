@@ -62,7 +62,7 @@ static uint32_t star_colors[] = {
 
 // [=]===^=[ remake_init ]============================================================^===[=]
 static void remake_init(struct platform_state *state) {
-	change_resolution(state, BUFFER_WIDTH, BUFFER_HEIGHT);
+	platform_change_resolution(state, BUFFER_WIDTH, BUFFER_HEIGHT);
 	text_writer_init();
 
 	xor_init_rng(&base_rand, 187481201);
@@ -85,14 +85,16 @@ static void remake_init(struct platform_state *state) {
 	mkfw_audio_callback = remake_audio_callback;
 }
 
-static void remake_options(struct options *opt) {
-	opt->release_group = "Warfalcons";
-	opt->release_title = "Wings of Victory";
-	opt->window_title = "Warfalcons - Wings of Victory 1990-02\0";
+static void remake_options(struct platform_state *state) {
+	state->release_group = "Warfalcons";
+	state->release_title = "Wings of Victory";
+	state->window_title = "Warfalcons - Wings of Victory 1990-02\0";
 }
 
 // [=]===^=[ remake_frame ]============================================================^===[=]
 static void remake_frame(struct platform_state *state) {
+	platform_clear_buffer(state);
+
 	uint32_t *dst1 = BUFFER_PTR(state, 0, 33);
 	uint32_t *dst2 = BUFFER_PTR(state, 0, 238);
 	for(size_t i = 0; i < state->buffer_width; ++i) {

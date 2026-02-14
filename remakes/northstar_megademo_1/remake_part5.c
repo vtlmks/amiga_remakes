@@ -273,8 +273,8 @@ static uint8_t p5_sprite_sine[] = {
 	0xff,
 };
 
-static struct scroller_state *p5_scroller1;
-static struct scroller_state *p5_scroller2;
+static struct scroller_state p5_scroller1;
+static struct scroller_state p5_scroller2;
 
 static uint8_t p5_process_char(struct scroller_state *scr_state, uint8_t scroll_character) {
 	if(scroll_character == '^') {		// Scrolltext end
@@ -285,13 +285,15 @@ static uint8_t p5_process_char(struct scroller_state *scr_state, uint8_t scroll_
 }
 
 static void p5_init() {
-	p5_scroller1 = scroller_new(16, 16,  78, 1, (uint8_t*)p5_scrolltext1_data, part1_small_font_data, 0, p5_process_char);
-	p5_scroller2 = scroller_new(32, 32, 170, 2, (uint8_t*)p5_scrolltext2_data, p5_large_font_data, 0, p5_process_char);
+	p5_scroller1 = (struct scroller_state){ .char_width = 16, .char_height = 16, .dest_offset_y =  78, .speed = 1, .text = (uint8_t*)p5_scrolltext1_data, .font = part1_small_font_data, .process_char = p5_process_char };
+	p5_scroller2 = (struct scroller_state){ .char_width = 32, .char_height = 32, .dest_offset_y = 170, .speed = 2, .text = (uint8_t*)p5_scrolltext2_data, .font = p5_large_font_data, .process_char = p5_process_char };
+	scroller_new(&p5_scroller1);
+	scroller_new(&p5_scroller2);
 }
 
 static void p5_shutdown() {
-	scroller_remove(p5_scroller1);
-	scroller_remove(p5_scroller2);
+	scroller_remove(&p5_scroller1);
+	scroller_remove(&p5_scroller2);
 }
 
 static uint32_t p5_logo_background_colors[59];
@@ -509,16 +511,16 @@ static void p5_render_copperbars(struct platform_state *state) {
 }
 
 static void p5_render_small_scroller(struct platform_state *state) {
-	const uint8_t * restrict src = p5_scroller1->buffer;
+	const uint8_t * restrict src = p5_scroller1.buffer;
 	uint32_t * restrict dst = BUFFER_PTR(state, (state->buffer_width - 336) / 2, 86);
 
 	uint32_t color_lookup[4];
 	color_lookup[2] = 0xffffffff;
 	color_lookup[3] = 0x555555ff;
 
-	uint32_t scroll_render_offset = p5_scroller1->char_render_offset - 360;
+	uint32_t scroll_render_offset = p5_scroller1.char_render_offset - 360;
 
-	for(uint32_t y = 0; y < p5_scroller1->char_height; ++y) {
+	for(uint32_t y = 0; y < p5_scroller1.char_height; ++y) {
 		color_lookup[1] = md1_p5_small_scroller_inner_color[y];
 
 		for(uint32_t x = 0; x < 336; ++x) {
@@ -534,18 +536,18 @@ static void p5_render_small_scroller(struct platform_state *state) {
 }
 
 static void p5_render_large_scroller(struct platform_state *state) {
-	uint8_t * restrict src = p5_scroller2->buffer;
+	uint8_t * restrict src = p5_scroller2.buffer;
 	uint32_t * restrict dst = BUFFER_PTR(state, (state->buffer_width - 336) / 2, 170);
 
 	uint32_t color_lookup[4];
 
-	for(uint32_t y = 0; y < p5_scroller2->char_height; ++y) {
+	for(uint32_t y = 0; y < p5_scroller2.char_height; ++y) {
 		color_lookup[1] = md1_p5_large_scroller_outer_colors[y];
 		color_lookup[2] = md1_p5_large_scroller_inner_color1[y];
 		color_lookup[3] = md1_p5_large_scroller_inner_color2[y];
 
 		for(uint32_t x = 0; x < 336; ++x) {
-			size_t src_index = (p5_scroller2->char_render_offset - 360 + x) & SCROLL_BUFFER_MASK;
+			size_t src_index = (p5_scroller2.char_render_offset - 360 + x) & SCROLL_BUFFER_MASK;
 			color_lookup[0] = dst[x];
 			dst[x] = color_lookup[src[src_index]];
 		}
@@ -594,15 +596,15 @@ static uint32_t p5_update(struct platform_state *state)  {
 	// PROFILE_NAMED("part5 all");
 
 	if(mkfw_is_button_pressed(state->window, MOUSE_BUTTON_RIGHT)) {
-		p5_scroller1->speed += 1;
-		p5_scroller2->speed += 2;
-		if(p5_scroller1->speed > 4) {
-			p5_scroller1->speed = 1;
-			p5_scroller2->speed = 2;
+		p5_scroller1.speed += 1;
+		p5_scroller2.speed += 2;
+		if(p5_scroller1.speed > 4) {
+			p5_scroller1.speed = 1;
+			p5_scroller2.speed = 2;
 		}
 	}
-	scroller(p5_scroller1);
-	scroller(p5_scroller2);
+	scroller_update(state, &p5_scroller1);
+	scroller_update(state, &p5_scroller2);
 	p5_render_warhammer_40k(state);
 	p5_render_copperbars(state);
 	p5_render_heads(state);

@@ -131,7 +131,7 @@ static uint32_t p7_scroll_color[] = {
 
 static int32_t md1_p7_stars[188];
 
-static struct scroller_state *p7_scroll;
+static struct scroller_state p7_scroll;
 
 static uint32_t p7_logo_index = 0xffffffff;
 
@@ -189,11 +189,12 @@ static void p7_init() {
 	font_chars['I'].width = 18;
 	#undef CHAR_48_SIZE
 
-	p7_scroll = scroller_new(48, 48, 8, 1, p7_scroll_text, part7_scroll_font_data, font_chars, p7_scroll_callback);
+	p7_scroll = (struct scroller_state){ .char_width = 48, .char_height = 48, .dest_offset_y = 8, .speed = 1, .text = p7_scroll_text, .font = part7_scroll_font_data, .char_info = font_chars, .process_char = p7_scroll_callback };
+	scroller_new(&p7_scroll);
 }
 
 static void p7_shutdown() {
-	scroller_remove(p7_scroll);
+	scroller_remove(&p7_scroll);
 }
 
 static void p7_render_scroll_buffer(struct platform_state *state, struct scroller_state *scr_state) {
@@ -313,12 +314,12 @@ static uint32_t p7_update(struct platform_state *state)  {
 	// PROFILE_NAMED("part7 all");
 
 	if(mkfw_is_button_pressed(state->window, MOUSE_BUTTON_RIGHT)) {
-		p7_scroll->speed = (p7_scroll->speed == 7) ? 1 : (p7_scroll->speed + 1);
+		p7_scroll.speed = (p7_scroll.speed == 7) ? 1 : (p7_scroll.speed + 1);
 	}
 
 	p7_render_stars(state);
-	scroller(p7_scroll);
-	p7_render_scroll_buffer(state, p7_scroll);
+	scroller_update(state, &p7_scroll);
+	p7_render_scroll_buffer(state, &p7_scroll);
 	p7_bar_scrollers(state);
 	p7_show_logos(state);
 

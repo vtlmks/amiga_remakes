@@ -111,7 +111,7 @@ static void remake_audio_callback(int16_t *data, size_t frames) {
 
 // [=]===^=[ remake_init ]============================================================^===[=]
 static void remake_init(struct platform_state *state) {
-	change_resolution(state, BUFFER_WIDTH, BUFFER_HEIGHT);
+	platform_change_resolution(state, BUFFER_WIDTH, BUFFER_HEIGHT);
 //	set_window_title(remake_title);
 	xor_init_rng(&base_rand, 187481201);
 
@@ -164,38 +164,15 @@ static void remake_shutdown(struct platform_state *state) {
 typedef uint32_t (*update_function)(struct platform_state *state);
 update_function update_callbacks[] = { p1_update, p2_update, p3_update, p4_update, p5_update, p6_update, p7_update, p8_update, };
 
-void remake_options(struct options *opt) {
-	opt->release_group = "NORTH STAR";
-	opt->release_title = "MEGADEMO 1";
-	opt->window_title = "North Star - Megademo - 1988-03-31";
+static void remake_options(struct platform_state *state) {
+	state->release_group = "NORTH STAR";
+	state->release_title = "MEGADEMO 1";
+	state->window_title = "North Star - Megademo - 1988-03-31";
 }
 
 // [=]===^=[ remake_frame ]============================================================^===[=]
 static void remake_frame(struct platform_state *state) {
-
-	// float step = keyboard_state[MKS_KEY_LSHIFT] ? 0.001f : 0.01f;
-
-	// // Bloom Threshold (Q/A)
-	// if(keyboard_state[MKS_KEY_Q]) state.bloom_threshold += step;
-	// if(keyboard_state[MKS_KEY_A]) state.bloom_threshold -= step;
-
-	// // Bloom Intensity (W/S)
-	// if(keyboard_state[MKS_KEY_W]) state.bloom_intensity += step;
-	// if(keyboard_state[MKS_KEY_S]) state.bloom_intensity -= step;
-
-	// // Persistence Decay (E/D)
-	// if(keyboard_state[MKS_KEY_E]) state.persistence_decay += step;
-	// if(keyboard_state[MKS_KEY_D]) state.persistence_decay -= step;
-
-	// // Brightness (R/F)
-	// if(keyboard_state[MKS_KEY_R]) state.brightness += step;
-	// if(keyboard_state[MKS_KEY_F]) state.brightness -= step;
-
-	// // Clamp values
-	// state.bloom_threshold = fminf(fmaxf(state.bloom_threshold, 0.0f), 1.0f);
-	// state.bloom_intensity = fminf(fmaxf(state.bloom_intensity, 0.0f), 1.0f);
-	// state.persistence_decay = fminf(fmaxf(state.persistence_decay, 0.0f), 0.99f);
-	// state.brightness = fminf(fmaxf(state.brightness, 0.1f), 3.0f);
+	platform_clear_buffer(state);
 
 	for(uint32_t i = '1'; i <= '8'; ++i) {
 		if(mkfw_is_key_pressed(state->window, i)) {

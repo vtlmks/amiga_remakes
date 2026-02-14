@@ -115,15 +115,15 @@ static void remake_audio_callback(int16_t *data, size_t frames) {
 	}
 }
 
-static void remake_options(struct options *opt) {
-	opt->release_group = "FASHION";
-	opt->release_title = "FASHIONATING";
-	opt->window_title = "Fashion - Fashionating - 1988-05";
+static void remake_options(struct platform_state *state) {
+	state->release_group = "FASHION";
+	state->release_title = "FASHIONATING";
+	state->window_title = "Fashion - Fashionating - 1988-05";
 }
 
 // [=]===^=[ remake_init ]============================================================^===[=]
 static void remake_init(struct platform_state *state) {
-	change_resolution(state, BUFFER_WIDTH, BUFFER_HEIGHT);
+	platform_change_resolution(state, BUFFER_WIDTH, BUFFER_HEIGHT);
 
 	xor_init_rng(&rand_state, 0x47189239);
 	part_1_init();
@@ -141,6 +141,7 @@ static void remake_init(struct platform_state *state) {
 
 // [=]===^=[ remake_frame ]============================================================^===[=]
 static void remake_frame(struct platform_state *state) {
+	platform_clear_buffer(state);
 
 	if(update_callbacks[active_demo_part].render(state)) {
 		active_demo_part = (active_demo_part < 7) ? active_demo_part + 1 : 0;

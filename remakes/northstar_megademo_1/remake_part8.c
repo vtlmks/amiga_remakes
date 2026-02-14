@@ -128,10 +128,10 @@ static uint8_t p8_scroll_text_4[] = {
 	"      !SNURRE-RUNTARE!            ^"
 };
 
-static struct scroller_state *p8_scroll_1;
-static struct scroller_state *p8_scroll_2;
-static struct scroller_state *p8_scroll_3;
-static struct scroller_state *p8_scroll_4;
+static struct scroller_state p8_scroll_1;
+static struct scroller_state p8_scroll_2;
+static struct scroller_state p8_scroll_3;
+static struct scroller_state p8_scroll_4;
 
 static uint8_t p8_process_char(struct scroller_state *scr_state, uint8_t scroll_character) {
 	if(scroll_character == '^') {		// Scrolltext end
@@ -143,17 +143,21 @@ static uint8_t p8_process_char(struct scroller_state *scr_state, uint8_t scroll_
 
 
 static void p8_init() {
-	p8_scroll_1 = scroller_new(16, 16,  54, 2, p8_scroll_text_1, part1_small_font_data, 0, p8_process_char);
-	p8_scroll_2 = scroller_new(16, 16,  86, 1, p8_scroll_text_2, part1_small_font_data, 0, p8_process_char);
-	p8_scroll_3 = scroller_new(16, 16, 182, 1, p8_scroll_text_3, part1_small_font_data, 0, p8_process_char);
-	p8_scroll_4 = scroller_new(16, 16, 214, 2, p8_scroll_text_4, part1_small_font_data, 0, p8_process_char);
+	p8_scroll_1 = (struct scroller_state){ .char_width = 16, .char_height = 16, .dest_offset_y =  54, .speed = 2, .text = p8_scroll_text_1, .font = part1_small_font_data, .process_char = p8_process_char };
+	p8_scroll_2 = (struct scroller_state){ .char_width = 16, .char_height = 16, .dest_offset_y =  86, .speed = 1, .text = p8_scroll_text_2, .font = part1_small_font_data, .process_char = p8_process_char };
+	p8_scroll_3 = (struct scroller_state){ .char_width = 16, .char_height = 16, .dest_offset_y = 182, .speed = 1, .text = p8_scroll_text_3, .font = part1_small_font_data, .process_char = p8_process_char };
+	p8_scroll_4 = (struct scroller_state){ .char_width = 16, .char_height = 16, .dest_offset_y = 214, .speed = 2, .text = p8_scroll_text_4, .font = part1_small_font_data, .process_char = p8_process_char };
+	scroller_new(&p8_scroll_1);
+	scroller_new(&p8_scroll_2);
+	scroller_new(&p8_scroll_3);
+	scroller_new(&p8_scroll_4);
 }
 
 static void p8_shutdown() {
-	scroller_remove(p8_scroll_1);
-	scroller_remove(p8_scroll_2);
-	scroller_remove(p8_scroll_3);
-	scroller_remove(p8_scroll_4);
+	scroller_remove(&p8_scroll_1);
+	scroller_remove(&p8_scroll_2);
+	scroller_remove(&p8_scroll_3);
+	scroller_remove(&p8_scroll_4);
 }
 
 static void p8_render_scroll_buffer(struct platform_state *state, struct scroller_state *scr_state) {
@@ -182,14 +186,14 @@ static void p8_render_scroll_buffer(struct platform_state *state, struct scrolle
 }
 
 static uint32_t p8_update(struct platform_state *state)  {
-	scroller(p8_scroll_1);
-	scroller(p8_scroll_2);
-	scroller(p8_scroll_3);
-	scroller(p8_scroll_4);
-	p8_render_scroll_buffer(state, p8_scroll_1);
-	p8_render_scroll_buffer(state, p8_scroll_2);
-	p8_render_scroll_buffer(state, p8_scroll_3);
-	p8_render_scroll_buffer(state, p8_scroll_4);
+	scroller_update(state, &p8_scroll_1);
+	scroller_update(state, &p8_scroll_2);
+	scroller_update(state, &p8_scroll_3);
+	scroller_update(state, &p8_scroll_4);
+	p8_render_scroll_buffer(state, &p8_scroll_1);
+	p8_render_scroll_buffer(state, &p8_scroll_2);
+	p8_render_scroll_buffer(state, &p8_scroll_3);
+	p8_render_scroll_buffer(state, &p8_scroll_4);
 	p8_real_inner_color_index++;
 	p8_real_border_color_index--;
 

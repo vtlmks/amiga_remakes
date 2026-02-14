@@ -119,14 +119,14 @@ static uint8_t p4_scroll_text_8[] = {
 	"    ^"
 };
 
-static struct scroller_state *p4_scroll_1;
-static struct scroller_state *p4_scroll_2;
-static struct scroller_state *p4_scroll_3;
-static struct scroller_state *p4_scroll_4;
-static struct scroller_state *p4_scroll_5;
-static struct scroller_state *p4_scroll_6;
-static struct scroller_state *p4_scroll_7;
-static struct scroller_state *p4_scroll_8;
+static struct scroller_state p4_scroll_1;
+static struct scroller_state p4_scroll_2;
+static struct scroller_state p4_scroll_3;
+static struct scroller_state p4_scroll_4;
+static struct scroller_state p4_scroll_5;
+static struct scroller_state p4_scroll_6;
+static struct scroller_state p4_scroll_7;
+static struct scroller_state p4_scroll_8;
 
 static uint8_t p4_process_char(struct scroller_state *scr_state, uint8_t scroll_character) {
 	if(scroll_character == '^') {		// Scrolltext end
@@ -137,25 +137,97 @@ static uint8_t p4_process_char(struct scroller_state *scr_state, uint8_t scroll_
 }
 
 static void p4_init() {
-	p4_scroll_1 = scroller_new(16, 16,  22, 4, p4_scroll_text_1, part1_small_font_data, 0, p4_process_char);
-	p4_scroll_2 = scroller_new(16, 16,  54, 3, p4_scroll_text_2, part1_small_font_data, 0, p4_process_char);
-	p4_scroll_3 = scroller_new(16, 16,  86, 2, p4_scroll_text_3, part1_small_font_data, 0, p4_process_char);
-	p4_scroll_4 = scroller_new(16, 16, 118, 1, p4_scroll_text_4, part1_small_font_data, 0, p4_process_char);
-	p4_scroll_5 = scroller_new(16, 16, 150, 1, p4_scroll_text_5, part1_small_font_data, 0, p4_process_char);
-	p4_scroll_6 = scroller_new(16, 16, 182, 2, p4_scroll_text_6, part1_small_font_data, 0, p4_process_char);
-	p4_scroll_7 = scroller_new(16, 16, 214, 3, p4_scroll_text_7, part1_small_font_data, 0, p4_process_char);
-	p4_scroll_8 = scroller_new(16, 16, 246, 4, p4_scroll_text_8, part1_small_font_data, 0, p4_process_char);
+	p4_scroll_1 = (struct scroller_state) {
+		.char_width = 16,
+		.char_height = 16,
+		.dest_offset_y = 22,
+		.speed = 4,
+		.text = p4_scroll_text_1,
+		.font = part1_small_font_data,
+		.process_char = p4_process_char
+	};
+	p4_scroll_2 = (struct scroller_state) {
+		.char_width = 16,
+		.char_height = 16,
+		.dest_offset_y = 54,
+		.speed = 3,
+		.text = p4_scroll_text_2,
+		.font = part1_small_font_data,
+		.process_char = p4_process_char
+	};
+	p4_scroll_3 = (struct scroller_state) {
+		.char_width = 16,
+		.char_height = 16,
+		.dest_offset_y = 86,
+		.speed = 2,
+		.text = p4_scroll_text_3,
+		.font = part1_small_font_data,
+		.process_char = p4_process_char
+	};
+	p4_scroll_4 = (struct scroller_state) {
+		.char_width = 16,
+		.char_height = 16,
+		.dest_offset_y = 118,
+		.speed = 1,
+		.text = p4_scroll_text_4,
+		.font = part1_small_font_data,
+		.process_char = p4_process_char
+	};
+	p4_scroll_5 = (struct scroller_state) {
+		.char_width = 16,
+		.char_height = 16,
+		.dest_offset_y = 150,
+		.speed = 1,
+		.text = p4_scroll_text_5,
+		.font = part1_small_font_data,
+		.process_char = p4_process_char
+	};
+	p4_scroll_6 = (struct scroller_state) {
+		.char_width = 16,
+		.char_height = 16,
+		.dest_offset_y = 182,
+		.speed = 2,
+		.text = p4_scroll_text_6,
+		.font = part1_small_font_data,
+		.process_char = p4_process_char
+	};
+	p4_scroll_7 = (struct scroller_state) {
+		.char_width = 16,
+		.char_height = 16,
+		.dest_offset_y = 214,
+		.speed = 3,
+		.text = p4_scroll_text_7,
+		.font = part1_small_font_data,
+		.process_char = p4_process_char
+	};
+	p4_scroll_8 = (struct scroller_state) {
+		.char_width = 16,
+		.char_height = 16,
+		.dest_offset_y = 246,
+		.speed = 4,
+		.text = p4_scroll_text_8,
+		.font = part1_small_font_data,
+		.process_char = p4_process_char
+	};
+	scroller_new(&p4_scroll_1);
+	scroller_new(&p4_scroll_2);
+	scroller_new(&p4_scroll_3);
+	scroller_new(&p4_scroll_4);
+	scroller_new(&p4_scroll_5);
+	scroller_new(&p4_scroll_6);
+	scroller_new(&p4_scroll_7);
+	scroller_new(&p4_scroll_8);
 }
 
 static void p4_shutdown() {
-	scroller_remove(p4_scroll_1);
-	scroller_remove(p4_scroll_2);
-	scroller_remove(p4_scroll_3);
-	scroller_remove(p4_scroll_4);
-	scroller_remove(p4_scroll_5);
-	scroller_remove(p4_scroll_6);
-	scroller_remove(p4_scroll_7);
-	scroller_remove(p4_scroll_8);
+	scroller_remove(&p4_scroll_1);
+	scroller_remove(&p4_scroll_2);
+	scroller_remove(&p4_scroll_3);
+	scroller_remove(&p4_scroll_4);
+	scroller_remove(&p4_scroll_5);
+	scroller_remove(&p4_scroll_6);
+	scroller_remove(&p4_scroll_7);
+	scroller_remove(&p4_scroll_8);
 }
 
 static void p4_render_scroll_buffer(struct platform_state *state, struct scroller_state *scr_state) {
@@ -195,23 +267,23 @@ static uint32_t p4_update(struct platform_state *state)  {
 
 
 // NOTE(peter): Scrollers
-	scroller(p4_scroll_1);
-	scroller(p4_scroll_2);
-	scroller(p4_scroll_3);
-	scroller(p4_scroll_4);
-	scroller(p4_scroll_5);
-	scroller(p4_scroll_6);
-	scroller(p4_scroll_7);
-	scroller(p4_scroll_8);
+	scroller_update(state, &p4_scroll_1);
+	scroller_update(state, &p4_scroll_2);
+	scroller_update(state, &p4_scroll_3);
+	scroller_update(state, &p4_scroll_4);
+	scroller_update(state, &p4_scroll_5);
+	scroller_update(state, &p4_scroll_6);
+	scroller_update(state, &p4_scroll_7);
+	scroller_update(state, &p4_scroll_8);
 
-	p4_render_scroll_buffer(state, p4_scroll_1);
-	p4_render_scroll_buffer(state, p4_scroll_2);
-	p4_render_scroll_buffer(state, p4_scroll_3);
-	p4_render_scroll_buffer(state, p4_scroll_4);
-	p4_render_scroll_buffer(state, p4_scroll_5);
-	p4_render_scroll_buffer(state, p4_scroll_6);
-	p4_render_scroll_buffer(state, p4_scroll_7);
-	p4_render_scroll_buffer(state, p4_scroll_8);
+	p4_render_scroll_buffer(state, &p4_scroll_1);
+	p4_render_scroll_buffer(state, &p4_scroll_2);
+	p4_render_scroll_buffer(state, &p4_scroll_3);
+	p4_render_scroll_buffer(state, &p4_scroll_4);
+	p4_render_scroll_buffer(state, &p4_scroll_5);
+	p4_render_scroll_buffer(state, &p4_scroll_6);
+	p4_render_scroll_buffer(state, &p4_scroll_7);
+	p4_render_scroll_buffer(state, &p4_scroll_8);
 
 
 	p4_real_inner_color_index++;

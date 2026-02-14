@@ -413,7 +413,7 @@ static uint8_t scrolltext[] = {
 	"N JA HYVIN MENEE ,,,,           "
 };
 
-static struct scroller_state *bf_scroller;
+static struct scroller_state bf_scroller;
 
 static uint8_t scroller_reflection_sine_data[] = {
 	0x5, 0x5, 0x5, 0x6, 0x6, 0x7, 0x8, 0x9, 0xa, 0xa, 0xb, 0xb, 0xb, 0xa, 0xa, 0x9, 0x8, 0x7, 0x6, 0x6,
@@ -463,29 +463,31 @@ static void bf_render_scroll_buffer(struct platform_state *state, struct scrolle
 
 // [=]===^=[ remake_init ]============================================================^===[=]
 static void remake_init(struct platform_state *state) {
-	change_resolution(state, BUFFER_WIDTH, BUFFER_HEIGHT);
+	platform_change_resolution(state, BUFFER_WIDTH, BUFFER_HEIGHT);
 
-	bf_scroller = scroller_new(32, 32, 126, 4, scrolltext, font, font_char_infos, 0);
+	bf_scroller = (struct scroller_state){ .char_width = 32, .char_height = 32, .dest_offset_y = 126, .speed = 4, .text = scrolltext, .font = font, .char_info = font_char_infos };
+	scroller_new(&bf_scroller);
 
 	micromod_initialize(&module, (signed char*)music, 48000);
 	mkfw_audio_callback = remake_audio_callback;
 }
 
 // [=]===^=[ remake_options ]============================================================^===[=]
-static void remake_options(struct options *opt) {
-	opt->release_group = "Beyond Force";
-	opt->release_title = "Flexible Logo";
-	opt->window_title = "Beyond Force - Flexible Logo 1990\0";
+static void remake_options(struct platform_state *state) {
+	state->release_group = "Beyond Force";
+	state->release_title = "Flexible Logo";
+	state->window_title = "Beyond Force - Flexible Logo 1990\0";
 }
 
 // [=]===^=[ remake_frame ]============================================================^===[=]
 static void remake_frame(struct platform_state *state) {
+	platform_clear_buffer(state);
 
 	render_background_copper(state);
 	render_flexible_logo(state);
-//	render_scroller(state);
-	scroller(bf_scroller);
-	bf_render_scroll_buffer(state, bf_scroller, font->palette);
+//	render_scroller_update(state);
+	scroller_update(state, &bf_scroller);
+	bf_render_scroll_buffer(state, &bf_scroller, font->palette);
 
 	render_equalizers(state);
 	render_bobs(state);
@@ -495,7 +497,7 @@ static void remake_frame(struct platform_state *state) {
 // [=]===^=[ remake_shutdown ]============================================================^===[=]
 static void remake_shutdown(struct platform_state *state) {
 	mkfw_audio_callback = 0;
-	scroller_remove(bf_scroller);
+	scroller_remove(&bf_scroller);
 }
 
 

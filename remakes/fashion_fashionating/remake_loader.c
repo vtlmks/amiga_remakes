@@ -40,5 +40,5 @@ static uint32_t loader(struct platform_state *state) {
 		return 1;
 	}
 
-	return mkfw_is_button_pressed(window, MOUSE_BUTTON_LEFT);
+	return mkfw_is_button_pressed(state->window, MOUSE_BUTTON_LEFT);
 }

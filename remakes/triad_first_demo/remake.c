@@ -22,7 +22,7 @@ struct sample_state {
 };
 
 static struct sample_state audio_sample;
-static struct scroller_state *triad_scroller;
+static struct scroller_state triad_scroller;
 
 
 #define CHAR_SIZE (16 * 8)  // 16 pixels wide * 8 pixels tall = 128 bytes per char
@@ -309,19 +309,28 @@ static void remake_audio_callback(int16_t *data, size_t frames) {
 
 // [=]===^=[ remake_init ]============================================================^===[=]
 static void remake_init(struct platform_state *state) {
-	change_resolution(state, BUFFER_WIDTH, BUFFER_HEIGHT);
+	platform_change_resolution(state, BUFFER_WIDTH, BUFFER_HEIGHT);
 
 	audio_sample.data = resample_audio((int8_t*)sample, sample_end - sample, 358, &audio_sample.size);
 
-	triad_scroller = scroller_new(16, 8, 231, 2, scroll_text, font, font_chars, 0);
+	triad_scroller = (struct scroller_state) {
+		.char_width = 16,
+		.char_height = 8,
+		.dest_offset_y = 231,
+		.speed = 2,
+		.text = scroll_text,
+		.font = font,
+		.char_info = font_chars
+	};
+	scroller_new(&triad_scroller);
 
 	mkfw_audio_callback = remake_audio_callback;
 }
 
-static void remake_options(struct options *opt) {
-	opt->release_group = "Triad";
-	opt->release_title = "First Demo";
-	opt->window_title = "Triad - First Demo - 1987-08\0";
+static void remake_options(struct platform_state *state) {
+	state->release_group = "Triad";
+	state->release_title = "First Demo";
+	state->window_title = "Triad - First Demo - 1987-08\0";
 }
 
 static uint32_t copper_bar_colors[] = {
@@ -341,13 +350,15 @@ static void render_copper_bar(struct platform_state *state, uint32_t y) {
 
 // [=]===^=[ remake_frame ]============================================================^===[=]
 static void remake_frame(struct platform_state *state) {
+	platform_clear_buffer(state);
+
 	render_copper_bar(state, 219);
 	render_copper_bar(state, 241);
 
 	struct rect source_clip = { 0, 9, picture->width, picture->height };
 	blit_full_dst(state, picture, source_clip, CENTER_X(state, picture->width), 0, 0);
-	scroller(triad_scroller);
-	render_scroll_buffer(state, triad_scroller);
+	scroller_update(state, &triad_scroller);
+	render_scroll_buffer(state, &triad_scroller);
 }
 
 // [=]===^=[ remake_shutdown ]============================================================^===[=]

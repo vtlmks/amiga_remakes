@@ -1,69 +1,170 @@
 #!/bin/bash
 
-# Script to generate compile_commands.json and c_cpp_properties.json for all remake projects
+# Generates per-remake-directory compile_commands.json and .vscode/c_cpp_properties.json
+# for IntelliSense when opening each remake directory as a VSCode workspace.
+#
+# For unity builds, sub-files (remake_part*.c etc.) get IntelliSense context
+# via -include platform.c with the correct BUFFER_WIDTH/HEIGHT defines.
+#
+# Uses the "arguments" array format (not "command" string) in compile_commands.json
+# so IntelliSense correctly parses flags like -include.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+GIT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-# Find all directories with build.sh
+PLATFORM_C="$GIT_ROOT/platform/platform.c"
+
+# Process each remake directory
 for dir in "$SCRIPT_DIR"/*/; do
-    # Skip if no build.sh exists
-    if [ ! -f "$dir/build.sh" ]; then
-        continue
-    fi
+	if [ ! -f "$dir/build.sh" ]; then
+		continue
+	fi
 
-    # Extract project name from build.sh
-    PROJECT_NAME=$(grep '^PROJECT_NAME=' "$dir/build.sh" | sed 's/PROJECT_NAME="\(.*\)".*/\1/')
+	# Skip template
+	if [ "$(basename "$dir")" = "template" ]; then
+		continue
+	fi
 
-    if [ -z "$PROJECT_NAME" ]; then
-        echo "Warning: Could not find PROJECT_NAME in $dir/build.sh"
-        continue
-    fi
+	DIR_NAME=$(basename "$dir")
+	dir="$(cd "$dir" && pwd)"
 
-    DIR_NAME=$(basename "$dir")
-    echo "Generating IntelliSense files for: $DIR_NAME (project: $PROJECT_NAME)"
+	echo "Processing: $DIR_NAME"
 
-    # Create .vscode directory if it doesn't exist
-    mkdir -p "$dir/.vscode"
+	# Extract BUFFER_WIDTH and BUFFER_HEIGHT from remake.c
+	BW=$(grep -m1 '#define BUFFER_WIDTH' "$dir/remake.c" | sed 's/#define BUFFER_WIDTH[[:space:]]*//' | tr -d '[:space:]')
+	BH=$(grep -m1 '#define BUFFER_HEIGHT' "$dir/remake.c" | sed 's/#define BUFFER_HEIGHT[[:space:]]*//' | tr -d '[:space:]')
 
-    # Generate compile_commands.json
-    cat > "$dir/compile_commands.json" << 'EOF'
-[
-	{
-		"directory": "DIRECTORY_PLACEHOLDER",
-		"command": "gcc -std=gnu11 -mtune=generic -march=x86-64-v3 -fno-argument-alias -mfunction-return=keep -mindirect-branch=keep -fwrapv -ffast-math -fno-trapping-math -fvisibility=hidden -fno-stack-protector -fno-PIE -no-pie -fcf-protection=none -fno-non-call-exceptions -fno-unwind-tables -fno-asynchronous-unwind-tables -Wall -Wextra -Wstrict-aliasing=3 -Wno-unused-parameter -Wno-sign-compare -Wno-trigraphs -Wno-maybe-uninitialized -Wno-unused-variable -Wno-unused-const-variable -Wno-unused-function -Wno-write-strings -Wno-missing-field-initializers -U_FORTIFY_SOURCE -fno-pic -fno-ident -fno-strict-overflow -fno-delete-null-pointer-checks -Wstrict-overflow=5 -Warray-bounds -Wshift-overflow=2 -Woverflow -Wstringop-overflow=4 -Wstringop-truncation -Wvla -ggdb -fno-omit-frame-pointer -O2 -ffunction-sections -fdata-sections -I. -I/work/current/amiga_remakes -I/work/current/amiga_remakes/include -I/work/current/amiga_remakes/platform -I/work/current/amiga_remakes/platform/mkfw remake.c -o PROJECT_NAME_PLACEHOLDER -Wl,--gc-sections -Wl,--as-needed -lasound -lXi -lX11 -lGL -lm -ldl -pthread",
-		"file": "remake.c"
+	if [ -z "$BW" ]; then BW="346"; fi
+	if [ -z "$BH" ]; then BH="270"; fi
+
+	OUTPUT="$dir/compile_commands.json"
+
+	# Common arguments shared by all entries
+	COMMON_ARGS="
+		\"gcc\",
+		\"-std=gnu99\",
+		\"-mtune=generic\",
+		\"-fno-math-errno\",
+		\"-fno-non-call-exceptions\",
+		\"-fno-pic\",
+		\"-fno-signaling-nans\",
+		\"-fno-stack-protector\",
+		\"-fno-trapping-math\",
+		\"-fno-unwind-tables\",
+		\"-fcf-protection=none\",
+		\"-ffast-math\",
+		\"-fstrict-aliasing\",
+		\"-fvisibility=hidden\",
+		\"-fwrapv\",
+		\"-no-pie\",
+		\"-Wall\",
+		\"-Wextra\",
+		\"-Wshift-overflow=2\",
+		\"-Wstrict-aliasing=3\",
+		\"-Wstrict-overflow=5\",
+		\"-Wstringop-overflow=4\",
+		\"-Wstringop-truncation\",
+		\"-Wno-missing-field-initializers\",
+		\"-Wno-trigraphs\",
+		\"-Wno-unused-const-variable\",
+		\"-Wno-unused-function\",
+		\"-Wno-unused-parameter\",
+		\"-Wno-unused-variable\",
+		\"-Wno-write-strings\",
+		\"-Wvla\",
+		\"-U_FORTIFY_SOURCE\",
+		\"-ggdb\",
+		\"-fno-omit-frame-pointer\",
+		\"-O2\",
+		\"-ffunction-sections\",
+		\"-fdata-sections\",
+		\"-I.\",
+		\"-I$GIT_ROOT\",
+		\"-I$GIT_ROOT/include\",
+		\"-I$GIT_ROOT/platform\",
+		\"-I$GIT_ROOT/platform/mkfw\""
+
+	FIRST_ENTRY=1
+
+	# Start the JSON array
+	echo "[" > "$OUTPUT"
+
+	add_comma() {
+		if [ $FIRST_ENTRY -eq 0 ]; then
+			echo "," >> "$OUTPUT"
+		fi
+		FIRST_ENTRY=0
 	}
-]
+
+	# Entry for remake.c itself (normal compile, no -include needed)
+	add_comma
+	cat >> "$OUTPUT" << EOF
+	{
+		"directory": "$dir",
+		"arguments": [
+$COMMON_ARGS,
+			"remake.c"
+		],
+		"file": "$dir/remake.c"
+	}
 EOF
 
-    # Replace placeholders
-    sed -i "s|DIRECTORY_PLACEHOLDER|$dir|g" "$dir/compile_commands.json"
-    sed -i "s|PROJECT_NAME_PLACEHOLDER|$PROJECT_NAME|g" "$dir/compile_commands.json"
+	# Find all other .c files in the directory (sub-files included by remake.c)
+	for cfile in "$dir"/*.c; do
+		[ "$(basename "$cfile")" = "remake.c" ] && continue
+		[ ! -f "$cfile" ] && continue
 
-    # Generate c_cpp_properties.json
-    cat > "$dir/.vscode/c_cpp_properties.json" << 'EOF'
+		BASENAME="$(basename "$cfile")"
+
+		# Sub-files need the framework context via -include
+		add_comma
+		cat >> "$OUTPUT" << EOF
+	{
+		"directory": "$dir",
+		"arguments": [
+$COMMON_ARGS,
+			"-DBUFFER_WIDTH=$BW",
+			"-DBUFFER_HEIGHT=$BH",
+			"-include",
+			"$PLATFORM_C",
+			"$BASENAME"
+		],
+		"file": "$dir/$BASENAME"
+	}
+EOF
+	done
+
+	# Close the JSON array
+	echo "" >> "$OUTPUT"
+	echo "]" >> "$OUTPUT"
+
+	# Generate .vscode/c_cpp_properties.json (only if it doesn't exist)
+	VSCODE_DIR="$dir/.vscode"
+	CPP_PROPS="$VSCODE_DIR/c_cpp_properties.json"
+	if [ ! -f "$CPP_PROPS" ]; then
+		mkdir -p "$VSCODE_DIR"
+		cat > "$CPP_PROPS" << EOF
 {
 	"configurations": [
 		{
 			"name": "Linux",
 			"includePath": [
-				"${workspaceFolder}",
-				"${workspaceFolder}/../../include",
-				"${workspaceFolder}/../../platform",
-				"${workspaceFolder}/../../platform/mkfw"
+				"\${workspaceFolder}",
+				"\${workspaceFolder}/../../include",
+				"\${workspaceFolder}/../../platform",
+				"\${workspaceFolder}/../../platform/mkfw"
 			],
 			"defines": [],
 			"compilerPath": "/usr/bin/gcc",
-			"cStandard": "gnu11",
-			"cppStandard": "gnu++17",
+			"cStandard": "gnu99",
 			"intelliSenseMode": "linux-gcc-x64",
-			"compileCommands": "${workspaceFolder}/compile_commands.json",
+			"compileCommands": "\${workspaceFolder}/compile_commands.json",
 			"browse": {
 				"path": [
-					"${workspaceFolder}",
-					"${workspaceFolder}/../../include",
-					"${workspaceFolder}/../../platform",
-					"${workspaceFolder}/../../platform/mkfw"
+					"\${workspaceFolder}",
+					"\${workspaceFolder}/../../include",
+					"\${workspaceFolder}/../../platform",
+					"\${workspaceFolder}/../../platform/mkfw"
 				],
 				"limitSymbolsToIncludedHeaders": false
 			}
@@ -72,10 +173,31 @@ EOF
 	"version": 4
 }
 EOF
+		echo "  Created: $CPP_PROPS"
+	fi
 
-    echo "  ✓ Created compile_commands.json"
-    echo "  ✓ Created .vscode/c_cpp_properties.json"
-    echo ""
+	# Generate .vscode/settings.json (only if it doesn't exist)
+	SETTINGS="$VSCODE_DIR/settings.json"
+	if [ ! -f "$SETTINGS" ]; then
+		mkdir -p "$VSCODE_DIR"
+		cat > "$SETTINGS" << EOF
+{
+	"files.associations": {
+		"*.s": "m68k",
+		"*.rh": "c"
+	},
+	"files.exclude": {
+		"**/.profile_viewer*": true,
+		"**/.remake_*": true,
+		"**/remake": true,
+		"**/viewer": true,
+		"**/*.exe": true
+	}
+}
+EOF
+		echo "  Created: $SETTINGS"
+	fi
 done
 
-echo "Done! All remake projects now have IntelliSense configuration."
+echo ""
+echo "Done! Generated compile_commands.json in each remake directory."

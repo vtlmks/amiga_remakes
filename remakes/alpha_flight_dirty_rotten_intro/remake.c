@@ -119,7 +119,7 @@ static uint32_t stars[95];
 
 struct rng_state base_rand;
 
-static struct scroller_state *scroll_state;
+static struct scroller_state scroll_state;
 
 static struct rect clip_rect = { 0, 44, 346, 130 };
 
@@ -183,7 +183,7 @@ static uint8_t af_process_char(struct scroller_state *scr_state, uint8_t char_in
 
 // [=]===^=[ remake_init ]============================================================^===[=]
 static void remake_init(struct platform_state *state) {
-	change_resolution(state, BUFFER_WIDTH, BUFFER_HEIGHT);
+	platform_change_resolution(state, BUFFER_WIDTH, BUFFER_HEIGHT);
 
 	xor_init_rng(&base_rand, 187481201);
 
@@ -195,17 +195,18 @@ static void remake_init(struct platform_state *state) {
 		color_buffer[pixel] = background_copper[(pixel / 8) % 58];
 	}
 
-	scroll_state = scroller_new(32, 32, 152, 1, scroll_text, alpha_flight_font, font_char_infos, af_process_char);
+	scroll_state = (struct scroller_state){ .char_width = 32, .char_height = 32, .dest_offset_y = 152, .speed = 1, .text = scroll_text, .font = alpha_flight_font, .char_info = font_char_infos, .process_char = af_process_char };
+	scroller_new(&scroll_state);
 
 	micromod_initialize(&chipsong_song, (int8_t*)chipsong_data, 48000);
 
 	mkfw_audio_callback = remake_audio_callback;
 }
 
-static void remake_options(struct options *opt) {
-	opt->release_group = "Alpha Flight";
-	opt->release_title = "Dirty Rotten Intro";
-	opt->window_title = "Alpha Flight - Dirty Rotten Intro 1992-10\0";
+static void remake_options(struct platform_state *state) {
+	state->release_group = "Alpha Flight";
+	state->release_title = "Dirty Rotten Intro";
+	state->window_title = "Alpha Flight - Dirty Rotten Intro 1992-10\0";
 }
 
 static void af_render_scroll_buffer(struct platform_state *state, struct scroller_state *scr_state) {
@@ -282,8 +283,9 @@ static void render_stars(struct platform_state *state) {
 
 // [=]===^=[ remake_frame ]============================================================^===[=]
 static void remake_frame(struct platform_state *state) {
+	platform_clear_buffer(state);
 
-	scroller(scroll_state);
+	scroller_update(state, &scroll_state);
 	render_background(state);
 	render_stars(state);
 
@@ -308,7 +310,7 @@ static void remake_frame(struct platform_state *state) {
 		} break;
 	}
 
-	af_render_scroll_buffer(state, scroll_state);
+	af_render_scroll_buffer(state, &scroll_state);
 }
 
 // [=]===^=[ remake_shutdown ]============================================================^===[=]

@@ -36,7 +36,7 @@ static void remake_audio_callback(int16_t *data, size_t frames) {
 
 // [=]===^=[ remake_init ]============================================================^===[=]
 static void remake_init(struct platform_state *state) {
-	change_resolution(state, BUFFER_WIDTH, BUFFER_HEIGHT);
+	platform_change_resolution(state, BUFFER_WIDTH, BUFFER_HEIGHT);
 
 	// mkfw_set_window_title(remake_title);
 	// int mod_size = _2d6_end - _2d6_data;
@@ -48,16 +48,17 @@ static void remake_init(struct platform_state *state) {
 	// mkfw_audio_callback = remake_audio_callback;
 }
 
-static void remake_options(struct options *opt) {
-	opt->release_group = "REMAKE";
-	opt->release_title = "TEMPLATE";
-	opt->window_title = "remake - remake 1985-01\0";
+static void remake_options(struct platform_state *state) {
+	state->release_group = "REMAKE";
+	state->release_title = "TEMPLATE";
+	state->window_title = "remake - remake 1985-01\0";
 }
 
 INCBIN_UGG(fullscreen, "test.ugg");
 
 // [=]===^=[ remake_frame ]============================================================^===[=]
 static void remake_frame(struct platform_state *state) {
+	platform_clear_buffer(state);
 
 	uint32_t *dst = BUFFER_PTR(state, 0, 0);
 	uint8_t *src = fullscreen->data;

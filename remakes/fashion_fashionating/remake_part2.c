@@ -8,9 +8,7 @@ INCBIN_UGG(p2_bouncing_balls, "data/p2_bouncing_balls.ugg");
 INCBIN_UGG(p2_bouncing_ball_springs, "data/p2_bouncing_ball_springs.ugg");
 INCBIN_UGG(p2_stalaktites, "data/p2_stalaktites.ugg");
 
-#define p2_scrollerHeight	32
-#define p2_scrollerWidth	BUFFER_WIDTH
-#define p2_scrollCharWidth	32
+static struct scroller_state p2_scroller;
 
 #define springsCopperStart	85
 #define scrollerCopperStart 223
@@ -43,17 +41,12 @@ static uint8_t scroll_text[] =
 " to enter the next part! (there you can read the greetings)  bye! see you in a few moments!!                                      "
 "                                                 @";
 
-static uint8_t *tmp_scroll_text_ptr;
-
 struct ballSpring {
 	uint8_t ball_anim_offset;
 	uint8_t offset;
 };
 
 static struct ballSpring	ball_springs[7];
-__attribute__((aligned(64)))
-static uint8_t scroll_buffer[(p2_scrollerWidth + p2_scrollCharWidth)*p2_scrollerHeight];
-
 static uint8_t dup_line_index;
 static int8_t ttcol_id1;
 static uint8_t ttcol_id2;
@@ -81,6 +74,17 @@ static uint8_t scroll_char_conversion[] = {
 	0x1a, 0x22, 0x23, 0x1a, 0x25, 0x26, 0x1a, 0x28, 0x1c, 0x1e, 0x1a, 0x1a, 0x34, 0x21, 0x24, 0x1a,
 	0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f, 0x30, 0x31, 0x32, 0x33, 0x27, 0x1a, 0x1a, 0x29, 0x1a, 0x1d,
 };
+
+static uint8_t p2_process_char(struct scroller_state *scr_state, uint8_t c) {
+	if(c == '@') {
+		scr_state->text_offset = 0;
+		c = scr_state->text[scr_state->text_offset++];
+	}
+	if(c > 63) {
+		c -= 96;
+	}
+	return scroll_char_conversion[c] + 31;
+}
 
 __attribute__((aligned(64)))
 static uint32_t tech_tech_colors[] = {
@@ -139,47 +143,7 @@ static void render_copper(struct platform_state *state, uint32_t start_line, uin
 	}
 }
 
-// [=]===^=====================================================================================^===[=]
-static void update_scroller(void) {
-	static uint8_t update = 0;
-	static uint8_t scroll_counter = 0;
-
-	uint32_t *row = 0;
-
-	memmove(scroll_buffer, scroll_buffer + 2, ARRAYSIZE(scroll_buffer) - 2);
-
-	scroll_counter += 2;
-	// check if we should render a new character
-	if(scroll_counter >= 32) {
-		scroll_counter = 0;
-
-		uint8_t *char_destination = scroll_buffer + p2_scrollerWidth;
-		uint8_t *char_source = p2_large_scroll_font->data;
-		uint8_t new_char = *tmp_scroll_text_ptr;
-		if(new_char == '@') {
-			tmp_scroll_text_ptr = scroll_text;
-			new_char = *tmp_scroll_text_ptr;
-		}
-		if(new_char > 63) new_char -= 96;
-
-		char_source += 32 * 32 * (scroll_char_conversion[new_char] - 1);
-		++tmp_scroll_text_ptr;
-
-		for(uint32_t y = 0; y < p2_scrollCharWidth; ++y) {
-			memcpy(char_destination, char_source, p2_scrollCharWidth);
-			char_destination += p2_scrollerWidth + p2_scrollCharWidth;
-			char_source += p2_scrollCharWidth;
-		}
-	}
-
-	uint32_t temp = p2_large_scroll_font->palette[31];
-	for(uint32_t i = 0; i < 28; ++i) {
-		p2_large_scroll_font->palette[(31 - i)] = p2_large_scroll_font->palette[(30 - i)];
-	}
-	p2_large_scroll_font->palette[4] = temp;
-}
-
-// [=]===^=====================================================================================^===[=]
+// [=]===^=[ render_tech_tech ]=====================================================^===[=]
 static void render_tech_tech(struct platform_state *state) {
 	uint8_t logo_line = 0;
 	uint8_t tmp_dup_line_index = dup_line_index;
@@ -218,24 +182,6 @@ static void render_tech_tech(struct platform_state *state) {
 		temp_ttcol_id1 = (temp_ttcol_id1 + 1) % ARRAYSIZE(tech_tech_colors);
 		temp_ttcol_id2 = (temp_ttcol_id2 + 1) % ARRAYSIZE(tech_tech_colors);
 		temp_ttsine_id = (temp_ttsine_id + 1) % ARRAYSIZE(tech_tech_sine);
-	}
-}
-
-static void render_scroller(struct platform_state *state) {
-	uint32_t *row = BUFFER_PTR(state, (state->buffer_width - p2_scrollerWidth) / 2, 233);
-	uint8_t *src = scroll_buffer;
-
-	for(uint32_t i = 0; i < p2_scrollerHeight; ++i) {
-		uint32_t *pixel = row;
-		for(uint32_t x = 0; x < p2_scrollerWidth; ++x) {
-			if(*src) {
-				*pixel = p2_large_scroll_font->palette[*src];
-			}
-			++pixel;
-			++src;
-		}
-		row += state->buffer_width;
-		src += p2_scrollCharWidth;
 	}
 }
 
@@ -311,7 +257,17 @@ static uint32_t part_2_render(struct platform_state *state) {
 			ball_springs[i].ball_anim_offset = 2 * i;
 			ball_springs[i].offset = 3 * i;
 		}
-		tmp_scroll_text_ptr = scroll_text;
+		p2_scroller = (struct scroller_state) {
+			.char_width = 32,
+			.char_height = 32,
+			.dest_offset_y = 233,
+			.speed = 2,
+			.text = scroll_text,
+			.font = p2_large_scroll_font,
+			.palette = p2_large_scroll_font->palette,
+			.process_char = p2_process_char
+		};
+		scroller_new(&p2_scroller);
 		p2_initialized = 1;
 	}
 
@@ -339,11 +295,15 @@ static uint32_t part_2_render(struct platform_state *state) {
 
 	render_tech_tech(state);
 
-	// Update and render scroller
-	update_scroller();
-	render_scroller(state);
+	// Palette rotation for scroller color cycling
+	uint32_t temp = p2_large_scroll_font->palette[31];
+	for(uint32_t i = 0; i < 28; ++i) {
+		p2_large_scroll_font->palette[(31 - i)] = p2_large_scroll_font->palette[(30 - i)];
+	}
+	p2_large_scroll_font->palette[4] = temp;
+	scroller_update(state, &p2_scroller);
 
-	return mkfw_is_button_pressed(window, MOUSE_BUTTON_LEFT);
+	return mkfw_is_button_pressed(state->window, MOUSE_BUTTON_LEFT);
 }
 
 
