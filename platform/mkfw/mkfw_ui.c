@@ -310,7 +310,7 @@ static GLuint mkui_create_shader(const char *vertex_src, const char *fragment_sr
 	if(!success) {
 		char info[512];
 		glGetShaderInfoLog(vertex_shader, 512, 0, info);
-		DEBUG_PRINT("Vertex shader compilation failed: %s\n", info);
+		mkfw_error("vertex shader compilation failed: %s", info);
 		return 0;
 	}
 
@@ -322,7 +322,7 @@ static GLuint mkui_create_shader(const char *vertex_src, const char *fragment_sr
 	if(!success) {
 		char info[512];
 		glGetShaderInfoLog(fragment_shader, 512, 0, info);
-		DEBUG_PRINT("Fragment shader compilation failed: %s\n", info);
+		mkfw_error("fragment shader compilation failed: %s", info);
 		return 0;
 	}
 
@@ -335,7 +335,7 @@ static GLuint mkui_create_shader(const char *vertex_src, const char *fragment_sr
 	if(!success) {
 		char info[512];
 		glGetProgramInfoLog(program, 512, 0, info);
-		DEBUG_PRINT("Shader linking failed: %s\n", info);
+		mkfw_error("shader linking failed: %s", info);
 		return 0;
 	}
 

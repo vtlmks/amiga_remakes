@@ -5,6 +5,8 @@
 #pragma once
 
 #include <stdint.h>
+#include <stdarg.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "mkfw_keys.h"
@@ -48,11 +50,62 @@ struct mkfw_state {
 	void *user_data;
 };
 
+/* Error reporting callback */
+typedef void (*mkfw_error_callback_t)(const char *message);
+static mkfw_error_callback_t mkfw_error_callback;
+
+__attribute__((format(printf, 1, 2)))
+static inline void mkfw_error(const char *fmt, ...) {
+	if(mkfw_error_callback) {
+		char buf[512];
+		va_list args;
+		va_start(args, fmt);
+		vsnprintf(buf, sizeof(buf), fmt, args);
+		va_end(args);
+		mkfw_error_callback(buf);
+	}
+}
+
 /* Platform-specific implementation includes */
 #ifdef _WIN32
 #include "mkfw_win32.c"
 #elif __linux__
 #include "mkfw_linux.c"
+#endif
+
+/* Thread abstraction */
+#ifdef _WIN32
+	typedef HANDLE mkfw_thread;
+	#define MKFW_THREAD_FUNC(name, arg) DWORD WINAPI name(LPVOID arg)
+
+	static inline mkfw_thread mkfw_thread_create(LPTHREAD_START_ROUTINE func, void *arg) {
+		return CreateThread(0, 0, func, arg, 0, 0);
+	}
+
+	static inline void mkfw_thread_join(mkfw_thread t) {
+		WaitForSingleObject(t, INFINITE);
+		CloseHandle(t);
+	}
+#else
+	#include <pthread.h>
+	typedef pthread_t mkfw_thread;
+	#define MKFW_THREAD_FUNC(name, arg) void *name(void *arg)
+
+	static inline mkfw_thread mkfw_thread_create(void *(*func)(void *), void *arg) {
+		pthread_t t;
+		if(pthread_create(&t, 0, func, arg)) {
+			return 0;
+		}
+		return t;
+	}
+
+	static inline void mkfw_thread_join(mkfw_thread t) {
+		pthread_join(t, 0);
+	}
+
+	static inline void mkfw_thread_cancel(mkfw_thread t) {
+		pthread_cancel(t);
+	}
 #endif
 
 /* Audio subsystem - optional */
@@ -74,10 +127,13 @@ struct mkfw_state {
 #endif
 
 /* Inline helper functions - placed after platform includes so struct is defined */
-static inline void mkfw_update_modifier_state(struct mkfw_state *state) { memcpy(state->prev_modifier_state, state->modifier_state, sizeof(state->modifier_state)); }
-static inline void mkfw_update_keyboard_state(struct mkfw_state *state) { memcpy(state->prev_keyboard_state, state->keyboard_state, sizeof(state->keyboard_state)); }
-static inline void mkfw_update_mouse_state(struct mkfw_state *state) { memcpy(state->previous_mouse_buttons, state->mouse_buttons, sizeof(state->mouse_buttons)); }
+static inline void mkfw_update_input_state(struct mkfw_state *state) {
+	memcpy(state->prev_keyboard_state, state->keyboard_state, sizeof(state->keyboard_state));
+	memcpy(state->prev_modifier_state, state->modifier_state, sizeof(state->modifier_state));
+	memcpy(state->previous_mouse_buttons, state->mouse_buttons, sizeof(state->mouse_buttons));
+}
 
+static inline void mkfw_set_error_callback(mkfw_error_callback_t callback) { mkfw_error_callback = callback; }
 static inline void mkfw_set_user_data(struct mkfw_state *state, void *user_data) { state->user_data = user_data; }
 static inline void *mkfw_get_user_data(struct mkfw_state *state) { return state->user_data; }
 static inline void mkfw_set_key_callback(struct mkfw_state *state, key_callback_t callback) { state->key_callback = callback; }

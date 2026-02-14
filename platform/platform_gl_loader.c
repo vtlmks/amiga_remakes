@@ -223,7 +223,6 @@ static void *get_any_gl_address(const char *name) {
 	return p;
 }
 
-#		// DEBUG_PRINT("Failed to load OpenGL function: %s\n", #Name);
 #define GetOpenGLFunction(Name, ...) \
 	*(void **)&Name = (void *)get_any_gl_address(#Name); \
 	if(!Name) { \
@@ -237,13 +236,13 @@ static void *glXGetProcAddress(const GLubyte *procName) {
 	if(!glxGetProcAddress) {
 		void *libGL = dlopen("libGL.so.1", RTLD_LAZY | RTLD_GLOBAL);
 		if(!libGL) {
-			// DEBUG_PRINT("Error: Unable to load libGL.so.1\n");
-			// exit(EXIT_FAILURE);
+			mkfw_error("unable to load libGL.so.1");
+			exit(EXIT_FAILURE);
 		}
 		glxGetProcAddress = (void *(*)(const GLubyte *))dlsym(libGL, "glXGetProcAddress");
 		if(!glxGetProcAddress) {
-			// DEBUG_PRINT("Error: Unable to find glXGetProcAddress\n");
-			// exit(EXIT_FAILURE);
+			mkfw_error("unable to find glXGetProcAddress");
+			exit(EXIT_FAILURE);
 		}
 	}
 	return glxGetProcAddress(procName);
@@ -252,12 +251,12 @@ static void *glXGetProcAddress(const GLubyte *procName) {
 #define GetOpenGLFunction(Name, ...) \
 	*(void **)&Name = (void *)glXGetProcAddress((const GLubyte *)#Name);	\
 	if(!Name) {	\
-		DEBUG_PRINT("Failed to load OpenGL function: %s\n", #Name);	\
+		mkfw_error("failed to load OpenGL function: %s", #Name);	\
 		exit(EXIT_FAILURE);	\
 	}
 #endif
 
 __attribute__((cold, noinline, section(".init_section")))
-static void gl_loader() {
+static void opengl_function_loader() {
 	GL_FUNCTIONS(GetOpenGLFunction);
 }

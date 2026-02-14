@@ -18,7 +18,7 @@ struct mkfw_timer_handle {
 	uint32_t running;
 
 	HANDLE event;
-	HANDLE timer_thread;
+	mkfw_thread timer_thread;
 	HANDLE mmcss_handle;
 
 #ifdef MKFW_TIMER_DEBUG
@@ -113,9 +113,9 @@ static DWORD WINAPI mkfw_timer_thread_func(LPVOID arg) {
 			if(overshoot_ns < 0) overshoot_ns = 0;
 
 			if(remaining_after_sleep_ns >= 0) {
-				DEBUG_PRINT("[DEBUG] Woke up with %lld ns left. Overshoot: %5lld ns\n", remaining_after_sleep_ns, overshoot_ns);
+				mkfw_error("[DEBUG] Woke up with %lld ns left. Overshoot: %5lld ns", remaining_after_sleep_ns, overshoot_ns);
 			} else {
-				DEBUG_PRINT("[DEBUG] No sleep. Overshoot: %lld ns\n", overshoot_ns);
+				mkfw_error("[DEBUG] No sleep. Overshoot: %lld ns", overshoot_ns);
 			}
 		}
 		t->last_wait_start_ns = now_ns;
@@ -161,7 +161,7 @@ static struct mkfw_timer_handle *mkfw_timer_new(uint64_t interval_ns) {
 #endif
 
 	t->event = CreateEvent(0, FALSE, FALSE, 0);
-	t->timer_thread = CreateThread(0, 0, mkfw_timer_thread_func, t, 0, 0);
+	t->timer_thread = mkfw_thread_create(mkfw_timer_thread_func, t);
 
 	return t;
 }
@@ -175,8 +175,7 @@ static void mkfw_timer_destroy(struct mkfw_timer_handle *t) {
 	t->running = 0;
 
 	SetEvent(t->event);
-	WaitForSingleObject(t->timer_thread, INFINITE);
-	CloseHandle(t->timer_thread);
+	mkfw_thread_join(t->timer_thread);
 	CloseHandle(t->event);
 
 	if(t->mmcss_handle) {

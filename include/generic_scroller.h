@@ -24,12 +24,33 @@ struct scroller_state {
 	uint32_t speed;								// The speed of the scroller
 	uint32_t char_width;							// Width of each character
 	uint32_t char_height;						// Height of each character
+	void (*render_scroll)(struct platform_state*, struct scroller_state*, uint32_t*);
+	uint32_t *palette;
+	uint32_t scroll_offset;						// Scroll render offset (default 370)
 };
 
-static struct scroller_state *scroller_new(uint32_t char_width, uint32_t char_height, uint32_t offset_y, uint32_t speed, uint8_t *text, struct ugg *font, struct font_char_info *char_info, uint8_t (*process_char)(struct scroller_state *, uint8_t));
-static void scroller(struct scroller_state *scr_state);
+static void scroller_new(struct scroller_state *scr_state);
+static void scroller_update(struct platform_state *state, struct scroller_state *scr_state);
 
 // TODO(peter): Add #ifdef GENERIC_SCROLLER_IMPLEMENTATION
+
+
+static void default_render_scroller(struct platform_state *state, struct scroller_state *scr_state, uint32_t *palette) {
+	uint32_t *scroll_dest = BUFFER_PTR(state, 0, scr_state->dest_offset_y);
+	uint8_t *scroll_src = scr_state->buffer;
+	size_t base_src_index = (scr_state->char_render_offset - scr_state->scroll_offset) & SCROLL_BUFFER_MASK;
+
+	for(size_t i = 0; i < scr_state->char_height; ++i) {
+		for(size_t j = 0; j < state->buffer_width; ++j) {
+			size_t src_index = (base_src_index + j) & SCROLL_BUFFER_MASK;
+			uint8_t color_index = scroll_src[src_index];
+			palette[0] = scroll_dest[j];
+			scroll_dest[j] = palette[color_index];
+		}
+		scroll_dest += state->buffer_width;
+		scroll_src += SCROLL_BUFFER_WIDTH;
+	}
+}
 
 static uint8_t default_process_char(struct scroller_state *scr_state, uint8_t scroll_character) {
 	if(scroll_character == 0) {		// Scrolltext end
@@ -47,26 +68,24 @@ static size_t horizontal_offset(struct scroller_state *scr, uint8_t c) {
 	return (c - ' ') * scr->char_width;
 }
 
-static struct scroller_state *scroller_new(uint32_t char_width, uint32_t char_height, uint32_t offset_y, uint32_t speed, uint8_t *text, struct ugg *font, struct font_char_info *char_info, uint8_t (*process_char)(struct scroller_state *, uint8_t)) {
-	struct scroller_state *scr_state = calloc(1, sizeof(struct scroller_state));
-	scr_state->char_width = char_width;
-	scr_state->char_height = char_height;
-	scr_state->buffer = calloc(1, SCROLL_BUFFER_WIDTH * char_height);
-	scr_state->speed = speed;
-	scr_state->font = font;
-	scr_state->text = text;
-	scr_state->dest_offset_y = offset_y;
-	scr_state->char_info = char_info;
-	scr_state->process_char = process_char ? process_char : default_process_char;
-	return scr_state;
+static void scroller_new(struct scroller_state *scr_state) {
+	scr_state->buffer = calloc(1, SCROLL_BUFFER_WIDTH * scr_state->char_height);
+	if(!scr_state->process_char) {
+		scr_state->process_char = default_process_char;
+	}
+	if(!scr_state->render_scroll) {
+		scr_state->render_scroll = default_render_scroller;
+	}
+	if(!scr_state->scroll_offset) {
+		scr_state->scroll_offset = 370;
+	}
 }
 
 static void scroller_remove(struct scroller_state *scr_state) {
 	free(scr_state->buffer);
-	free(scr_state);
 }
 
-static void scroller(struct scroller_state * restrict scr_state) {
+static void scroller_update(struct platform_state *state, struct scroller_state * restrict scr_state) {
 	if(scr_state->pause_timer) {
 		scr_state->pause_timer--;
 		return;
@@ -96,6 +115,11 @@ static void scroller(struct scroller_state * restrict scr_state) {
 		}
 		scr_state->char_next_render_offset += char_width;
 	}
+
 	scr_state->char_render_offset += scr_state->speed;
+
+	if(scr_state->palette) {
+		scr_state->render_scroll(state, scr_state, scr_state->palette);
+	}
 }
 

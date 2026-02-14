@@ -16,10 +16,26 @@
 
 void (*mkfw_audio_callback)(int16_t *audio_buffer, size_t frames);
 
+// Single-pole IIR low-pass filter (RC filter)
+// alpha = dt / (rc + dt), where dt = 1/sample_rate, rc = 1/(2*pi*cutoff_hz)
+// At 48kHz with ~8kHz cutoff: alpha ≈ 0.7265
+#define MKFW_LP_ALPHA 0.7265f
+
+static float mkfw_lp_prev_l = 0.0f;
+static float mkfw_lp_prev_r = 0.0f;
+
 static void mkfw_audio_callback_thread(int16_t *audio_buffer, size_t frames) {
 	memset(audio_buffer, 0, frames * MKFW_NUM_CHANNELS * 2);
 	if(mkfw_audio_callback) {
 		mkfw_audio_callback(audio_buffer, frames);
+	}
+	for(size_t i = 0; i < frames; ++i) {
+		float l = (float)audio_buffer[i * 2 + 0];
+		float r = (float)audio_buffer[i * 2 + 1];
+		mkfw_lp_prev_l += MKFW_LP_ALPHA * (l - mkfw_lp_prev_l);
+		mkfw_lp_prev_r += MKFW_LP_ALPHA * (r - mkfw_lp_prev_r);
+		audio_buffer[i * 2 + 0] = (int16_t)mkfw_lp_prev_l;
+		audio_buffer[i * 2 + 1] = (int16_t)mkfw_lp_prev_r;
 	}
 }
 
@@ -28,7 +44,7 @@ static IMMDevice *mkfw_device_out;
 static IAudioClient *mkfw_audio_client_out;
 static IAudioRenderClient *mkfw_render_client;
 static HANDLE mkfw_audio_event;
-static HANDLE mkfw_audio_thread;
+static mkfw_thread mkfw_audio_thread;
 static int mkfw_audio_running;
 
 static DWORD WINAPI mkfw_audio_thread_proc(void *arg) {
@@ -98,35 +114,35 @@ static void mkfw_audio_initialize(void) {
 								if(SUCCEEDED(IAudioClient_GetService(mkfw_audio_client_out, &IID_IAudioRenderClient, (void**)&mkfw_render_client))) {
 									if(SUCCEEDED(IAudioClient_Start(mkfw_audio_client_out))) {
 										mkfw_audio_running = 1;
-										mkfw_audio_thread = CreateThread(0, 0, mkfw_audio_thread_proc, 0, 0, 0);
+										mkfw_audio_thread = mkfw_thread_create(mkfw_audio_thread_proc, 0);
 										if(mkfw_audio_thread) {
 											return;
 
-										} else { DEBUG_PRINT("CreateThread failed\n"); }
+										} else { mkfw_error("mkfw_thread_create failed"); }
 										IAudioClient_Stop(mkfw_audio_client_out);
 
-									} else { DEBUG_PRINT("IAudioClient_Start failed\n"); }
+									} else { mkfw_error("IAudioClient_Start failed"); }
 									IAudioRenderClient_Release(mkfw_render_client);
 
-								} else { DEBUG_PRINT("IAudioClient_GetService(IAudioRenderClient) failed\n"); }
+								} else { mkfw_error("IAudioClient_GetService(IAudioRenderClient) failed"); }
 
-							} else { DEBUG_PRINT("IAudioClient_SetEventHandle failed\n"); }
+							} else { mkfw_error("IAudioClient_SetEventHandle failed"); }
 							CloseHandle(mkfw_audio_event);
 
-						} else { DEBUG_PRINT("CreateEvent failed\n"); }
+						} else { mkfw_error("CreateEvent failed"); }
 
-					} else { DEBUG_PRINT("IAudioClient_Initialize failed\n"); }
+					} else { mkfw_error("IAudioClient_Initialize failed"); }
 
-				} else { DEBUG_PRINT("IAudioClient_GetDevicePeriod failed\n"); }
+				} else { mkfw_error("IAudioClient_GetDevicePeriod failed"); }
 				IAudioClient_Release(mkfw_audio_client_out);
 
-			} else { DEBUG_PRINT("IMMDevice_Activate failed\n"); }
+			} else { mkfw_error("IMMDevice_Activate failed"); }
 			IMMDevice_Release(mkfw_device_out);
 
-		} else { DEBUG_PRINT("IMMDeviceEnumerator_GetDefaultAudioEndpoint failed\n"); }
+		} else { mkfw_error("IMMDeviceEnumerator_GetDefaultAudioEndpoint failed"); }
 		IMMDeviceEnumerator_Release(mkfw_enumerator);
 
-	} else { DEBUG_PRINT("CoCreateInstance(CLSID_MMDeviceEnumerator) failed\n"); }
+	} else { mkfw_error("CoCreateInstance(CLSID_MMDeviceEnumerator) failed"); }
 
 	if(com_initialized) {
 		CoUninitialize();
@@ -141,8 +157,7 @@ static void mkfw_audio_shutdown(void) {
 
 	if(mkfw_audio_thread) {
 		SetEvent(mkfw_audio_event);
-		WaitForSingleObject(mkfw_audio_thread, INFINITE);
-		CloseHandle(mkfw_audio_thread);
+		mkfw_thread_join(mkfw_audio_thread);
 	}
 
 	if(mkfw_audio_client_out && mkfw_render_client) {

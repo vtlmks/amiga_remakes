@@ -8,18 +8,13 @@
 #define FRAME_RATE_HZ 50.0
 #define FRAME_TIME_NS ((uint64_t)(1000000000.0 / FRAME_RATE_HZ))
 
-struct options {
-	uint8_t fullscreen;
-	uint8_t crtshader;
+struct platform_state {
+	struct mkfw_state *window;
+
+	// Demo identity (set by remake_options)
 	char *release_group;	// MAX 40 chars
 	char *release_title;	// MAX 40 chars
 	char *window_title;
-};
-struct options opt;
-
-struct platform_state {
-	// Window reference
-	struct mkfw_state *window;
 
 	// Framebuffer (fixed 1024x1024, only buffer_width x buffer_height is used)
 	uint32_t buffer[1024 * 1024] __attribute__((aligned(4096)));

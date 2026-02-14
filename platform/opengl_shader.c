@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Peter Fors
 // SPDX-License-Identifier: MIT
 
-#include "shader.h"
+#include "opengl_shader.h"
 
 //==============================================================
 //
@@ -23,10 +23,10 @@
  *                0.0 = no change
  *                1.0 = increased saturation (over 1.0 for even more)
  *
- * thin, mask - Inputs shared between CrtsTone() and CrtsFilter()
+ * thin, mask - Inputs shared between opengl_shader_crts_tone() and CrtsFilter()
  *
  */
-static void CrtsTone(float * restrict dst, float contrast, float saturation, float thin, float mask) {
+static void opengl_shader_crts_tone(float * restrict dst, float contrast, float saturation, float thin, float mask) {
 //--------------------------------------------------------------
 #ifdef CRTS_MASK_NONE
 	mask = 1.0f;

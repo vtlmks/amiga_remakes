@@ -174,13 +174,13 @@ static uint32_t map_x11_keysym(struct mkfw_state *state, KeySym keysym, int key_
 static void enable_xi2_raw_input(struct mkfw_state *state) {
 	int event, error;
 	if(!XQueryExtension(PLATFORM(state)->display, "XInputExtension", &PLATFORM(state)->xi_opcode, &event, &error)) {
-		DEBUG_PRINT("XInput2 not available on this X server.\n");
+		mkfw_error("XInput2 not available on this X server");
 		return;
 	}
 
 	int major = 2, minor = 0;
 	if(XIQueryVersion(PLATFORM(state)->display, &major, &minor) == BadRequest) {
-		DEBUG_PRINT("XInput2 version 2.0 not supported.\n");
+		mkfw_error("XInput2 version 2.0 not supported");
 		return;
 	}
 
@@ -221,7 +221,7 @@ static GLXFBConfig select_best_fbconfig(Display *display, int screen) {
 	int fb_count = 0;
 	GLXFBConfig *fbcs = glXChooseFBConfig(display, screen, 0, &fb_count);
 	if(!fbcs || fb_count == 0) {
-		DEBUG_PRINT("Error: No framebuffer configs found.\n");
+		mkfw_error("no framebuffer configs found");
 		exit(EXIT_FAILURE);
 	}
 
@@ -280,7 +280,7 @@ static GLXFBConfig select_best_fbconfig(Display *display, int screen) {
 	}
 
 	if(!best_fbconfig) {
-		DEBUG_PRINT("Warning: No suitable framebuffer config supports window rendering, falling back to first.\n");
+		mkfw_error("no suitable framebuffer config supports window rendering, falling back to first");
 		best_fbconfig = fbcs[0];
 	}
 
@@ -322,7 +322,7 @@ static struct mkfw_state *mkfw_init(int32_t width, int32_t height) {
 	setup_signal_handlers(state);
 	PLATFORM(state)->display = XOpenDisplay(0);
 	if(!PLATFORM(state)->display) {
-		DEBUG_PRINT("Error: Unable to open X display\n");
+		mkfw_error("unable to open X display");
 		free(state->platform);
 		free(state);
 		return 0;
@@ -337,7 +337,7 @@ static struct mkfw_state *mkfw_init(int32_t width, int32_t height) {
 
 	XVisualInfo *vi = glXGetVisualFromFBConfig(PLATFORM(state)->display, fb_config);
 	if(!vi) {
-		DEBUG_PRINT("Error: Unable to get a visual from framebuffer config\n");
+		mkfw_error("unable to get a visual from framebuffer config");
 		XCloseDisplay(PLATFORM(state)->display);
 		free(state->platform);
 		free(state);
@@ -369,7 +369,7 @@ static struct mkfw_state *mkfw_init(int32_t width, int32_t height) {
 	// Create OpenGL context
 	PFNGLXCREATECONTEXTATTRIBSARBPROC glXCreateContextAttribsARB = (PFNGLXCREATECONTEXTATTRIBSARBPROC)glXGetProcAddress((const uint8_t *)"glXCreateContextAttribsARB");
 	if(!glXCreateContextAttribsARB) {
-		DEBUG_PRINT("Error: glXCreateContextAttribsARB not supported\n");
+		mkfw_error("glXCreateContextAttribsARB not supported");
 		XDestroyWindow(PLATFORM(state)->display, PLATFORM(state)->window);
 		XCloseDisplay(PLATFORM(state)->display);
 		free(state->platform);
@@ -388,7 +388,7 @@ static struct mkfw_state *mkfw_init(int32_t width, int32_t height) {
 
 	PLATFORM(state)->glctx = glXCreateContextAttribsARB(PLATFORM(state)->display, fb_config, 0, 1, ctx_attribs);
 	if(!PLATFORM(state)->glctx) {
-		DEBUG_PRINT("Error: Unable to create OpenGL 3.1 context\n");
+		mkfw_error("unable to create OpenGL 3.1 context");
 		XDestroyWindow(PLATFORM(state)->display, PLATFORM(state)->window);
 		XCloseDisplay(PLATFORM(state)->display);
 		free(state->platform);
@@ -413,7 +413,7 @@ static void mkfw_constrain_mouse(struct mkfw_state *state, int32_t constrain) {
 		int result = XGrabPointer(PLATFORM(state)->display, PLATFORM(state)->window, True, ButtonPressMask | ButtonReleaseMask | PointerMotionMask | FocusChangeMask, GrabModeAsync, GrabModeAsync, PLATFORM(state)->window, None, CurrentTime);
 
 		if(result != GrabSuccess) {
-			DEBUG_PRINT("Failed to grab pointer\n");
+			mkfw_error("failed to grab pointer");
 			return;
 		}
 
@@ -685,7 +685,7 @@ static void mkfw_swap_buffers(struct mkfw_state *state) {
 static void mkfw_set_window_min_size_and_aspect(struct mkfw_state *state, int32_t min_width, int32_t min_height, float aspect_width, float aspect_height) {
 	XSizeHints *hints = XAllocSizeHints();
 	if(!hints) {
-		DEBUG_PRINT("Failed to allocate XSizeHints\n");
+		mkfw_error("failed to allocate XSizeHints");
 		return;
 	}
 
@@ -723,7 +723,7 @@ static void mkfw_set_window_title(struct mkfw_state *state, char *title) {
 static void mkfw_set_window_resizable(struct mkfw_state *state, int32_t resizable) {
 	XSizeHints *hints = XAllocSizeHints();
 	if(!hints) {
-		DEBUG_PRINT("Failed to allocate XSizeHints\n");
+		mkfw_error("failed to allocate XSizeHints");
 		return;
 	}
 

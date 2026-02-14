@@ -67,7 +67,7 @@ static void load_glx_functions(Display *display) {
 	glXGetFBConfigAttrib = (PFNGLXGETFBCONFIGATTRIBPROC)glXGetProcAddress((const GLubyte *)"glXGetFBConfigAttrib"); /* Added */
 
 	if(!glXChooseFBConfig || !glXGetVisualFromFBConfig || !glXCreateContextAttribsARB || !glXMakeCurrent || !glXSwapBuffers || !glXDestroyContext || !glXGetCurrentDrawable || !glXGetClientString || !glXGetFBConfigAttrib) {
-		DEBUG_PRINT("Error: Failed to load GLX functions.\n");
+		mkfw_error("failed to load GLX functions");
 		exit(EXIT_FAILURE);
 	}
 }

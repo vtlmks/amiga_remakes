@@ -1,7 +1,6 @@
 // Copyright (c) 2025 Peter Fors
 // SPDX-License-Identifier: MIT
 
-#include <pthread.h>
 #include <time.h>
 #include <unistd.h>
 #include <sys/syscall.h>
@@ -14,7 +13,7 @@ struct mkfw_timer_handle {
 	uint64_t interval_ns;
 	struct timespec next_deadline;
 	uint32_t running;
-	pthread_t timer_thread;
+	mkfw_thread timer_thread;
 
 	volatile int futex_word;
 
@@ -51,7 +50,7 @@ static int mkfw_futex_wake(volatile int *addr) {
 	return syscall(SYS_futex, addr, FUTEX_WAKE_PRIVATE, 1, 0, 0, 0);
 }
 
-static void *mkfw_timer_thread_func(void *arg) {
+static MKFW_THREAD_FUNC(mkfw_timer_thread_func, arg) {
 	struct mkfw_timer_handle *t = (struct mkfw_timer_handle *)arg;
 
 	while(t->running) {
@@ -88,9 +87,9 @@ static void *mkfw_timer_thread_func(void *arg) {
 			if(overshoot_ns < 0) overshoot_ns = 0;
 
 			if(remaining_after_sleep_ns >= 0) {
-				DEBUG_PRINT("[DEBUG] Woke up with %ld ns left. Overshoot: %5ld ns\n", remaining_after_sleep_ns, overshoot_ns);
+				mkfw_error("[DEBUG] Woke up with %ld ns left. Overshoot: %5ld ns", remaining_after_sleep_ns, overshoot_ns);
 			} else {
-				DEBUG_PRINT("[DEBUG] No sleep. Overshoot: %ld ns\n", overshoot_ns);
+				mkfw_error("[DEBUG] No sleep. Overshoot: %ld ns", overshoot_ns);
 			}
 		}
 		t->last_wait_start = now;
@@ -116,7 +115,7 @@ static struct mkfw_timer_handle *mkfw_timer_new(uint64_t interval_ns) {
 	t->last_wait_start.tv_nsec = 0;
 #endif
 
-	pthread_create(&t->timer_thread, 0, mkfw_timer_thread_func, t);
+	t->timer_thread = mkfw_thread_create(mkfw_timer_thread_func, t);
 
 	return t;
 }
@@ -131,7 +130,7 @@ static void mkfw_timer_destroy(struct mkfw_timer_handle *t) {
 	t->running = 0;
 	t->futex_word = 1;
 	mkfw_futex_wake(&t->futex_word);
-	pthread_join(t->timer_thread, 0);
+	mkfw_thread_join(t->timer_thread);
 	free(t);
 }
 

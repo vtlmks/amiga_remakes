@@ -12,22 +12,38 @@
 
 void (*mkfw_audio_callback)(int16_t *audio_buffer, size_t frames);
 
+// Single-pole IIR low-pass filter (RC filter)
+// alpha = dt / (rc + dt), where dt = 1/sample_rate, rc = 1/(2*pi*cutoff_hz)
+// At 48kHz with ~8kHz cutoff: alpha ≈ 0.7265
+#define MKFW_LP_ALPHA 0.7265f
+
+static float mkfw_lp_prev_l = 0.0f;
+static float mkfw_lp_prev_r = 0.0f;
+
 static void mkfw_audio_callback_thread(int16_t *audio_buffer, size_t frames) {
 	memset(audio_buffer, 0, frames * MKFW_NUM_CHANNELS * 2);
 	if(mkfw_audio_callback) {
 		mkfw_audio_callback(audio_buffer, frames);
 	}
+
+	for(size_t i = 0; i < frames; ++i) {
+		float l = (float)audio_buffer[i * 2 + 0];
+		float r = (float)audio_buffer[i * 2 + 1];
+		mkfw_lp_prev_l += MKFW_LP_ALPHA * (l - mkfw_lp_prev_l);
+		mkfw_lp_prev_r += MKFW_LP_ALPHA * (r - mkfw_lp_prev_r);
+		audio_buffer[i * 2 + 0] = (int16_t)mkfw_lp_prev_l;
+		audio_buffer[i * 2 + 1] = (int16_t)mkfw_lp_prev_r;
+	}
 }
 
-#include <pthread.h>
 #include <alsa/asoundlib.h>
 
 static snd_pcm_t *mkfw_pcm;
-static pthread_t mkfw_audio_thread;
+static mkfw_thread mkfw_audio_thread;
 static int16_t *mkfw_audio_buffer;
 static snd_pcm_uframes_t mkfw_frames_per_period;
 
-static void *mkfw_audio_thread_func(void *arg) {
+static MKFW_THREAD_FUNC(mkfw_audio_thread_func, arg) {
 	while(1) {
 		int32_t err = snd_pcm_wait(mkfw_pcm, -1);
 		if(err < 0) {
@@ -99,12 +115,12 @@ static void mkfw_audio_initialize(void) {
 	if(snd_pcm_start(mkfw_pcm) < 0) {
 		return;
 	}
-	pthread_create(&mkfw_audio_thread, 0, mkfw_audio_thread_func, 0);
+	mkfw_audio_thread = mkfw_thread_create(mkfw_audio_thread_func, 0);
 }
 
 static void mkfw_audio_shutdown(void) {
-	pthread_cancel(mkfw_audio_thread);
-	pthread_join(mkfw_audio_thread, 0);
+	mkfw_thread_cancel(mkfw_audio_thread);
+	mkfw_thread_join(mkfw_audio_thread);
 	snd_pcm_drop(mkfw_pcm);
 	snd_pcm_close(mkfw_pcm);
 	free(mkfw_audio_buffer);

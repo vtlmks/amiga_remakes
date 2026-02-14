@@ -26,7 +26,7 @@ int main() {
 	mkfw_show_window(mkfw);
 
 	// Load OpenGL functions
-	gl_loader();
+	opengl_function_loader();
 
 	mkfw_set_swapinterval(mkfw, 1);
 

@@ -186,7 +186,7 @@ static void option_opengl_initialize(struct option_state *state) {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB8_ALPHA8, state->buffer_width, state->buffer_height, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB8_ALPHA8, state->buffer_width, state->buffer_height, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, 0);
 
 	glBindVertexArray(0);
 	glUseProgram(state->program);
@@ -205,20 +205,16 @@ static void option_render(struct option_state *state) {
 }
 
 // Render thread function
-#ifdef _WIN32
-static DWORD WINAPI option_render_thread_func(LPVOID arg) {
-#else
-static void *option_render_thread_func(void *arg) {
-#endif
-	struct options *opt = (struct options *)arg;
+static MKFW_THREAD_FUNC(option_render_thread_func, arg) {
+	struct platform_state *pstate = (struct platform_state *)arg;
 	struct option_state *state = &option_state;
 
 	mkfw_attach_context(state->window);
 	option_opengl_initialize(state);
 	option_init_stars(state);
 
-	uint32_t release_group_center_x = (state->buffer_width - (chrlen(opt->release_group) * 8)) >> 1;
-	uint32_t release_title_center_x = (state->buffer_width - (chrlen(opt->release_title) * 8)) >> 1;
+	uint32_t release_group_center_x = (state->buffer_width - (chrlen(pstate->release_group) * 8)) >> 1;
+	uint32_t release_title_center_x = (state->buffer_width - (chrlen(pstate->release_title) * 8)) >> 1;
 
 	struct mkfw_timer_handle *timer = mkfw_timer_new(FRAME_TIME_NS);
 
@@ -242,21 +238,21 @@ static void *option_render_thread_func(void *arg) {
 		}
 
 		if(mkfw_is_key_pressed(state->window, MKS_KEY_F1)) {
-			opt->fullscreen = !opt->fullscreen;
+			pstate->fullscreen = !pstate->fullscreen;
 		}
 		if(mkfw_is_key_pressed(state->window, MKS_KEY_F2)) {
-			opt->crtshader = !opt->crtshader;
+			pstate->toggle_crt_emulation = !pstate->toggle_crt_emulation;
 		}
 
 		// Render starfield and UI
 		render_starfield(state);
 		render_text(state,  68,  16, "MINDKILLER SYSTEMS 2025", line_colors);
 		render_text(state, 128,  32, "PRESENTS", line_colors);
-		render_text(state, release_group_center_x,  64, opt->release_group, line_release_colors);
-		render_text(state, release_title_center_x,  80, opt->release_title, line_release_colors);
+		render_text(state, release_group_center_x,  64, pstate->release_group, line_release_colors);
+		render_text(state, release_title_center_x,  80, pstate->release_title, line_release_colors);
 
-		char *fullscreen_string	= (opt->fullscreen)	? "F1 - Unlimited Screen Size ON" : "F1 - Unlimited Screen Size OFF";
-		char *crt_string			= (opt->crtshader)	? "F2 - CRT Shader DLC ...... ON" : "F2 - CRT Shader DLC ...... OFF";
+		char *fullscreen_string	= (pstate->fullscreen)				? "F1 - Unlimited Screen Size ON" : "F1 - Unlimited Screen Size OFF";
+		char *crt_string			= (pstate->toggle_crt_emulation)	? "F2 - CRT Shader DLC ...... ON" : "F2 - CRT Shader DLC ...... OFF";
 		render_text(state,  40, 120, fullscreen_string, line_colors);
 		render_text(state,  40, 136, crt_string, line_colors);
 
@@ -265,10 +261,7 @@ static void *option_render_thread_func(void *arg) {
 
 		render_text(state,  24, 216, "REMAKE BY VITAL/MINDKILLER SYSTEMS", line_colors);
 
-		// Update input state
-		mkfw_update_keyboard_state(state->window);
-		mkfw_update_modifier_state(state->window);
-		mkfw_update_mouse_state(state->window);
+		mkfw_update_input_state(state->window);
 
 		// Render and swap buffers
 		option_render(state);
@@ -288,7 +281,7 @@ static void option_audio(int16_t *audio_buffer, size_t frames) {
 	fc14_get_audio(&option_song, audio_buffer, frames);
 };
 
-static uint8_t option_selector(struct options *opt) {
+static uint8_t option_selector(struct platform_state *pstate) {
 	fc14_initialize(&option_song, (const uint8_t*)billy_the_kid_music, billy_the_kid_music_end - billy_the_kid_music_data, 48000);
 
 	xor_init_rng(&option_state.rand, 187481201);
@@ -299,7 +292,7 @@ static uint8_t option_selector(struct options *opt) {
 	uint32_t width = OPTIONS_WINDOW_WIDTH * OPTIONS_WINDOW_SCALE;
 	uint32_t height = OPTIONS_WINDOW_HEIGHT * OPTIONS_WINDOW_SCALE;
 	option_state.window = mkfw_init(width, height);
-	gl_loader();
+	opengl_function_loader();
 
 	mkfw_set_swapinterval(option_state.window, 0);
 	mkfw_set_window_min_size_and_aspect(option_state.window, width, height, width, height);
@@ -312,25 +305,15 @@ static uint8_t option_selector(struct options *opt) {
 	mkfw_audio_callback = option_audio;
 	mkfw_detach_context(option_state.window);
 
-#ifdef _WIN32
-	HANDLE render_thread = CreateThread(0, 0, option_render_thread_func, opt, 0, 0);
+	mkfw_thread render_thread = mkfw_thread_create(option_render_thread_func, pstate);
 	if(render_thread) {
-#else
-	pthread_t render_thread;
-	if(!pthread_create(&render_thread, 0, option_render_thread_func, opt)) {
-#endif
 		while(option_state.running) {
 			mkfw_pump_messages(option_state.window);
 			mkfw_sleep(5000000);
 		}
 
 		option_state.running = 0;
-#ifdef _WIN32
-		WaitForSingleObject(render_thread, INFINITE);
-		CloseHandle(render_thread);
-#else
-		pthread_join(render_thread, 0);
-#endif
+		mkfw_thread_join(render_thread);
 	}
 
 	mkfw_audio_callback = 0;

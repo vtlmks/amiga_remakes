@@ -428,7 +428,6 @@ static LRESULT CALLBACK Win32WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPA
 		}
 
 		default:
-			// DEBUG_PRINT("Message received: 0x%x\n", uMsg);
 			break;
 	}
 	return DefWindowProc(hwnd, uMsg, wParam, lParam);
@@ -451,7 +450,7 @@ static void mkfw_enable_raw_mouse(struct mkfw_state *state, int32_t enable) {
 	rid.dwFlags     = 0;		// Default flags for raw input
 	rid.hwndTarget  = PLATFORM(state)->hwnd;
 	if(!RegisterRawInputDevices(&rid, 1, sizeof(rid))) {
-		DEBUG_PRINT("Failed to register raw mouse input.\n");
+		mkfw_error("failed to register raw mouse input");
 	}
 }
 
