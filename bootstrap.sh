@@ -29,5 +29,5 @@ process_selector() {
 	return 0
 }
 
-process_selector "option_selector_1"
+process_selector "option_selectors/selector_1"
 echo "Bootstrap complete. You can now run build_all.sh or individual build scripts."

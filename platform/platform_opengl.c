@@ -64,6 +64,32 @@ static GLuint opengl_link_program(const char *vertex_src, const char *fragment_s
 	return prog;
 }
 
+// [=]===^=[ opengl_create_fullscreen_quad ]================================================================^===[=]
+static void opengl_create_fullscreen_quad(GLuint *vao, GLuint *vbo, GLuint *ebo) {
+	float vertices[] = {
+		-1.0f, -1.0f, 0.0f, 0.0f,
+		 1.0f, -1.0f, 1.0f, 0.0f,
+		 1.0f,  1.0f, 1.0f, 1.0f,
+		-1.0f,  1.0f, 0.0f, 1.0f
+	};
+	unsigned int indices[] = { 0, 1, 2, 2, 3, 0 };
+
+	glGenVertexArrays(1, vao);
+	glGenBuffers(1, vbo);
+	glGenBuffers(1, ebo);
+	glBindVertexArray(*vao);
+
+	glBindBuffer(GL_ARRAY_BUFFER, *vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, *ebo);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
+	glBindVertexArray(0);
+}
+
 // [=]===^=[ opengl_setup_render_targets ]================================================================^===[=]
 static void opengl_setup_render_targets(struct platform_state *state) {
 	int w = state->buffer_width;
@@ -189,28 +215,7 @@ static void opengl_setup(struct platform_state *state) {
 	glUseProgram(state->passthrough_program);
 	state->passthrough_uniform_source = glGetUniformLocation(state->passthrough_program, "source");
 
-	glGenVertexArrays(1, &state->vao);
-	glGenBuffers(1, &state->vbo);
-	glGenBuffers(1, &state->ebo);
-	glBindVertexArray(state->vao);
-
-	float vertices[] = {
-		-1.0f, -1.0f, 0.0f, 0.0f,
-		 1.0f, -1.0f, 1.0f, 0.0f,
-		 1.0f,  1.0f, 1.0f, 1.0f,
-		-1.0f,  1.0f, 0.0f, 1.0f
-	};
-	unsigned int indices[] = { 0, 1, 2, 2, 3, 0 };
-
-	glBindBuffer(GL_ARRAY_BUFFER, state->vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, state->ebo);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
-	glEnableVertexAttribArray(0);
-	glEnableVertexAttribArray(1);
-	glBindVertexArray(0);
+	opengl_create_fullscreen_quad(&state->vao, &state->vbo, &state->ebo);
 }
 
 // [=]===^=[ opengl_render_frame ]=================================================================^===[=]

@@ -98,7 +98,7 @@ esac
 set -e
 
 # Process assets
-(cd option_selector_1/data && [ -n "$(ls *.bmp 2>/dev/null)" ] && bmp2ugg -o . *.bmp || true)
+(cd option_selectors/selector_1/data && [ -n "$(ls *.bmp 2>/dev/null)" ] && bmp2ugg -o . *.bmp || true)
 
 # Build Linux version
 (

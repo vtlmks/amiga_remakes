@@ -41,7 +41,7 @@
 #define MKS_RESAMPLER_IMPLEMENTATION
 #include "resampler.h"
 
-#include "option_selector_1/option_window.c"
+#include "option_selectors/selector_1/option_selector_1.c"
 
 // [=]===^=[ platform_clear_buffer ]=================================================================^===[=]
 __attribute__((always_inline))
