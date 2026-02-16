@@ -16,7 +16,6 @@
 		".incbin " STR(file) "\n"													\
 		".zero 64\n"																	\
 		".global " STR(name) "_end\n"												\
-		".balign 1\n"																	\
 		STR(name) "_end:\n");														\
 	extern __attribute__((aligned(64))) unsigned char name##_data[];	\
 	extern                              unsigned char name##_end[];
@@ -44,7 +43,6 @@
 		middle_section																	\
 		".byte 0\n"																		\
 		".global " STR(name) "_end\n"												\
-		".balign 1\n"																	\
 		STR(name) "_end:\n");														\
 	extern __attribute__((aligned(64))) char name##_data[];				\
 	extern                              char name##_end[];
