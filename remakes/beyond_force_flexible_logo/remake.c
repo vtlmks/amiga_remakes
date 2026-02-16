@@ -6,6 +6,7 @@
 #define BUFFER_WIDTH  (346 << 0)
 #define BUFFER_HEIGHT (270 << 0)
 
+#define AUDIO_STEREO_MIX
 #include "platform.c"
 
 // [=]===^=[ remake stuff below ]============================================================^===[=]
@@ -307,17 +308,6 @@ static void render_flexible_logo(struct platform_state *state) {
 // [=]===^=[ audio_callback ]============================================================^===[=]
 static void remake_audio_callback(int16_t *data, size_t frames) {
 	micromod_get_audio(&module, (short*)data, frames);
-
-	for(size_t i = 0; i < frames; i++) {
-		int32_t old_left = (int32_t)data[i * 2];
-		int32_t old_right = (int32_t)data[i * 2 + 1];
-
-		int32_t mixed_left = old_left + (old_right * 3) / 4;
-		int32_t mixed_right = old_right + (old_left * 3) / 4;
-
-		data[i * 2] = (int16_t)(mixed_left >> 1);
-		data[i * 2 + 1] = (int16_t)(mixed_right >> 1);
-	}
 }
 
 #define FONT_ROW_0 0

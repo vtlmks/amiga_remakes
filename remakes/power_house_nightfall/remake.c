@@ -37,25 +37,7 @@ static uint32_t rng_next(void) {
 
 // [=]===^=[ audio_callback ]============================================================^===[=]
 static void remake_audio_callback(int16_t *data, size_t frames) {
-	// memset(data, 0, 2*2*frames);
-	// micromod_get_audio(&ctx, (short*)data, frames);
 	fc14_get_audio(&remake_song, data, frames);
-
-
-	// NOTE(peter): Enable for 75% mix if the player doesn't have that functionality!
-#if 0
-	for(size_t i = 0; i < frames; i++) {
-		int32_t old_left = (int32_t)data[i * 2];
-		int32_t old_right = (int32_t)data[i * 2 + 1];
-
-		int32_t mixed_left = old_left + (old_right * 3) / 4;
-		int32_t mixed_right = old_right + (old_left * 3) / 4;
-
-		// Shift right by 1 to prevent clipping and scale down
-		data[i * 2] = (int16_t)(mixed_left >> 1);
-		data[i * 2 + 1] = (int16_t)(mixed_right >> 1);
-	}
-#endif
 }
 
 

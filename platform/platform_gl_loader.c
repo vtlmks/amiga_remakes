@@ -283,7 +283,7 @@ static void *get_any_gl_address(const char *name) {
 }
 
 // Satisfies the forward declaration in mkfw_glx_mini.h
-static void *glXGetProcAddress(const GLubyte *procName) {
+void *glXGetProcAddress(const GLubyte *procName) {
 	return get_any_gl_address((const char *)procName);
 }
 

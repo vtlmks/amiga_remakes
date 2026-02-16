@@ -24,6 +24,8 @@
 
 #define MKFW_TIMER
 #define MKFW_AUDIO
+static void platform_audio_post_process(int16_t *audio_buffer, size_t frames);
+#define MKFW_AUDIO_POST_PROCESS platform_audio_post_process
 #include "mkfw.h"
 #include "platform_gl_loader.c"
 #include "platform_state.c"
@@ -42,6 +44,39 @@
 #include "resampler.h"
 
 #include "option_selectors/selector_1/option_selector_1.c"
+
+// [=]===^=[ platform_audio_post_process ]=============================================================^===[=]
+// Single-pole IIR low-pass filter (RC filter)
+// alpha = dt / (rc + dt), where dt = 1/sample_rate, rc = 1/(2*pi*cutoff_hz)
+// At 48kHz with ~8kHz cutoff: alpha ≈ 0.7265
+#define PLATFORM_LP_ALPHA 0.7265f
+
+static float platform_lp_prev_l = 0.0f;
+static float platform_lp_prev_r = 0.0f;
+
+static void platform_audio_post_process(int16_t *audio_buffer, size_t frames) {
+#ifdef AUDIO_STEREO_MIX
+	for(size_t i = 0; i < frames; ++i) {
+		int32_t old_left = (int32_t)audio_buffer[i * 2];
+		int32_t old_right = (int32_t)audio_buffer[i * 2 + 1];
+
+		int32_t mixed_left = old_left + (old_right * 3) / 4;
+		int32_t mixed_right = old_right + (old_left * 3) / 4;
+
+		audio_buffer[i * 2] = (int16_t)(mixed_left >> 1);
+		audio_buffer[i * 2 + 1] = (int16_t)(mixed_right >> 1);
+	}
+#endif
+
+	for(size_t i = 0; i < frames; ++i) {
+		float l = (float)audio_buffer[i * 2 + 0];
+		float r = (float)audio_buffer[i * 2 + 1];
+		platform_lp_prev_l += PLATFORM_LP_ALPHA * (l - platform_lp_prev_l);
+		platform_lp_prev_r += PLATFORM_LP_ALPHA * (r - platform_lp_prev_r);
+		audio_buffer[i * 2 + 0] = (int16_t)platform_lp_prev_l;
+		audio_buffer[i * 2 + 1] = (int16_t)platform_lp_prev_r;
+	}
+}
 
 // [=]===^=[ platform_clear_buffer ]=================================================================^===[=]
 __attribute__((always_inline))

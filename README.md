@@ -10,6 +10,7 @@ Requires both GCC (for Linux binaries) and MinGW (for Windows binaries).
 
 First-time setup:
 ```bash
+git submodule update --init
 ./bootstrap.sh
 ```
 
