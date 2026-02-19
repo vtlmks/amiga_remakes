@@ -123,7 +123,7 @@ static void remake_init(struct platform_state *state) {
 	micromod_initialize(&part2_song, (int8_t*)p2_the_world_of_the_dj,	48000);
 	micromod_initialize(&part3_song, (int8_t*)p3_parallax_ii,			48000);
 	micromod_initialize(&part4_song, (int8_t*)p4_ivory_towers,			48000);
-	mkfw_audio_callback = remake_audio_callback;
+	mkfw_set_audio_callback(remake_audio_callback);
 }
 
 

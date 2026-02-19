@@ -447,7 +447,7 @@ static void remake_init(struct platform_state *state) {
 	xor_init_rng(&vf_rand_state, 0x34872d9);
 	precalc_rotated_vertices();
 	fc14_initialize(&remake_song, waterproof_data, INCBIN_SIZE(waterproof), 48000);
-	mkfw_audio_callback = remake_audio_callback;
+	mkfw_set_audio_callback(remake_audio_callback);
 	mkfw_set_mouse_sensitivity(state->window, 0.067);
 	initialize_star_sprites();
 
@@ -705,6 +705,6 @@ static void remake_frame(struct platform_state *state) {
 
 // [=]===^=[ shutdown ]==============================================================^===[=]
 static void remake_shutdown(struct platform_state *state) {
-	mkfw_audio_callback = 0;
+	mkfw_set_audio_callback(0);
 	fc14_shutdown(&remake_song);
 }

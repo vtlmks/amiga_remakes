@@ -116,7 +116,7 @@ static void remake_init(struct platform_state *state) {
 	micromod_initialize(&part6_song, (int8_t*)part6_tune13_data,		48000);
 	micromod_initialize(&part8_song, (int8_t*)part8_n_s_dreamer_data,	48000);
 
-	mkfw_audio_callback = remake_audio_callback;
+	mkfw_set_audio_callback(remake_audio_callback);
 }
 
 // [=]===^=[ remake_shutdown ]============================================================^===[=]
@@ -132,7 +132,7 @@ static void remake_shutdown(struct platform_state *state) {
 	free(part3_sample.data);
 	free(part7_sample.data);
 
-	mkfw_audio_callback = 0;
+	mkfw_set_audio_callback(0);
 
 	// printf("\n=== CRT Parameters ===\n");
 	// printf("state.bloom_threshold = %.3ff;\n", state.bloom_threshold);

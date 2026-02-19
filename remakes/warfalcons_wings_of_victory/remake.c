@@ -71,7 +71,7 @@ static void remake_init(struct platform_state *state) {
 	memcpy(bobs, initializers, sizeof(bobs));
 
 	micromod_initialize(&module, (signed char*)music, 48000);
-	mkfw_audio_callback = remake_audio_callback;
+	mkfw_set_audio_callback(remake_audio_callback);
 }
 
 static void remake_options(struct platform_state *state) {
@@ -169,6 +169,6 @@ static void remake_frame(struct platform_state *state) {
 
 // [=]===^=[ remake_shutdown ]============================================================^===[=]
 static void remake_shutdown(struct platform_state *state) {
-	mkfw_audio_callback = 0;
+	mkfw_set_audio_callback(0);
 }
 

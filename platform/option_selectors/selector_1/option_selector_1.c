@@ -117,7 +117,7 @@ static uint32_t release_title_center_x;
 // [=]===^=[ option_setup ]================================================================^===[=]
 static void option_setup(struct option_state *state, struct platform_state *pstate) {
 	fc14_initialize(&option_song, (const uint8_t*)billy_the_kid_music, billy_the_kid_music_end - billy_the_kid_music_data, 48000);
-	mkfw_audio_callback = option_audio;
+	mkfw_set_audio_callback(option_audio);
 }
 
 // [=]===^=[ option_init ]================================================================^===[=]
@@ -155,6 +155,6 @@ static void option_frame(struct option_state *state, struct platform_state *psta
 
 // [=]===^=[ option_shutdown ]================================================================^===[=]
 static void option_shutdown(struct option_state *state, struct platform_state *pstate) {
-	mkfw_audio_callback = 0;
+	mkfw_set_audio_callback(0);
 	fc14_shutdown(&option_song);
 }

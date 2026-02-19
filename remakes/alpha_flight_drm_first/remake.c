@@ -330,7 +330,7 @@ static void remake_options(struct platform_state *state) {
 static void remake_init(struct platform_state *state) {
 	platform_change_resolution(state, BUFFER_WIDTH, BUFFER_HEIGHT);
 	part1_sample.data = resample_audio((int8_t*)music, music_end - music_data, 400, &part1_sample.size);
-	mkfw_audio_callback = remake_audio_callback;
+	mkfw_set_audio_callback(remake_audio_callback);
 }
 
 // [=]===^=[ remake_frame ]============================================================^===[=]
@@ -343,6 +343,6 @@ static void remake_frame(struct platform_state *state) {
 // [=]===^=[ remake_shutdown ]============================================================^===[=]
 static void remake_shutdown(struct platform_state *state) {
 	free(part1_sample.data);
-	mkfw_audio_callback = 0;
+	mkfw_set_audio_callback(0);
 }
 
