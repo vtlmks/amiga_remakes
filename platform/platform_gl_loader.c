@@ -21,7 +21,7 @@ typedef unsigned int GLbitfield;
 typedef float GLfloat;
 typedef double GLdouble;
 
-typedef unsigned long long GLsizeiptr;
+typedef ptrdiff_t GLsizeiptr;
 
 // --- Boolean ---
 #define GL_FALSE 0

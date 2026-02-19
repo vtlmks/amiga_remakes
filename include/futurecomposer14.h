@@ -190,8 +190,11 @@ struct fc14_state {
 #define FC14_LERP(x, y, z) ((x) + ((y) - (x)) * (z))
 #define FC14_CLAMP(x, low, high) (((x) > (high)) ? (high) : (((x) < (low)) ? (low) : (x)))
 #define FC14_CLAMP16(i) if ((int16_t)(i) != i) i = 0x7FFF ^ (i >> 31);
-#define FC14_PTR2LONG(x) ((uint32_t *)(x))
-#define FC14_PTR2WORD(x) ((uint16_t *)(x))
+static inline uint32_t fc14_read_u32(const void *p) { uint32_t v; memcpy(&v, p, 4); return v; }
+static inline uint16_t fc14_read_u16(const void *p) { uint16_t v; memcpy(&v, p, 2); return v; }
+static inline void fc14_write_u16(void *p, uint16_t v) { memcpy(p, &v, 2); }
+static inline uint32_t fc14_read_be32(const void *p) { uint32_t v; memcpy(&v, p, 4); return __builtin_bswap32(v); }
+static inline uint16_t fc14_read_be16(const void *p) { uint16_t v; memcpy(&v, p, 2); return __builtin_bswap16(v); }
 #define FC14_SSMP_MAGIC 0x504D5353u
 
 static const uint8_t fc14_silentTable[8] = { 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xE1 };
@@ -502,30 +505,30 @@ static uint8_t fc14_init_music(struct fc14_state *fc, const uint8_t *moduleData)
 	uint8_t i;
 	struct fc14_soundInfo_t *s;
 
-	fc->fc14 = (*FC14_PTR2LONG(&moduleData[0]) == 0x34314346);
+	fc->fc14 = (fc14_read_u32(&moduleData[0]) == 0x34314346);
 
-	if(*FC14_PTR2LONG(&moduleData[0]) != 0x444F4D53 && !fc->fc14)
+	if(fc14_read_u32(&moduleData[0]) != 0x444F4D53 && !fc->fc14)
 		return 0;
 
 	fc->SEQpoint = (uint8_t *)&moduleData[fc->fc14 ? 180 : 100];
-	fc->PATpoint = (uint8_t *)&moduleData[__builtin_bswap32(*FC14_PTR2LONG(&moduleData[8]))];
-	fc->FRQpoint = (uint8_t *)&moduleData[__builtin_bswap32(*FC14_PTR2LONG(&moduleData[16]))];
-	fc->VOLpoint = (uint8_t *)&moduleData[__builtin_bswap32(*FC14_PTR2LONG(&moduleData[24]))];
+	fc->PATpoint = (uint8_t *)&moduleData[fc14_read_be32(&moduleData[8])];
+	fc->FRQpoint = (uint8_t *)&moduleData[fc14_read_be32(&moduleData[16])];
+	fc->VOLpoint = (uint8_t *)&moduleData[fc14_read_be32(&moduleData[24])];
 
-	fc->ptr8s_1 = (int8_t *)&moduleData[__builtin_bswap32(*FC14_PTR2LONG(&moduleData[32]))];
+	fc->ptr8s_1 = (int8_t *)&moduleData[fc14_read_be32(&moduleData[32])];
 	fc->ptr8u_2 = (uint8_t *)&moduleData[40];
 
 	for(i = 0; i < FC14_NUM_SAMPLES; i++) {
 		fc->samples[i].data = fc->ptr8s_1;
-		fc->samples[i].length = __builtin_bswap16(*FC14_PTR2WORD(fc->ptr8u_2)); fc->ptr8u_2 += 2;
-		fc->samples[i].repeat = &fc->samples[i].data[__builtin_bswap16(*FC14_PTR2WORD(fc->ptr8u_2))]; fc->ptr8u_2 += 2;
-		fc->samples[i].replen = __builtin_bswap16(*FC14_PTR2WORD(fc->ptr8u_2)); fc->ptr8u_2 += 2;
+		fc->samples[i].length = fc14_read_be16(fc->ptr8u_2); fc->ptr8u_2 += 2;
+		fc->samples[i].repeat = &fc->samples[i].data[fc14_read_be16(fc->ptr8u_2)]; fc->ptr8u_2 += 2;
+		fc->samples[i].replen = fc14_read_be16(fc->ptr8u_2); fc->ptr8u_2 += 2;
 
 		if(fc->samples[i].replen <= 1) {
 			fc->samples[i].replen = 1;
 			if(fc->samples[i].length >= 1) {
-				if(*FC14_PTR2LONG((uint8_t*)fc->samples[i].data) != FC14_SSMP_MAGIC)
-					*FC14_PTR2WORD(fc->samples[i].data) = 0;
+				if(fc14_read_u32(fc->samples[i].data) != FC14_SSMP_MAGIC)
+					fc14_write_u16(fc->samples[i].data, 0);
 			}
 		}
 
@@ -533,7 +536,7 @@ static uint8_t fc14_init_music(struct fc14_state *fc, const uint8_t *moduleData)
 	}
 
 	if(fc->fc14) {
-		fc->ptr8s_1 = (int8_t *)&moduleData[__builtin_bswap32(*FC14_PTR2LONG(&moduleData[36]))];
+		fc->ptr8s_1 = (int8_t *)&moduleData[fc14_read_be32(&moduleData[36])];
 		fc->ptr8u_2 = (uint8_t *)&moduleData[100];
 
 		for(i = 0; i < FC14_NUM_WAVEFORMS; i++) {
@@ -567,7 +570,7 @@ static uint8_t fc14_init_music(struct fc14_state *fc, const uint8_t *moduleData)
 		}
 	}
 
-	fc->numSequences = (uint32_t)(__builtin_bswap32(*FC14_PTR2LONG(&moduleData[4])) / FC14_SEQ_SIZE) * FC14_SEQ_SIZE;
+	fc->numSequences = (uint32_t)(fc14_read_be32(&moduleData[4]) / FC14_SEQ_SIZE) * FC14_SEQ_SIZE;
 
 	return 1;
 }
@@ -725,20 +728,20 @@ testeffects:
 			} else if(tabPtr[0] == 0xE9) {
 				if(tabPtr[1] < FC14_NUM_SAMPLES + FC14_NUM_WAVEFORMS) {
 					sample = &fc->samples[tabPtr[1]];
-					if(*FC14_PTR2LONG(sample->data) == 0x504D5353) {
+					if(fc14_read_u32(sample->data) == 0x504D5353) {
 						tmpPtr = (uint8_t *)&sample->data[4 + (tabPtr[2] * 16)];
 
-						ch->loopStart = &sample->data[(4 + 320 + *FC14_PTR2LONG(&tmpPtr[0])) + *FC14_PTR2WORD(&tmpPtr[6])];
-						ch->loopLength = *FC14_PTR2WORD(&tmpPtr[8]);
+						ch->loopStart = &sample->data[(4 + 320 + fc14_read_u32(&tmpPtr[0])) + fc14_read_u16(&tmpPtr[6])];
+						ch->loopLength = fc14_read_u16(&tmpPtr[8]);
 
 						if(ch->loopLength <= 1) {
 							ch->loopLength = 1;
-							if(*FC14_PTR2WORD(&tmpPtr[4]) >= 1)
-								*FC14_PTR2WORD(&sample->data[4 + 320 + *FC14_PTR2LONG(&tmpPtr[0])]) = 0;
+							if(fc14_read_u16(&tmpPtr[4]) >= 1)
+								fc14_write_u16(&sample->data[4 + 320 + fc14_read_u32(&tmpPtr[0])], 0);
 						}
 
-						fc14_paulaSetData(fc, ch->voiceIndex, &sample->data[4 + 320 + *FC14_PTR2LONG(&tmpPtr[0])]);
-						fc14_paulaSetLength(fc, ch->voiceIndex, *FC14_PTR2WORD(&tmpPtr[4]));
+						fc14_paulaSetData(fc, ch->voiceIndex, &sample->data[4 + 320 + fc14_read_u32(&tmpPtr[0])]);
+						fc14_paulaSetLength(fc, ch->voiceIndex, fc14_read_u16(&tmpPtr[4]));
 						fc14_paulaStartDMA(fc, ch->voiceIndex);
 
 						ch->volTabPos = 0;

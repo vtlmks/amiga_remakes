@@ -502,9 +502,9 @@ static void p5_render_copperbars(struct platform_state *state) {
 	uint32_t num_copper_bars = ARRAYSIZE(md1_p5_large_copper_bars);
 
 	for(uint32_t i = 0; i < num_copper_bars; ++i) {
-		__m128i color = _mm_set1_epi32(copper_bars_src[i]);
-		for(uint32_t x = 0; x < state->buffer_width; x += 4) {
-			_mm_storeu_si128((__m128i*)(copper_bars_dest + x), color);
+		uint32_t color = copper_bars_src[i];
+		for(uint32_t x = 0; x < state->buffer_width; ++x) {
+			copper_bars_dest[x] = color;
 		}
 		copper_bars_dest += state->buffer_width;
 	}

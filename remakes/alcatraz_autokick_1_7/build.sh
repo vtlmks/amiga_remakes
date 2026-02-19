@@ -24,7 +24,8 @@ CFLAGS+="-fno-stack-protector "
 CFLAGS+="-fno-trapping-math "
 CFLAGS+="-fno-unwind-tables "
 
-CFLAGS+="-fcf-protection=none "
+# x86-specific (Intel CET)
+case "$(uname -m)" in x86_64|i686|i386) CFLAGS+="-fcf-protection=none " ;; esac
 CFLAGS+="-ffast-math "
 CFLAGS+="-fstrict-aliasing "
 CFLAGS+="-fvisibility=hidden "

@@ -222,9 +222,9 @@ static void opengl_setup(struct platform_state *state) {
 __attribute__((always_inline))
 static inline void opengl_render_frame(struct platform_state *state) {
 	// Check if viewport changed and we need to recreate render targets
-	if(state->viewport_changed) {
+	if(__atomic_load_n(&state->viewport_changed, __ATOMIC_ACQUIRE)) {
 		opengl_setup_render_targets(state);
-		state->viewport_changed = 0;
+		__atomic_store_n(&state->viewport_changed, 0, __ATOMIC_RELAXED);
 	}
 
 	// Upload new frame to texture

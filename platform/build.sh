@@ -9,10 +9,17 @@ WINCC=x86_64-w64-mingw32-gcc
 
 # Base configuration common to all builds
 CFLAGS="-std=gnu11 -mtune=generic "
-CFLAGS+="-fno-argument-alias "
-CFLAGS+="-mfunction-return=keep -mindirect-branch=keep "
 CFLAGS+="-fwrapv -ffast-math -fno-trapping-math -fvisibility=hidden "
-CFLAGS+="-fno-stack-protector -fno-PIE -no-pie -fcf-protection=none "
+CFLAGS+="-fno-stack-protector -fno-PIE -no-pie "
+
+# x86-specific flags (Spectre mitigations, CET, aliasing)
+case "$(uname -m)" in
+	x86_64|i686|i386)
+		CFLAGS+="-fno-argument-alias "
+		CFLAGS+="-mfunction-return=keep -mindirect-branch=keep "
+		CFLAGS+="-fcf-protection=none "
+		;;
+esac
 CFLAGS+="-fno-non-call-exceptions -fno-unwind-tables -fno-asynchronous-unwind-tables "
 CFLAGS+="-Wall -Wextra -Wstrict-aliasing=3 "
 CFLAGS+="-Wno-unused-parameter -Wno-sign-compare -Wno-trigraphs -Wno-maybe-uninitialized "

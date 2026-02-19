@@ -9,7 +9,6 @@
 #include <math.h>
 #include <time.h>
 #include <inttypes.h>
-#include <immintrin.h>
 #include <unistd.h>
 #include <stdio.h>
 
@@ -119,7 +118,7 @@ static void framebuffer_callback(struct mkfw_state *window, int32_t width, int32
 	state->viewport.w = viewport_width;
 	state->viewport.h = viewport_height;
 
-	state->viewport_changed = 1;
+	__atomic_store_n(&state->viewport_changed, 1, __ATOMIC_RELEASE);
 }
 
 // [=]===^=[ key_callback ]=================================================================^===[=]
@@ -155,7 +154,7 @@ static MKFW_THREAD_FUNC(render_thread_func, arg) {
 	struct mkfw_timer_handle *timer = mkfw_timer_new(FRAME_TIME_NS);
 	uint64_t last_frame_time_ns = mkfw_gettime(window);
 
-	while(state->running) {
+	while(__atomic_load_n(&state->running, __ATOMIC_ACQUIRE)) {
 		if(mkfw_is_key_pressed(window, MKS_KEY_F11)) {
 			state->fullscreen = !state->fullscreen;
 			mkfw_fullscreen(window, state->fullscreen);
@@ -166,7 +165,7 @@ static MKFW_THREAD_FUNC(render_thread_func, arg) {
 		}
 
 		if(mkfw_is_key_pressed(window, MKS_KEY_ESCAPE)) {
-			state->running = 0;
+			__atomic_store_n(&state->running, 0, __ATOMIC_RELEASE);
 		}
 
 		remake_frame(state);
@@ -223,17 +222,17 @@ int main(int argc, char **argv) {
 	mkfw_get_framebuffer_size(platform_state.window, &init_w, &init_h);
 	framebuffer_callback(platform_state.window, init_w, init_h, CRT_ASPECT);
 
-	platform_state.running = 1;
+	__atomic_store_n(&platform_state.running, 1, __ATOMIC_RELEASE);
 
 	mkfw_detach_context(platform_state.window);
 
 	mkfw_thread render_thread = mkfw_thread_create(render_thread_func, &platform_state);
 	if(render_thread) {
-		while(platform_state.running && !mkfw_should_close(platform_state.window)) {
+		while(__atomic_load_n(&platform_state.running, __ATOMIC_ACQUIRE) && !mkfw_should_close(platform_state.window)) {
 			mkfw_pump_messages(platform_state.window);
 			mkfw_sleep(5000000);
 		}
-		platform_state.running = 0;
+		__atomic_store_n(&platform_state.running, 0, __ATOMIC_RELEASE);
 		mkfw_thread_join(render_thread);
 	}
 

@@ -8,6 +8,8 @@
 
 #define MICROMOD_MAX_CHANNELS 4
 
+static inline uint16_t micromod_read_be16(const void *p) { uint16_t v; memcpy(&v, p, 2); return __builtin_bswap16(v); }
+
 struct micromod_note {
 	uint16_t key;
 	uint8_t instrument, effect, param;
@@ -500,7 +502,7 @@ static int32_t micromod_calculate_mod_file_len(int8_t *module_header) {
 	if(numchan <= 0) return -1;
 	length = 1084 + 4 * numchan * 64 * micromod_calculate_num_patterns(module_header);
 	for(inst_idx = 1; inst_idx < 32; inst_idx++)
-		length += __builtin_bswap16(*(uint16_t*)&module_header[inst_idx * 30 + 12]) * 2;
+		length += micromod_read_be16(&module_header[inst_idx * 30 + 12]) * 2;
 	return length;
 }
 
@@ -576,13 +578,13 @@ static int32_t micromod_initialize(struct micromod_state *m, int8_t *data, int32
 	sample_data_offset = 1084 + m->num_patterns * 64 * m->num_channels * 4;
 	for(inst_idx = 1; inst_idx < 32; inst_idx++) {
 		inst = &m->instruments[ inst_idx ];
-		sample_length = __builtin_bswap16(*(uint16_t*)&m->module_data[inst_idx * 30 + 12]) * 2;
+		sample_length = micromod_read_be16(&m->module_data[inst_idx * 30 + 12]) * 2;
 		fine_tune = m->module_data[ inst_idx * 30 + 14 ] & 0xF;
 		inst->fine_tune = (fine_tune & 0x7) - (fine_tune & 0x8) + 8;
 		volume = m->module_data[ inst_idx * 30 + 15 ] & 0x7F;
 		inst->volume = volume > 64 ? 64 : volume;
-		loop_start = __builtin_bswap16(*(uint16_t*)&m->module_data[inst_idx * 30 + 16]) * 2;
-		loop_length = __builtin_bswap16(*(uint16_t*)&m->module_data[inst_idx * 30 + 18]) * 2;
+		loop_start = micromod_read_be16(&m->module_data[inst_idx * 30 + 16]) * 2;
+		loop_length = micromod_read_be16(&m->module_data[inst_idx * 30 + 18]) * 2;
 		if(loop_start + loop_length > sample_length) {
 			if(loop_start / 2 + loop_length <= sample_length) {
 				/* Some old modules have loop start in bytes. */
