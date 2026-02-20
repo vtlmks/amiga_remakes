@@ -4,7 +4,7 @@
 ** - NOT BIG ENDIAN SAFE! -
 **
 ** Very accurate C port of Future Composer 1.4's replayer,
-** by Olav "8bitbubsy" Sørensen, using a FC1.4 disassembly (its supplied replayer code was buggy).
+** by Olav "8bitbubsy" Sorensen, using a FC1.4 disassembly (its supplied replayer code was buggy).
 ** Works correctly with v1.0..v1.3 modules as well.
 **
 ** The BLEP (Band-Limited Step) and filter routines were coded by aciddose.

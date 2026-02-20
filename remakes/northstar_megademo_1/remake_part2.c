@@ -36,7 +36,7 @@ static const uint32_t md1_p2_text_writer_background_colors[] = {
 
 /*
 
-000290EA unk_290EA:      dc.b   2                ; Probable_entry_point+32C↑o
+000290EA unk_290EA:      dc.b   2                ; Probable_entry_point+32C^o
 000290EB                 dc.b   8
 000290EC aPresents:      dc.b '*** PRESENTS :***'
 000290FD                 dc.b $23 ; #
@@ -51,7 +51,7 @@ static const uint32_t md1_p2_text_writer_background_colors[] = {
 00029126                 dc.b $3E ; >
 00029127                 dc.b   8
 00029128                 dc.b '*****************'
-00029139 unk_29139:      dc.b $23 ; #            ; RAM:off_290D4↑o
+00029139 unk_29139:      dc.b $23 ; #            ; RAM:off_290D4^o
 0002913A                 dc.b   0
 */
 

@@ -47,7 +47,7 @@ static void platform_audio_post_process(int16_t *audio_buffer, size_t frames);
 // [=]===^=[ platform_audio_post_process ]=============================================================^===[=]
 // Single-pole IIR low-pass filter (RC filter)
 // alpha = dt / (rc + dt), where dt = 1/sample_rate, rc = 1/(2*pi*cutoff_hz)
-// At 48kHz with ~8kHz cutoff: alpha ≈ 0.7265
+// At 48kHz with ~8kHz cutoff: alpha ~= 0.7265
 #define PLATFORM_LP_ALPHA 0.7265f
 
 static float platform_lp_prev_l = 0.0f;
