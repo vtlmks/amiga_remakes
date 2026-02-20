@@ -192,7 +192,7 @@ static void opengl_setup(struct platform_state *state) {
 	state->persistence_program = opengl_link_program(vertex_shader_data, phosphor_persistence_fragment_data);
 	state->passthrough_program = opengl_link_program(vertex_shader_data, passthrough_fragment_data);
 
-	state->persistence_decay = 0.15f;
+	state->persistence_decay = 0.07f;
 
 	state->contrast = 1.0f;
 	state->saturation = 0.0f;

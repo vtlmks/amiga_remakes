@@ -107,7 +107,7 @@ case "$BUILD_TYPE" in
 		;;
 	"debug")
 		CFLAGS+="-g -O0 -DDEBUGPRINT "
-		# CFLAGS+="-DMKFW_TIMER_DEBUG "
+		CFLAGS+="-DMKFW_TIMER_DEBUG "
 		# tripwires for UB; non-recovering so failures are loud
 #		CFLAGS+="-fsanitize=undefined,alignment,shift,signed-integer-overflow,pointer-overflow,object-size,unreachable "
 #		CFLAGS+="-fno-sanitize-recover=undefined,alignment,shift,signed-integer-overflow,pointer-overflow,object-size,unreachable "

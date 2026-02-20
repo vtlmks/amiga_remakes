@@ -89,7 +89,8 @@ audio_function audio_callbacks[] = {
 // [=]===^=[ audio_callback ]============================================================^===[=]
 static void remake_audio_callback(int16_t *data, size_t frames) {
 	memset(data, 0, 2*2*frames);
-	audio_callbacks[active_demo_part](data, frames);
+	uint32_t part = __atomic_load_n(&active_demo_part, __ATOMIC_ACQUIRE);
+	audio_callbacks[part](data, frames);
 }
 
 // [=]===^=[ remake_init ]============================================================^===[=]
@@ -157,22 +158,26 @@ static void remake_options(struct platform_state *state) {
 static void remake_frame(struct platform_state *state) {
 	platform_clear_buffer(state);
 
+	uint32_t part = active_demo_part;
+
 	for(uint32_t i = '1'; i <= '8'; ++i) {
 		if(mkfw_is_key_pressed(state->window, i)) {
-			active_demo_part = i - '1';
+			part = i - '1';
 			break;
 		}
 	}
 
 	if(mkfw_is_key_pressed(state->window, MKS_KEY_UP) || mkfw_is_key_pressed(state->window, MKS_KEY_LEFT)) {
-		active_demo_part = (active_demo_part > 0) ? active_demo_part - 1 : 7;
+		part = (part > 0) ? part - 1 : 7;
 	}
 
 	if(mkfw_is_key_pressed(state->window, MKS_KEY_RIGHT) || mkfw_is_key_pressed(state->window, MKS_KEY_DOWN)) {
-		active_demo_part = (active_demo_part < 7) ? active_demo_part + 1 : 0;
+		part = (part < 7) ? part + 1 : 0;
 	}
 
-	if(update_callbacks[active_demo_part](state)) {
-		active_demo_part = (active_demo_part < 7) ? active_demo_part + 1 : 0;
+	if(update_callbacks[part](state)) {
+		part = (part < 7) ? part + 1 : 0;
 	}
+
+	__atomic_store_n(&active_demo_part, part, __ATOMIC_RELEASE);
 }
