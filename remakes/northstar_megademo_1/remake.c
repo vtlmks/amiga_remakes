@@ -134,14 +134,6 @@ static void remake_shutdown(struct platform_state *state) {
 	free(part7_sample.data);
 
 	mkfw_set_audio_callback(0);
-
-	// printf("\n=== CRT Parameters ===\n");
-	// printf("state.bloom_threshold = %.3ff;\n", state.bloom_threshold);
-	// printf("state.bloom_intensity = %.3ff;\n", state.bloom_intensity);
-	// printf("state.persistence_decay = %.3ff;\n", state.persistence_decay);
-	// printf("state.brightness = %.3ff;\n", state.brightness);
-	// printf("state.bloom_scale = %.3ff;\n", state.bloom_scale);
-	// printf("=====================\n");
 }
 
 

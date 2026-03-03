@@ -123,9 +123,7 @@ static void framebuffer_callback(struct mkfw_state *window, int32_t width, int32
 
 // [=]===^=[ key_callback ]=================================================================^===[=]
 static void key_callback(struct mkfw_state *window, uint32_t key, uint32_t action, uint32_t mods) {
-
 	// remake_key(key, action, mods);
-
 }
 
 // [=]===^=[ mouse_move_callback ]=================================================================^===[=]
