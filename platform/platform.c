@@ -52,6 +52,7 @@ static void platform_audio_post_process(int16_t *audio_buffer, size_t frames);
 
 static float platform_lp_prev_l = 0.0f;
 static float platform_lp_prev_r = 0.0f;
+static struct rng_state platform_dither_rng = { 0x12345678, 0x9ABCDEF0, 0xDEADBEEF, 0xCAFEBABE };
 
 static void platform_audio_post_process(int16_t *audio_buffer, size_t frames) {
 #ifdef AUDIO_STEREO_MIX
@@ -72,8 +73,10 @@ static void platform_audio_post_process(int16_t *audio_buffer, size_t frames) {
 		float r = (float)audio_buffer[i * 2 + 1];
 		platform_lp_prev_l += PLATFORM_LP_ALPHA * (l - platform_lp_prev_l);
 		platform_lp_prev_r += PLATFORM_LP_ALPHA * (r - platform_lp_prev_r);
-		audio_buffer[i * 2 + 0] = (int16_t)platform_lp_prev_l;
-		audio_buffer[i * 2 + 1] = (int16_t)platform_lp_prev_r;
+		float dither_l = (float)(xor_generate_random(&platform_dither_rng) & 1) - (float)(xor_generate_random(&platform_dither_rng) & 1);
+		float dither_r = (float)(xor_generate_random(&platform_dither_rng) & 1) - (float)(xor_generate_random(&platform_dither_rng) & 1);
+		audio_buffer[i * 2 + 0] = (int16_t)(platform_lp_prev_l + dither_l);
+		audio_buffer[i * 2 + 1] = (int16_t)(platform_lp_prev_r + dither_r);
 	}
 }
 
