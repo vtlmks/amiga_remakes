@@ -293,7 +293,7 @@ static void p7_show_logos(struct platform_state *state) {
 
 	if(p7_logo_index != 0xffffffff) {
 		uint32_t logo_x = (state->buffer_width - p7_logos[p7_logo_index].image->width) >> 1;
-		blit_full(state, p7_logos[p7_logo_index].image, logo_x, p7_logos[p7_logo_index].logo_y, 0);
+		blit(state, &(struct blit_op){ .src = p7_logos[p7_logo_index].image, .dst_x = logo_x, .dst_y = p7_logos[p7_logo_index].logo_y });
 	}
 }
 

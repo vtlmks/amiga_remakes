@@ -346,7 +346,7 @@ static void p5_sprite_bounce(struct platform_state *state) {
 			offset_y = p5_sprite_sine[sprites[i].sine_index++];
 		}
 
-		blit_full(state, sprites[i].sprite, sprites[i].xpos, 104 +0x29 - offset_y, 0);
+		blit(state, &(struct blit_op){ .src = sprites[i].sprite, .dst_x = sprites[i].xpos, .dst_y = 104 + 0x29 - offset_y });
 
 	}
 
@@ -361,7 +361,8 @@ static void p5_render_logo(struct platform_state *state, struct ugg *image, int3
 
 	struct rect clip_rect = { 0, 0, state->buffer_width - 2, state->buffer_height };
 
-	struct clip_info clip = calculate_clip_rect(state, image, center_offset + offset_x, 103 + offset_y, clip_rect);
+	struct blit_op op = { .src = image, .dst_x = center_offset + offset_x, .dst_y = 103 + offset_y, .clip_rect = clip_rect };
+	struct clip_info clip = calculate_clip(state, &op);
 
 	if(!clip.visible) {
 		return;
@@ -464,8 +465,8 @@ static void p5_mid_screen_logos(struct platform_state *state) {
 
 static void p5_render_heads(struct platform_state *state) {
 	int32_t half_head_w = p5_faces_data->width >> 1;
-	blit_full(state, p5_faces_data, -half_head_w, 206, 0);
-	blit_full(state, p5_faces_data, state->buffer_width-half_head_w, 206, 0);
+	blit(state, &(struct blit_op){ .src = p5_faces_data, .dst_x = -half_head_w, .dst_y = 206 });
+	blit(state, &(struct blit_op){ .src = p5_faces_data, .dst_x = state->buffer_width - half_head_w, .dst_y = 206 });
 }
 
 #define LOGO_Y_OFFSET 224

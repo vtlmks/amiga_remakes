@@ -9,7 +9,7 @@ GIT_ROOT=$(git rev-parse --show-toplevel)
 export PATH="$PATH:$GIT_ROOT/tools/bin"
 
 # Compiler
-CC=gcc
+CC=clang
 WINCC=x86_64-w64-mingw32-gcc
 
 # Base configuration common to all builds

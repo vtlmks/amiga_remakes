@@ -280,7 +280,7 @@ static void remake_frame(struct platform_state *state) {
 
 	switch(af_remake_state) {
 		case STATE_WAIT_LOGO: {
-			blit_full_src(state, alpha_flight_logo, CENTER_X(state, alpha_flight_logo->width), logo_y, clip_rect, 0);
+			blit(state, &(struct blit_op){ .src = alpha_flight_logo, .dst_x = CENTER_X(state, alpha_flight_logo->width), .dst_y = logo_y, .clip_rect = clip_rect });
 			if(state->frame_number & 1) {
 				logo_y = (logo_y == LOGO_Y_POS) ? LOGO_Y_POS : logo_y - 1;
 			}
@@ -290,12 +290,12 @@ static void remake_frame(struct platform_state *state) {
 		} break;
 
 		case STATE_FADE_STARS: {
-			blit_full(state, alpha_flight_logo, CENTER_X(state, alpha_flight_logo->width), LOGO_Y_POS, 0);
+			blit(state, &(struct blit_op){ .src = alpha_flight_logo, .dst_x = CENTER_X(state, alpha_flight_logo->width), .dst_y = LOGO_Y_POS });
 			fade_star_color();
 		} break;
 
 		case STATE_RUN: {
-			blit_full(state, alpha_flight_logo, CENTER_X(state, alpha_flight_logo->width), LOGO_Y_POS, 0);
+			blit(state, &(struct blit_op){ .src = alpha_flight_logo, .dst_x = CENTER_X(state, alpha_flight_logo->width), .dst_y = LOGO_Y_POS });
 		} break;
 	}
 

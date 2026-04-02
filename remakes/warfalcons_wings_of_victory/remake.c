@@ -114,7 +114,7 @@ static void remake_frame(struct platform_state *state) {
 
 	switch(run_state) {
 		case STATE_SHOW_LOGO: {
-			blit_full(state, logo, CENTER_X(state, logo->width), 79, 0);
+			blit(state, &(struct blit_op){ .src = logo, .dst_x = CENTER_X(state, logo->width), .dst_y = 79 });
 
 			if(frame_count++ == LOGO_TIME) {
 				frame_count = 0;

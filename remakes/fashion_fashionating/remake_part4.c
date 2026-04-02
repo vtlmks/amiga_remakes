@@ -99,10 +99,8 @@ static uint32_t part_4_render(struct platform_state *state) {
 
 	// Blit logos
 
-	// blit_full(state, p2_stalaktites, CENTER_X(state, p2_stalaktites->width), 103, 0);
-
-	blit_full(state, loader_logo, CENTER_X(state, loader_logo->width), P4_TOP_LOGO_Y_START, fsn_top_logo_colors);
-	blit_full(state, loader_logo, CENTER_X(state, loader_logo->width), P4_BOTTOM_LOGO_Y_START, fsn_bottom_logo_colors);
+	blit(state, &(struct blit_op){ .src = loader_logo, .dst_x = CENTER_X(state, loader_logo->width), .dst_y = P4_TOP_LOGO_Y_START, .palette = fsn_top_logo_colors });
+	blit(state, &(struct blit_op){ .src = loader_logo, .dst_x = CENTER_X(state, loader_logo->width), .dst_y = P4_BOTTOM_LOGO_Y_START, .palette = fsn_bottom_logo_colors });
 
 	// fast_blit_with_palette(state->shared, loader_logo->data, loader_logo->width, loader_logo->height, fsn_top_logo_colors, x_center, P4_TOP_LOGO_Y_START);
 	// fast_blit_with_palette(state->shared, loader_logo->data, loader_logo->width, loader_logo->height, fsn_bottom_logo_colors, x_center, P4_BOTTOM_LOGO_Y_START);

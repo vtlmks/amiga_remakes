@@ -83,7 +83,7 @@ static void p6_bouncing_logo(struct platform_state *state) {
 	struct rect dest_rect = { 0, 18, state->buffer_width, 164 };
 	uint32_t offset_x = (state->buffer_width - part6_large_logo_data->width) >> 1;
 
-	blit_full_src(state, part6_large_logo_data, offset_x, 18-p6_offset, dest_rect, 0);
+	blit(state, &(struct blit_op){ .src = part6_large_logo_data, .dst_x = offset_x, .dst_y = 18 - p6_offset, .clip_rect = dest_rect });
 }
 
 static void p6_render_scroll_buffer(struct platform_state *state, struct scroller_state *dat) {

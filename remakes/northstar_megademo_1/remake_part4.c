@@ -263,7 +263,7 @@ static uint32_t p4_update(struct platform_state *state)  {
 
 // NOTE(peter): Background logo
 	uint32_t atom_offset_x = (state->buffer_width - part4_atom_logo_bg_data->width) >> 1;
-	blit_full(state, part4_atom_logo_bg_data, atom_offset_x, 37, 0);
+	blit(state, &(struct blit_op){ .src = part4_atom_logo_bg_data, .dst_x = atom_offset_x, .dst_y = 37 });
 
 
 // NOTE(peter): Scrollers

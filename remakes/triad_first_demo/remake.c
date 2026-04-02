@@ -356,7 +356,7 @@ static void remake_frame(struct platform_state *state) {
 	render_copper_bar(state, 241);
 
 	struct rect source_clip = { 0, 9, picture->width, picture->height };
-	blit_full_dst(state, picture, source_clip, CENTER_X(state, picture->width), 0, 0);
+	blit(state, &(struct blit_op){ .src = picture, .src_rect = source_clip, .dst_x = CENTER_X(state, picture->width), .dst_y = 0 });
 	scroller_update(state, &triad_scroller);
 	render_scroll_buffer(state, &triad_scroller);
 }

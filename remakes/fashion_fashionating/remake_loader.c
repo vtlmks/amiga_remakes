@@ -31,7 +31,7 @@ static uint32_t loader(struct platform_state *state) {
 	}
 
 	uint32_t y = (state->buffer_height - loader_logo->height) >> 1;
-	blit_full(state, loader_logo, CENTER_X(state, loader_logo->width), y, loader_logo_red_palette);
+	blit(state, &(struct blit_op){ .src = loader_logo, .dst_x = CENTER_X(state, loader_logo->width), .dst_y = y, .palette = loader_logo_red_palette });
 
 	if(loader_timer) {
 		--loader_timer;

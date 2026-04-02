@@ -207,7 +207,7 @@ static uint32_t p8_update(struct platform_state *state)  {
 		struct ugg *end_logo_entry = (struct ugg*)p8_end_logo_entries[p8_the_end_animation_index];
 		uint32_t y_offset = 144 - (end_logo_entry->height >> 1);
 		uint32_t x_offset = (state->buffer_width>>1) - (end_logo_entry->width >> 1);
-		blit_full(state, end_logo_entry, x_offset, y_offset, 0);
+		blit(state, &(struct blit_op){ .src = end_logo_entry, .dst_x = x_offset, .dst_y = y_offset });
 
 		if((state->frame_number & 0x1) == 0) {
 			p8_the_end_animation_index++;

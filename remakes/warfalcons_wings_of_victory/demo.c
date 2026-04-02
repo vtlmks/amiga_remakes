@@ -543,7 +543,7 @@ static void render_vector_bobs(struct platform_state *state, uint32_t obj) {
 	for(uint32_t i = 0; i < n_coords; ++i) {
 		uint8_t object = vec_coords[i].object;
 		uint32_t width_over_two = bobs[object]->width >> 1;
-		blit_full_src(state, bobs[object], vec_coords[i].x - width_over_two, (vec_coords[i].y - width_over_two), clip_area, bob_palette);
+		blit(state, &(struct blit_op){ .src = bobs[object], .dst_x = vec_coords[i].x - width_over_two, .dst_y = vec_coords[i].y - width_over_two, .clip_rect = clip_area, .palette = bob_palette });
 	}
 
 	angle_x = (angle_x + 3) & 0xff;

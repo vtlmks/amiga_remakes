@@ -291,7 +291,7 @@ static uint32_t part_2_render(struct platform_state *state) {
 
 
 	// Render static elements and tech-tech effect
-	blit_full(state, p2_stalaktites, CENTER_X(state, p2_stalaktites->width), 103, 0);
+	blit(state, &(struct blit_op){ .src = p2_stalaktites, .dst_x = CENTER_X(state, p2_stalaktites->width), .dst_y = 103 });
 
 	render_tech_tech(state);
 

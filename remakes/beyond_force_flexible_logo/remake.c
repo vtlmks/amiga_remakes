@@ -217,7 +217,7 @@ static void render_bobs(struct platform_state *state) {
 		uint32_t x = center_x + bob_sine_table[x_base_temp] + bob_sine_table[x_base_mod_temp];
 		uint32_t y = 56 + bob_sine_table[y_base_temp] + bob_sine_table[y_base_mod_temp];
 
-		blit_full(state, bob, x, y, 0);
+		blit(state, &(struct blit_op){ .src = bob, .dst_x = x, .dst_y = y });
 
 		x_base_temp			= (x_base_temp			+ 15) % 167;
 		x_base_mod_temp	= (x_base_mod_temp	+ 5) % 167;

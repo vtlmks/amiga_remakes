@@ -200,7 +200,7 @@ static void render_stars(struct platform_state *state) {
 	for(size_t i = 0; i < 19; ++i) {
 		// PROFILE_NAMED("Large_star");
 		int32_t temp_x = large_star_positions[i].x;
-		blit_full(state, large_star, temp_x, large_star_positions[i].y, 0);
+		blit(state, &(struct blit_op){ .src = large_star, .dst_x = temp_x, .dst_y = large_star_positions[i].y });
 		temp_x = (temp_x > 424) ? temp_x - 512 : temp_x + 6;
 		large_star_positions[i].x = temp_x;
 	}
@@ -208,7 +208,7 @@ static void render_stars(struct platform_state *state) {
 	for(size_t i = 0; i < 17; ++i) {
 		// PROFILE_NAMED("Small_star");
 		int32_t temp_x = small_star_positions[i].x;
-		blit_full(state, small_star, temp_x, small_star_positions[i].y, 0);
+		blit(state, &(struct blit_op){ .src = small_star, .dst_x = temp_x, .dst_y = small_star_positions[i].y });
 		temp_x = (temp_x > 424) ? temp_x - 512 : temp_x + 4;
 		small_star_positions[i].x = temp_x;
 	}
@@ -220,7 +220,7 @@ static int32_t y_offset;	// NOTE(peter): y-offset for the logo 'reveal' function
 
 static void render_logo(struct platform_state *state) {
 	struct rect full_rect = { 0, 0, state->buffer_width, (0x2d-36) + powerhouse_logo->height };
-	blit_full_src(state, powerhouse_logo, (state->buffer_width - powerhouse_logo->width) / 2, (0x2d-36) + y_offset, full_rect, 0);
+	blit(state, &(struct blit_op){ .src = powerhouse_logo, .dst_x = (state->buffer_width - powerhouse_logo->width) / 2, .dst_y = (0x2d-36) + y_offset, .clip_rect = full_rect });
 	y_offset = (y_offset > 0) ? y_offset - 1 : 0;
 }
 

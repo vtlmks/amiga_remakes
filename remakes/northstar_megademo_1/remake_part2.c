@@ -300,7 +300,7 @@ static void p2_starfield(struct platform_state *state) {
 static void p2_render_logo(struct platform_state *state) {
 	if(p2_logo_reveal_done) {
 		uint32_t logo_x_offset = (state->buffer_width - part2_ns_logo_data->width) >> 1;
-		blit_full(state, part2_ns_logo_data, logo_x_offset, 15, 0);
+		blit(state, &(struct blit_op){ .src = part2_ns_logo_data, .dst_x = logo_x_offset, .dst_y = 15 });
 	} else {
 		p2_logo_reveal_done = logo_render(state);
 	}

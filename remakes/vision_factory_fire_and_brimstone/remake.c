@@ -549,7 +549,7 @@ static void show_vector_logo(struct platform_state *state) {
 	for(size_t i = 0; i < vector_ball_count; ++i) {
 		int16_t x = *src++;
 		int16_t y = *src++;
-		blit_full_src(state, vector_ball, x, y, remake_clip, (y < 57) ? top_vector_ball_colors : bottom_vector_ball_colors);
+		blit(state, &(struct blit_op){ .src = vector_ball, .dst_x = x, .dst_y = y, .clip_rect = remake_clip, .palette = (y < 57) ? top_vector_ball_colors : bottom_vector_ball_colors });
 	}
 }
 
@@ -558,7 +558,7 @@ static void back_plane_star_sprites(struct platform_state *state) {
 
 	for(size_t layer = 0; layer < 2; ++layer) {
 		for(size_t i = 0; i < layers[layer].count; ++i, ++s) {
-			blit_full_src(state, layers[layer].bob, s->x, s->y, remake_clip, 0);
+			blit(state, &(struct blit_op){ .src = layers[layer].bob, .dst_x = s->x, .dst_y = s->y, .clip_rect = remake_clip });
 			s->x += layers[layer].speed_x;
 			if(s->x >= 512) s->x = -((512 - 346) >> 1);
 		}
@@ -570,7 +570,7 @@ static void front_plane_star_sprites(struct platform_state *state) {
 
 	for(size_t layer = 2; layer < 4; ++layer) {
 		for(size_t i = 0; i < layers[layer].count; ++i, ++s) {
-			blit_full_src(state, layers[layer].bob, s->x, s->y, remake_clip, 0);
+			blit(state, &(struct blit_op){ .src = layers[layer].bob, .dst_x = s->x, .dst_y = s->y, .clip_rect = remake_clip });
 			s->x += layers[layer].speed_x;
 			if(s->x >= 512) s->x = -((512 - 346) >> 1);
 		}
@@ -699,7 +699,7 @@ static void remake_frame(struct platform_state *state) {
 		} break;
 	}
 
-	blit_full_src(state, fraxion, 291, 15, remake_clip, 0);
+	blit(state, &(struct blit_op){ .src = fraxion, .dst_x = 291, .dst_y = 15, .clip_rect = remake_clip });
 }
 
 

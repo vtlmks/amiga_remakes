@@ -227,7 +227,7 @@ static void render_flirty_eyes(struct platform_state *state) {
 
 		uint32_t frame_offset_x = flirty_eyes_offsets[7 - p3_flirt_frames];
 		struct rect src = {frame_offset_x, 0, 16, 11};
-		blit_full_dst(state, p3_flirty_eye, src, 187, 90, 0);
+		blit(state, &(struct blit_op){ .src = p3_flirty_eye, .src_rect = src, .dst_x = 187, .dst_y = 90 });
 
 		if(local_frame_counter % 2 == 0) {
 			--p3_flirt_frames;
@@ -246,7 +246,7 @@ static void render_moving_eyes(struct platform_state *state) {
 
 	uint32_t frame_offset_y = (p3_eyes_frame % 3) * 8;
 	struct rect src = {0, frame_offset_y, p3_eyes->width, 8};
-	blit_full_dst(state, p3_eyes, src, 110, 36, 0);
+	blit(state, &(struct blit_op){ .src = p3_eyes, .src_rect = src, .dst_x = 110, .dst_y = 36 });
 }
 
 static void render_bling_stars(struct platform_state *state) {
@@ -265,7 +265,7 @@ static void render_bling_stars(struct platform_state *state) {
 
 		uint32_t frame_offset_x = p3_bling_star_phases[p3_bling_star_phase_index] * p3_stars->height;
 		struct rect src = { frame_offset_x, 0, p3_stars->height, p3_stars->height };
-		blit_full_dst(state, p3_stars, src, star_x, star_y, 0);
+		blit(state, &(struct blit_op){ .src = p3_stars, .src_rect = src, .dst_x = star_x, .dst_y = star_y });
 
 		--p3_bling_star_phase_index;
 	}
@@ -275,7 +275,7 @@ static void render_bling_stars(struct platform_state *state) {
 static int32_t bob_x = -16;
 
 static void render_bob_scroller(struct platform_state *state) {
-	blit_full(state, p3_bob, bob_x, 247, 0);
+	blit(state, &(struct blit_op){ .src = p3_bob, .dst_x = bob_x, .dst_y = 247 });
 	bob_x = ((bob_x + 1) > (512 - 16)) ? -16 : bob_x + 1;
 }
 
