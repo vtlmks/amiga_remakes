@@ -575,7 +575,6 @@ static inline void p5_render_image_with_palette(struct platform_state *state, st
 		color_lookup[3] = palette1[color_index % 30];
 		color_index++;
 
-		#pragma GCC ivdep
 		for(uint32_t j = 0; j < image->width; ++j) {
 			uint32_t index = src[j];
 			color_lookup[0] = dst[j];
