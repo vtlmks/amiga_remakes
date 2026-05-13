@@ -116,8 +116,10 @@ static uint32_t release_title_center_x;
 
 // [=]===^=[ option_setup ]================================================================^===[=]
 static void option_setup(struct option_state *state, struct platform_state *pstate) {
+	(void)state;
+	(void)pstate;
 	fc14_initialize(&option_song, (const uint8_t*)billy_the_kid_music, billy_the_kid_music_end - billy_the_kid_music_data, 48000);
-	mkfw_set_audio_callback(option_audio);
+	platform_set_audio_callback(option_audio);
 }
 
 // [=]===^=[ option_init ]================================================================^===[=]
@@ -129,10 +131,10 @@ static void option_init(struct option_state *state, struct platform_state *pstat
 
 // [=]===^=[ option_frame ]================================================================^===[=]
 static void option_frame(struct option_state *state, struct platform_state *pstate) {
-	if(mkfw_is_key_pressed(state->window, MKS_KEY_F1)) {
+	if(mkfw_window_is_key_pressed(state->window, MKFW_KEY_F1)) {
 		pstate->fullscreen = !pstate->fullscreen;
 	}
-	if(mkfw_is_key_pressed(state->window, MKS_KEY_F2)) {
+	if(mkfw_window_is_key_pressed(state->window, MKFW_KEY_F2)) {
 		pstate->toggle_crt_emulation = !pstate->toggle_crt_emulation;
 	}
 
@@ -155,6 +157,8 @@ static void option_frame(struct option_state *state, struct platform_state *psta
 
 // [=]===^=[ option_shutdown ]================================================================^===[=]
 static void option_shutdown(struct option_state *state, struct platform_state *pstate) {
-	mkfw_set_audio_callback(0);
+	(void)state;
+	(void)pstate;
+	platform_set_audio_callback(0);
 	fc14_shutdown(&option_song);
 }

@@ -105,5 +105,5 @@ static uint32_t p6_update(struct platform_state *state)  {
 	scroller_update(state, &p6_scroll);
 	p6_render_scroll_buffer(state, &p6_scroll);
 
-	return mkfw_is_button_pressed(state->window, MOUSE_BUTTON_LEFT);
+	return mkfw_window_is_button_pressed(state->window, MKFW_MOUSE_LEFT);
 }

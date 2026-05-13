@@ -134,5 +134,5 @@ static uint32_t p3_update(struct platform_state *state)  {
 	p3_render_bouncing_logo(state, center_bounce_x,     center_bounce_y, bounce_offset2, 0xaaaaaaff);
 	p3_render_bouncing_logo(state, center_bounce_x - 1, center_bounce_y, bounce_offset3, 0xffffffff);
 
-	return mkfw_is_button_pressed(state->window, MOUSE_BUTTON_LEFT);
+	return mkfw_window_is_button_pressed(state->window, MKFW_MOUSE_LEFT);
 }

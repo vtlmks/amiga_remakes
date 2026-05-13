@@ -223,12 +223,12 @@ static void p1_init(struct platform_state *state) {
 
 static uint32_t p1_update(struct platform_state *state)  {
 	// PROFILE_NAMED("part1 all");
-	if(mkfw_is_button_pressed(state->window, MOUSE_BUTTON_RIGHT)) {
+	if(mkfw_window_is_button_pressed(state->window, MKFW_MOUSE_RIGHT)) {
 		firework_noclear = !firework_noclear;
 	}
 
 	p1_firework(state);
 	p1_render_text(state);
 
-	return mkfw_is_button_pressed(state->window, MOUSE_BUTTON_LEFT);
+	return mkfw_window_is_button_pressed(state->window, MKFW_MOUSE_LEFT);
 }

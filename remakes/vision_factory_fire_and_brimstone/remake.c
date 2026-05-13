@@ -447,8 +447,8 @@ static void remake_init(struct platform_state *state) {
 	xor_init_rng(&vf_rand_state, 0x34872d9);
 	precalc_rotated_vertices();
 	fc14_initialize(&remake_song, waterproof_data, INCBIN_SIZE(waterproof), 48000);
-	mkfw_set_audio_callback(remake_audio_callback);
-	mkfw_set_mouse_sensitivity(state->window, 0.067);
+	platform_set_audio_callback(remake_audio_callback);
+	mkfw_window_set_mouse_sensitivity(state->window, 0.067);
 	initialize_star_sprites();
 
 	for(int i = 32; i < 96; i++) {
@@ -610,10 +610,10 @@ static void remake_frame(struct platform_state *state) {
   there is 18 characters before V in vision factory = 144 pixels..
 */
 
-	if(mkfw_is_button_pressed(state->window, MOUSE_BUTTON_MIDDLE)) {
-		mkfw_set_mouse_cursor(state->window, mouse_locked);
+	if(mkfw_window_is_button_pressed(state->window, MKFW_MOUSE_MIDDLE)) {
+		mkfw_window_set_cursor_visible(state->window, mouse_locked);
 		mouse_locked = !mouse_locked;
-		mkfw_constrain_mouse(state->window, mouse_locked);
+		mkfw_window_set_cursor_locked(state->window, mouse_locked);
 	}
 
 	uint32_t *dst0 = BUFFER_PTR(state, 0, 6);
@@ -672,7 +672,7 @@ static void remake_frame(struct platform_state *state) {
 			}
 
 			int32_t mouse_dx, mouse_dy;
-			mkfw_get_and_clear_mouse_delta(state->window, &mouse_dx, &mouse_dy);
+			mkfw_window_get_and_clear_mouse_delta(state->window, &mouse_dx, &mouse_dy);
 			delta_accumulator += mouse_dy;
 			if(delta_accumulator >= SELECTION_THRESHOLD) {
 				selected_line++;
@@ -705,6 +705,6 @@ static void remake_frame(struct platform_state *state) {
 
 // [=]===^=[ shutdown ]==============================================================^===[=]
 static void remake_shutdown(struct platform_state *state) {
-	mkfw_set_audio_callback(0);
+	platform_set_audio_callback(0);
 	fc14_shutdown(&remake_song);
 }

@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Peter Fors
+// Copyright (c) 2025-2026 Peter Fors
 // SPDX-License-Identifier: MIT
 
 #define CRT_ASPECT_NUM 4
@@ -14,7 +14,8 @@
 #define BLOOM_MIP_COUNT 4
 
 struct platform_state {
-	struct mkfw_state *window;
+	struct mkfw_context *ctx;
+	struct mkfw_window *window;
 
 	// Demo identity (set by remake_options)
 	char *release_group;	// MAX 40 chars

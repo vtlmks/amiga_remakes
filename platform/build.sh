@@ -46,13 +46,13 @@ INCLUDE_PATHS="-I. -I../include "
 LINUX_CFLAGS="-ffunction-sections -fdata-sections"
 LINUX_LDFLAGS="$LDFLAGS"
 LINUX_INCLUDE=""
-LINUX_LIBS="-lasound -lXi -lX11 -lGL -lm -ldl -pthread "
+LINUX_LIBS="-pthread "
 
 # Windows-specific includes and libraries
 WINDOWS_CFLAGS="-ffunction-sections -D__USE_MINGW_ANSI_STDIO=0 "
 WINDOWS_LDFLAGS="$LDFLAGS "
 WINDOWS_INCLUDE=""
-WINDOWS_LIBS="-lwinmm -lole32 -lmmdevapi -lavrt -lgdi32 -lopengl32 -luuid "
+WINDOWS_LIBS="-lwinmm -lole32 -lavrt -lgdi32 -lopengl32 "
 # -mwindows "
 
 # Determine build type-specific flags

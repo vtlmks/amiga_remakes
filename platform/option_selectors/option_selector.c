@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Peter Fors
+// Copyright (c) 2025-2026 Peter Fors
 // SPDX-License-Identifier: MIT
 
 // The including file must define these before #include:
@@ -10,7 +10,7 @@
 #define OPTIONS_WINDOW_HEIGHT OPTIONS_BUFFER_HEIGHT
 
 struct option_state {
-	struct mkfw_state *window;
+	struct mkfw_window *window;
 
 	uint32_t buffer[OPTIONS_BUFFER_WIDTH * OPTIONS_BUFFER_HEIGHT];
 	uint32_t buffer_width;
@@ -77,37 +77,37 @@ static MKFW_THREAD_FUNC(option_render_thread_func, arg) {
 	struct platform_state *pstate = (struct platform_state *)arg;
 	struct option_state *state = &option_state;
 
-	mkfw_attach_context(state->window);
+	mkfw_window_attach_context(state->window);
 	option_opengl_initialize(state);
 	option_init(state, pstate);
 
-	struct mkfw_timer_handle *timer = mkfw_timer_new(FRAME_TIME_NS);
+	struct mkfw_timer_handle *timer = mkfw_timer_create(FRAME_TIME_NS);
 
 	while(state->running) {
 		for(size_t i = 0; i < state->buffer_height * state->buffer_width; ++i) {
 			state->buffer[i] = 0x102040ff;
 		}
 
-		if(mkfw_is_key_pressed(state->window, MKS_KEY_ESCAPE)) {
+		if(mkfw_window_is_key_pressed(state->window, MKFW_KEY_ESCAPE)) {
 			state->running = 0;
 			state->result = 1;
 		}
 
-		if(mkfw_should_close(state->window)) {
+		if(mkfw_window_should_close(state->window)) {
 			state->running = 0;
 			state->result = 1;
 		}
 
-		if(mkfw_is_key_pressed(state->window, MKS_KEY_SPACE)) {
+		if(mkfw_window_is_key_pressed(state->window, MKFW_KEY_SPACE)) {
 			state->running = 0;
 		}
 
 		option_frame(state, pstate);
 
-		mkfw_update_input_state(state->window);
+		mkfw_window_update_input_state(state->window);
 
 		option_render(state);
-		mkfw_swap_buffers(state->window);
+		mkfw_window_swap_buffers(state->window);
 
 		mkfw_timer_wait(timer);
 	}
@@ -123,26 +123,34 @@ static uint8_t option_selector(struct platform_state *pstate) {
 	option_state.buffer_width = OPTIONS_BUFFER_WIDTH;
 	option_state.buffer_height = OPTIONS_BUFFER_HEIGHT;
 
-	uint32_t width = OPTIONS_WINDOW_WIDTH * OPTIONS_WINDOW_SCALE;
-	uint32_t height = OPTIONS_WINDOW_HEIGHT * OPTIONS_WINDOW_SCALE;
-	option_state.window = mkfw_init(width, height);
+	int32_t width = OPTIONS_WINDOW_WIDTH * OPTIONS_WINDOW_SCALE;
+	int32_t height = OPTIONS_WINDOW_HEIGHT * OPTIONS_WINDOW_SCALE;
+
+	struct mkfw_window_options wopts = {
+		.width = width,
+		.height = height,
+		.title = "remake options",
+	};
+	option_state.window = mkfw_window_create(pstate->ctx, &wopts);
+	if(!option_state.window) {
+		return 1;
+	}
 	opengl_function_loader();
 
-	mkfw_set_swapinterval(option_state.window, 0);
-	mkfw_set_window_min_size_and_aspect(option_state.window, width, height, width, height);
-	mkfw_set_window_resizable(option_state.window, 0);
-	mkfw_set_window_title(option_state.window, "remake options");
-	mkfw_show_window(option_state.window);
+	mkfw_window_set_swap_interval(option_state.window, 0);
+	mkfw_window_set_size_limits(option_state.window, width, height, width, height);
+	mkfw_window_set_aspect_ratio(option_state.window, width, height);
+	mkfw_window_set_resizable(option_state.window, 0);
 
 	option_state.running = 1;
 
 	option_setup(&option_state, pstate);
-	mkfw_detach_context(option_state.window);
+	mkfw_window_detach_context(option_state.window);
 
 	mkfw_thread render_thread = mkfw_thread_create(option_render_thread_func, pstate);
 	if(render_thread) {
 		while(option_state.running) {
-			mkfw_pump_messages(option_state.window);
+			mkfw_poll_events(pstate->ctx);
 			mkfw_sleep(5000000);
 		}
 
@@ -151,6 +159,6 @@ static uint8_t option_selector(struct platform_state *pstate) {
 	}
 
 	option_shutdown(&option_state, pstate);
-	mkfw_cleanup(option_state.window);
+	mkfw_window_destroy(option_state.window);
 	return option_state.result;
 }

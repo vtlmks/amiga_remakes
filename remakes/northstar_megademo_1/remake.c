@@ -117,7 +117,7 @@ static void remake_init(struct platform_state *state) {
 	micromod_initialize(&part6_song, (int8_t*)part6_tune13_data,		48000);
 	micromod_initialize(&part8_song, (int8_t*)part8_n_s_dreamer_data,	48000);
 
-	mkfw_set_audio_callback(remake_audio_callback);
+	platform_set_audio_callback(remake_audio_callback);
 }
 
 // [=]===^=[ remake_shutdown ]============================================================^===[=]
@@ -133,7 +133,7 @@ static void remake_shutdown(struct platform_state *state) {
 	free(part3_sample.data);
 	free(part7_sample.data);
 
-	mkfw_set_audio_callback(0);
+	platform_set_audio_callback(0);
 }
 
 
@@ -153,17 +153,17 @@ static void remake_frame(struct platform_state *state) {
 	uint32_t part = active_demo_part;
 
 	for(uint32_t i = '1'; i <= '8'; ++i) {
-		if(mkfw_is_key_pressed(state->window, i)) {
+		if(mkfw_window_is_key_pressed(state->window, i)) {
 			part = i - '1';
 			break;
 		}
 	}
 
-	if(mkfw_is_key_pressed(state->window, MKS_KEY_UP) || mkfw_is_key_pressed(state->window, MKS_KEY_LEFT)) {
+	if(mkfw_window_is_key_pressed(state->window, MKFW_KEY_UP) || mkfw_window_is_key_pressed(state->window, MKFW_KEY_LEFT)) {
 		part = (part > 0) ? part - 1 : 7;
 	}
 
-	if(mkfw_is_key_pressed(state->window, MKS_KEY_RIGHT) || mkfw_is_key_pressed(state->window, MKS_KEY_DOWN)) {
+	if(mkfw_window_is_key_pressed(state->window, MKFW_KEY_RIGHT) || mkfw_window_is_key_pressed(state->window, MKFW_KEY_DOWN)) {
 		part = (part < 7) ? part + 1 : 0;
 	}
 

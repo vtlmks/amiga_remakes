@@ -324,7 +324,7 @@ static void remake_init(struct platform_state *state) {
 	};
 	scroller_new(&triad_scroller);
 
-	mkfw_set_audio_callback(remake_audio_callback);
+	platform_set_audio_callback(remake_audio_callback);
 }
 
 static void remake_options(struct platform_state *state) {
@@ -363,6 +363,6 @@ static void remake_frame(struct platform_state *state) {
 
 // [=]===^=[ remake_shutdown ]============================================================^===[=]
 static void remake_shutdown(struct platform_state *state) {
-	mkfw_set_audio_callback(0);
+	platform_set_audio_callback(0);
 	free(audio_sample.data);
 }

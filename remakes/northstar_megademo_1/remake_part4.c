@@ -289,5 +289,5 @@ static uint32_t p4_update(struct platform_state *state)  {
 	p4_real_inner_color_index++;
 	p4_real_border_color_index--;
 
-	return mkfw_is_button_pressed(state->window, MOUSE_BUTTON_LEFT);
+	return mkfw_window_is_button_pressed(state->window, MKFW_MOUSE_LEFT);
 }

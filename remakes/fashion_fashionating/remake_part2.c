@@ -303,7 +303,7 @@ static uint32_t part_2_render(struct platform_state *state) {
 	p2_large_scroll_font->palette[4] = temp;
 	scroller_update(state, &p2_scroller);
 
-	return mkfw_is_button_pressed(state->window, MOUSE_BUTTON_LEFT);
+	return mkfw_window_is_button_pressed(state->window, MKFW_MOUSE_LEFT);
 }
 
 

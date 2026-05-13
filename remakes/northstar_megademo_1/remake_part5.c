@@ -595,7 +595,7 @@ static void p5_render_warhammer_40k(struct platform_state *state) {
 static uint32_t p5_update(struct platform_state *state)  {
 	// PROFILE_NAMED("part5 all");
 
-	if(mkfw_is_button_pressed(state->window, MOUSE_BUTTON_RIGHT)) {
+	if(mkfw_window_is_button_pressed(state->window, MKFW_MOUSE_RIGHT)) {
 		p5_scroller1.speed += 1;
 		p5_scroller2.speed += 2;
 		if(p5_scroller1.speed > 4) {
@@ -614,7 +614,7 @@ static uint32_t p5_update(struct platform_state *state)  {
 	p5_mid_screen_logos(state);
 	p5_render_atom_logo(state);
 
-	return mkfw_is_button_pressed(state->window, MOUSE_BUTTON_LEFT);
+	return mkfw_window_is_button_pressed(state->window, MKFW_MOUSE_LEFT);
 
 }
 

@@ -428,7 +428,7 @@ static void remake_init(struct platform_state *state) {
 	scroller_new(&scroller2);
 
 	micromod_initialize(&metalwar_song, (int8_t*)metalwar, 48000);
-	mkfw_set_audio_callback(remake_audio_callback);
+	platform_set_audio_callback(remake_audio_callback);
 }
 
 // [=]===^=[ remake_frame ]============================================================^===[=]
@@ -459,5 +459,5 @@ static void remake_frame(struct platform_state *state) {
 
 // [=]===^=[ remake_shutdown ]============================================================^===[=]
 static void remake_shutdown(struct platform_state *state) {
-	mkfw_set_audio_callback(0);
+	platform_set_audio_callback(0);
 }

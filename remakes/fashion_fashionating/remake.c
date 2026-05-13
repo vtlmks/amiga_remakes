@@ -124,7 +124,7 @@ static void remake_init(struct platform_state *state) {
 	micromod_initialize(&part2_song, (int8_t*)p2_the_world_of_the_dj,	48000);
 	micromod_initialize(&part3_song, (int8_t*)p3_parallax_ii,			48000);
 	micromod_initialize(&part4_song, (int8_t*)p4_ivory_towers,			48000);
-	mkfw_set_audio_callback(remake_audio_callback);
+	platform_set_audio_callback(remake_audio_callback);
 }
 
 
@@ -134,7 +134,7 @@ static void remake_frame(struct platform_state *state) {
 
 	uint32_t part = active_demo_part;
 	for(uint32_t i = '1'; i <= '4'; ++i) {
-		if(mkfw_is_key_pressed(state->window, i)) {
+		if(mkfw_window_is_key_pressed(state->window, i)) {
 			active_demo_part = 1 + ((i - '1') << 1);
 			part = active_demo_part;
 			break;

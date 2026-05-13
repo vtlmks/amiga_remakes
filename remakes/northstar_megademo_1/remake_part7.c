@@ -313,7 +313,7 @@ static void p7_render_stars(struct platform_state *state) {
 static uint32_t p7_update(struct platform_state *state)  {
 	// PROFILE_NAMED("part7 all");
 
-	if(mkfw_is_button_pressed(state->window, MOUSE_BUTTON_RIGHT)) {
+	if(mkfw_window_is_button_pressed(state->window, MKFW_MOUSE_RIGHT)) {
 		p7_scroll.speed = (p7_scroll.speed == 7) ? 1 : (p7_scroll.speed + 1);
 	}
 
@@ -323,6 +323,6 @@ static uint32_t p7_update(struct platform_state *state)  {
 	p7_bar_scrollers(state);
 	p7_show_logos(state);
 
-	return mkfw_is_button_pressed(state->window, MOUSE_BUTTON_LEFT);
+	return mkfw_window_is_button_pressed(state->window, MKFW_MOUSE_LEFT);
 }
 

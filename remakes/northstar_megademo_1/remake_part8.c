@@ -215,7 +215,7 @@ static uint32_t p8_update(struct platform_state *state)  {
 		}
 	}
 
-	return mkfw_is_button_pressed(state->window, MOUSE_BUTTON_LEFT);
+	return mkfw_window_is_button_pressed(state->window, MKFW_MOUSE_LEFT);
 }
 
 

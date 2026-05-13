@@ -316,6 +316,6 @@ static uint32_t p2_update(struct platform_state *state) {
 	p2_texteffect(state);
 	p2_bouncing_scroller(state);
 
-	return mkfw_is_button_pressed(state->window, MOUSE_BUTTON_LEFT);
+	return mkfw_window_is_button_pressed(state->window, MKFW_MOUSE_LEFT);
 }
 
