@@ -133,6 +133,14 @@ static void remake_frame(struct platform_state *state) {
 	platform_clear_buffer(state);
 
 	uint32_t part = active_demo_part;
+	for(uint32_t i = '1'; i <= '4'; ++i) {
+		if(mkfw_is_key_pressed(state->window, i)) {
+			active_demo_part = 1 + ((i - '1') << 1);
+			part = active_demo_part;
+			break;
+		}
+	}
+
 	if(update_callbacks[part].render(state)) {
 		part = (part < 7) ? part + 1 : 0;
 	}

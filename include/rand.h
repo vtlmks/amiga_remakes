@@ -23,6 +23,29 @@ uint32_t xor_generate_random(struct rng_state *state);
 
 #ifdef RAND_IMPLEMENTATION
 
+
+// TODO(peter): replace with PCG
+/*
+struct rng_state { uint64_t state, inc; };
+
+void pcg_init_rng(struct rng_state *s, uint64_t seed, uint64_t stream) {
+    s->state = 0;
+    s->inc = (stream << 1u) | 1u;
+    pcg_generate_random(s);
+    s->state += seed;
+    pcg_generate_random(s);
+}
+
+uint32_t pcg_generate_random(struct rng_state *s) {
+    uint64_t old = s->state;
+    s->state = old * 6364136223846775807ULL + s->inc;
+    uint32_t xorshifted = ((old >> 18u) ^ old) >> 27u;
+    uint32_t rot = old >> 59u;
+    return (xorshifted >> rot) | (xorshifted << ((-rot) & 31));
+}
+*/
+
+
 static uint32_t splitmix32(uint32_t *x) {
 	uint32_t z = (*x += 0x9e3779b9);
 	z = (z ^ (z >> 16)) * 0x85ebca6b;

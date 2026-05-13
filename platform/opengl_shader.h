@@ -28,4 +28,19 @@
 //  0.50 = recommended default
 //  1.00 = no shadow mask
 #define INPUT_MASK 0.5
+//--------------------------------------------------------------
+// How much bright pixels widen their scanline (phosphor saturation).
+// Brighter beam = wider beam spot = scanline bleeds into the dark gaps.
+//  0.0 = constant scanline thickness (original CRTS behavior)
+//  0.3 = recommended subtle effect
+//  0.5 = strong, very visible bloom-into-gaps
+#define INPUT_BEAM_BLOOM 0.0
+//--------------------------------------------------------------
+// Corner vignetting strength (lens / phosphor edge falloff). Applied in
+// warped screen space so corners darken more than edges, matching the
+// geometry of a real curved CRT face.
+//  0.00 = off
+//  0.20 = recommended subtle effect
+//  0.50 = strong, very dark corners
+#define INPUT_VIGNETTE 0.20
 

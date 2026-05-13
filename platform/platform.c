@@ -165,6 +165,10 @@ static MKFW_THREAD_FUNC(render_thread_func, arg) {
 			state->toggle_crt_emulation = !state->toggle_crt_emulation;
 		}
 
+		if(mkfw_is_key_pressed(window, MKS_KEY_F10)) {
+			state->toggle_bloom = !state->toggle_bloom;
+		}
+
 		if(mkfw_is_key_pressed(window, MKS_KEY_ESCAPE)) {
 			__atomic_store_n(&state->running, 0, __ATOMIC_RELEASE);
 		}
@@ -187,6 +191,7 @@ static MKFW_THREAD_FUNC(render_thread_func, arg) {
 int main(int argc, char **argv) {
 	mkfw_set_error_callback(error_callback);
 	platform_state.toggle_crt_emulation = 1;
+	platform_state.toggle_bloom = 1;
 	platform_state.crt_mask_type = 1;
 
 	mkfw_audio_initialize();
